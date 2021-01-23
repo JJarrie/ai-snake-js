@@ -3,6 +3,8 @@ import SquareValue from "../rule/SquareValue";
 import {connect} from "react-redux";
 import State from "../store/State";
 import Grid from "../rule/Grid";
+import Position from "../rule/Position";
+import Snake from "../rule/Snake";
 
 interface BoardState {
     grid: Grid,
@@ -39,7 +41,7 @@ const BoardSquare = (props: BoardSquareState) => (
 const BoardLine = ({width, grid, index}: BoardLineState) => (
     <tr>
         {[...Array(width)].map((v, i) =>
-            <BoardSquare key={`boardsquare_${i}`} value={grid.getValue({x: i, y: index})}/>
+            <BoardSquare key={`boardsquare_${i}`} value={grid.getSquare(new Position(i, index)).value}/>
         )}
     </tr>
 );

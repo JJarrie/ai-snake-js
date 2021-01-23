@@ -37,16 +37,16 @@ class SnakeRule {
     public updateHead(snake: Snake): Snake {
         switch (snake.direction) {
             case Direction.EAST:
-                snake.head = {...snake.head, x: snake.head.x + 1}
+                snake.head = new Position(snake.head.x + 1, snake.head.y)
                 break;
             case Direction.NORTH:
-                snake.head = {...snake.head, y: snake.head.y - 1}
+                snake.head = new Position(snake.head.x, snake.head.y - 1)
                 break;
             case Direction.SOUTH:
-                snake.head = {...snake.head, y: snake.head.y + 1}
+                snake.head = new Position(snake.head.x, snake.head.y + 1)
                 break;
             case Direction.WEST:
-                snake.head = {...snake.head, x: snake.head.x - 1}
+                snake.head = new Position(snake.head.x - 1, snake.head.y)
                 break;
         }
 

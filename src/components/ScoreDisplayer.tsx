@@ -7,7 +7,7 @@ interface ScoreDisplayerProps {
 }
 
 const ScoreDisplayer = ({score}: ScoreDisplayerProps) => (
-    <p>Score: {score}</p>
+    <h1>Score: {score}</h1>
 )
 
 const mapStateToProps = (state: State): ScoreDisplayerProps => ({

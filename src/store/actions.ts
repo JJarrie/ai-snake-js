@@ -3,7 +3,9 @@ enum GameAction {
     up,
     down,
     left,
-    right
+    right,
+    newGame,
+    pause,
 }
 
 export default GameAction
