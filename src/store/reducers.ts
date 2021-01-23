@@ -24,7 +24,9 @@ const nextState = (state: State): State => {
 
         if (isEating) {
             snake.body.unshift(state.food)
-            food = Position.createRandom(state.boardSize)
+            do {
+                food = Position.createRandom(state.boardSize)
+            } while (snake.body.filter(p => p.x === food.x && p.y === food.y).length > 0);
             score = score + 1
         }
         grid.setSquareValue(SquareValue.FOOD, food)
