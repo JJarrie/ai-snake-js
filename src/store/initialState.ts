@@ -25,6 +25,7 @@ export const generateInitialState = (boardSize: BoardSize): State => {
         boardSize,
         food,
         grid,
-        ai: new SnakeAi()
+        ai: new SnakeAi(),
+        vision: null
     })
 }

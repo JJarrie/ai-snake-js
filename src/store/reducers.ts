@@ -13,6 +13,7 @@ const nextState = (state: State): State => {
     const rule = new SnakeRule(state.boardSize)
     let food = state.food
     let score = state.score
+    let vision = state.vision
     let snake = rule.updateBody(state.snake)
     snake = rule.updateHead(snake)
 
@@ -32,10 +33,11 @@ const nextState = (state: State): State => {
         grid.setSquareValue(SquareValue.FOOD, food)
         grid.setSquareValue(SquareValue.SNAKE, snake.head)
         snake.body.forEach(position => grid.setSquareValue(SquareValue.SNAKE, position))
-        const vision = new SnakeEyes(snake).look(grid)
+        vision = new SnakeEyes(snake).look(grid)
+        console.log(vision)
     }
 
-    return {...state, grid, alive, score, food, snake};
+    return {...state, grid, alive, score, food, snake, vision};
 }
 
 const getNewDirection = (currentDirection: Direction, newDirection: Direction, oppositeDirection: Direction): Direction => {

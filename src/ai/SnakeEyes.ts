@@ -19,10 +19,10 @@ class SnakeEyes {
         bounds[Direction.SOUTH] = grid.boardSize.height - this.snake.head.y
         bounds[Direction.EAST] = this.snake.head.x
         bounds[Direction.WEST] = grid.boardSize.width - this.snake.head.x
-        bounds[Direction.NORTH_EAST] = SnakeEyes.pythagoreDistance(bounds[Direction.EAST], bounds[Direction.NORTH])
-        bounds[Direction.NORTH_WEST] = SnakeEyes.pythagoreDistance(bounds[Direction.WEST], bounds[Direction.NORTH])
-        bounds[Direction.SOUTH_EAST] = SnakeEyes.pythagoreDistance(bounds[Direction.EAST], bounds[Direction.SOUTH])
-        bounds[Direction.SOUTH_WEST] = SnakeEyes.pythagoreDistance(bounds[Direction.WEST], bounds[Direction.SOUTH])
+        bounds[Direction.NORTH_EAST] = Math.hypot(bounds[Direction.EAST], bounds[Direction.NORTH])
+        bounds[Direction.NORTH_WEST] = Math.hypot(bounds[Direction.WEST], bounds[Direction.NORTH])
+        bounds[Direction.SOUTH_EAST] = Math.hypot(bounds[Direction.EAST], bounds[Direction.SOUTH])
+        bounds[Direction.SOUTH_WEST] = Math.hypot(bounds[Direction.WEST], bounds[Direction.SOUTH])
 
         return {food, bounds, body}
     }
@@ -38,10 +38,6 @@ class SnakeEyes {
         })
 
         return vision
-    }
-
-    private static pythagoreDistance(distanceA: number, distanceB: number): number {
-        return Math.sqrt(Math.pow(distanceA, 2) + Math.pow(distanceB, 2))
     }
 }
 
