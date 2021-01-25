@@ -2,36 +2,33 @@ import SquareValue from "./SquareValue";
 import Position from "./Position";
 import BoardSize from "./BoardSize";
 import Square from "./Square";
+import Matrix from "../utils/Matrix";
 
 class Grid {
-    innerGrid: Square[][]
+    innerGrid: Matrix<Square>
     boardSize: BoardSize
 
     constructor(boardSize: BoardSize) {
         this.boardSize = boardSize
-        this.innerGrid = Array.from(
-            {length: boardSize.height},
-            (a, x) => Array.from(
-                {length: boardSize.width},
-                (b, y): Square => ({
-                    value: SquareValue.EMPTY,
-                    index: y * boardSize.height + x,
-                    position: new Position(x, y)
-                })
-            )
-        )
+        this.innerGrid = new Matrix<Square>(this.boardSize.width, this.boardSize.height)
+        this.innerGrid.fillWithCallback((col: number, row: number): Square => ({
+            value: SquareValue.EMPTY,
+            position: new Position(row, col)
+        }))
     }
 
     public getSquare(position: Position): Square {
-        return this.innerGrid[position.x][position.y]
+        return this.innerGrid.getValue(position.x, position.y)
     }
 
     public setSquareValue(value: SquareValue, position: Position): void {
-        this.innerGrid[position.x][position.y].value = value
+        const square = this.innerGrid.getValue(position.x, position.y)
+        square.value = value
+        this.innerGrid.setValue(position.x, position.y, square)
     }
 
     public getSquaresByValue(value: SquareValue): Square[] {
-        return this.innerGrid.map(line => line.filter(square => square.value === value))
+        return this.innerGrid.matrix.map(line => line.filter(square => square.value === value))
             .reduce((prev, cur) => prev.concat(cur), [])
     }
 }

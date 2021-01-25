@@ -13,8 +13,8 @@ const nextState = (state: State): State => {
     const rule = new SnakeRule(state.boardSize)
     let food = state.food
     let score = state.score
-    let vision = state.vision
     let snake = rule.updateBody(state.snake)
+    let vision = state.vision
     snake = rule.updateHead(snake)
 
     const alive = rule.isAlive(snake)
@@ -34,8 +34,9 @@ const nextState = (state: State): State => {
         grid.setSquareValue(SquareValue.SNAKE, snake.head)
         snake.body.forEach(position => grid.setSquareValue(SquareValue.SNAKE, position))
         vision = new SnakeEyes(snake).look(grid)
-        console.log(vision)
     }
+
+    console.log(vision)
 
     return {...state, grid, alive, score, food, snake, vision};
 }

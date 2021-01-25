@@ -2,30 +2,24 @@ import * as React from "react"
 import State from "../store/State";
 import {connect} from "react-redux";
 import Position from "../rule/Position";
+import SnakeVision from "../ai/SnakeVision";
 
 interface GameStateProps {
     head: Position,
-    food: Position
+    food: Position,
+    vision: SnakeVision
 }
 
-class GameState extends React.Component<GameStateProps> {
-    public render() {
-        return (
-            <div>
-                <p>{GameState.renderPosition('Head', this.props.head)}</p>
-                <p>{GameState.renderPosition('Food', this.props.food)}</p>
-            </div>
-        )
-    }
-
-    private static renderPosition(label: string, position: Position): string {
-        return `${label}: { x: ${position.x}, y: ${position.y} }`
-    }
-}
-
+const GameState = ({head, food}: GameStateProps) => (
+    <div>
+        <p>{`Head : { x: ${head.x}, y: ${head.y} }`}</p>
+        <p>{`Food : { x: ${food.x}, y: ${food.y} }`}</p>
+    </div>
+)
 const mapStateToProps = (state: State): GameStateProps => ({
     food: state.food,
-    head: state.snake.head
+    head: state.snake.head,
+    vision: state.vision
 })
 
 export default connect(mapStateToProps)(GameState)

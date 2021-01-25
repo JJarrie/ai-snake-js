@@ -6,13 +6,13 @@ import SnakeAi from "../ai/SnakeAi";
 import SnakeVision from "../ai/SnakeVision";
 
 interface State {
-    snake: Snake
-    grid: Grid
-    food: Position
-    alive: boolean
-    score: number
+    snake: Snake,
+    grid: Grid,
+    food: Position,
+    alive: boolean,
+    score: number,
     boardSize: BoardSize
-    ai: SnakeAi
+    ai: SnakeAi,
     vision: SnakeVision
 }
 
