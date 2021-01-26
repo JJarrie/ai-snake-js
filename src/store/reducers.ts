@@ -7,7 +7,8 @@ import Position from "../rule/Position";
 import Grid from "../rule/Grid";
 import SquareValue from "../rule/SquareValue";
 import {generateInitialState} from "./initialState";
-import SnakeEyes from "../ai/SnakeEyes";
+import EyedSnake from "../ai/EyedSnake";
+import AwareSnake from "../ai/AwareSnake";
 
 const nextState = (state: State): State => {
     const rule = new SnakeRule(state.boardSize)
@@ -32,13 +33,23 @@ const nextState = (state: State): State => {
         }
         grid.setSquareValue(SquareValue.FOOD, food)
         grid.setSquareValue(SquareValue.SNAKE, snake.head)
-        snake.body.forEach(position => grid.setSquareValue(SquareValue.SNAKE, position))
-        vision = new SnakeEyes(snake).look(grid)
+        grid.setSquareForSnake(snake)
+
+        if (snake instanceof AwareSnake) {
+            console.log('aware')
+            snake.grid = grid
+        }
+
+        if (snake instanceof EyedSnake) {
+            console.log('eyed')
+            snake.look()
+            vision = snake.getVision()
+            console.log(vision)
+        }
     }
 
-    console.log(vision)
 
-    return {...state, grid, alive, score, food, snake, vision};
+    return {...state, grid, alive, score, food, snake, vision}
 }
 
 const getNewDirection = (currentDirection: Direction, newDirection: Direction, oppositeDirection: Direction): Direction => {
@@ -56,7 +67,7 @@ const getNewDirectionState = (state: State, newDirection: Direction, opppositeDi
 const reducer: Reducer<State> = (state, action): State => {
     switch (action.type) {
         case GameAction.newGame:
-            return generateInitialState(state.boardSize);
+            return generateInitialState(state.playerType, state.boardSize);
         case GameAction.nextFrame:
             return nextState(state)
         case GameAction.up:

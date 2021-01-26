@@ -3,6 +3,7 @@ import Position from "./Position";
 import BoardSize from "./BoardSize";
 import Square from "./Square";
 import Matrix from "../utils/Matrix";
+import Snake from "./Snake";
 
 class Grid {
     innerGrid: Matrix<Square>
@@ -30,6 +31,10 @@ class Grid {
     public getSquaresByValue(value: SquareValue): Square[] {
         return this.innerGrid.matrix.map(line => line.filter(square => square.value === value))
             .reduce((prev, cur) => prev.concat(cur), [])
+    }
+
+    public setSquareForSnake(snake: Snake) {
+        snake.body.forEach(position => this.setSquareValue(SquareValue.SNAKE, position))
     }
 }
 

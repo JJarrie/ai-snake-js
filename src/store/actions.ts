@@ -6,6 +6,7 @@ enum GameAction {
     right,
     newGame,
     pause,
+    highscore,
 }
 
 export default GameAction
