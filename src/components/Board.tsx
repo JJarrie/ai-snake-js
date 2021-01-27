@@ -1,20 +1,13 @@
 import * as React from 'react';
 import SquareValue from "../rule/SquareValue";
-import {connect} from "react-redux";
-import State from "../store/State";
-import Grid from "../rule/Grid";
-import Position from "../rule/Position";
-import Snake from "../rule/Snake";
+import {GridState} from "../rule/Grid";
 
 interface BoardState {
-    grid: Grid,
-    width: number,
-    height: number
+    grid: GridState
 }
 
 interface BoardLineState {
-    grid: Grid,
-    width: number,
+    grid: GridState,
     index: number
 }
 
@@ -38,28 +31,22 @@ const BoardSquare = (props: BoardSquareState) => (
     }/>
 );
 
-const BoardLine = ({width, grid, index}: BoardLineState) => (
+const BoardLine = ({grid, index}: BoardLineState) => (
     <tr>
-        {[...Array(width)].map((v, i) =>
-            <BoardSquare key={`boardsquare_${i}`} value={grid.getSquare(new Position(i, index)).value}/>
+        {[...Array(grid.boardSize.width)].map((v, i) =>
+            <BoardSquare key={`boardsquare_${i}`} value={grid.innerGrid[index][i].value}/>
         )}
     </tr>
 );
 
-const Board = ({grid, width, height}: BoardState) => (
+const Board = ({grid}: BoardState) => (
     <table>
         <tbody>
-        {[...Array(height)].map((v, i) =>
-            <BoardLine key={`boardline_${i}`} width={width} index={i} grid={grid}/>
+        {[...Array(grid.boardSize.height)].map((v, i) =>
+            <BoardLine key={`boardline_${i}`} index={i} grid={grid}/>
         )}
         </tbody>
     </table>
 )
 
-const mapStateToProps = (state: State): BoardState => ({
-    grid: state.grid,
-    width: state.boardSize.width,
-    height: state.boardSize.height
-})
-
-export default connect(mapStateToProps)(Board)
+export default Board

@@ -1,12 +1,14 @@
 import BoardSize from "../rule/BoardSize";
 import IntelligentSnake from "./IntelligentSnake";
 import SnakeRule from "../rule/SnakeRule";
-import Grid from "../rule/Grid";
+import Game from "../rule/Game";
+import PlayerType from "../rule/PlayerType";
+import Snake from "../rule/Snake";
 
 class Population {
     mutationRate: number
-    snakes: IntelligentSnake[]
-    bestSnake: IntelligentSnake
+    games: Game[]
+    bestGame: Game
     snakeRule: SnakeRule
 
     bestScore: number = 0
@@ -16,20 +18,22 @@ class Population {
 
     constructor(size: number, mutationRate: number, boardSize: BoardSize) {
         this.snakeRule = new SnakeRule(boardSize)
-        this.snakes = new Array<IntelligentSnake>(size)
-        for (let i = 0; i < this.snakes.length; ++i) {
-            this.snakes[i] = new IntelligentSnake(boardSize)
+        this.games = new Array<Game>(size)
+
+        for (let i = 0; i < this.games.length; ++i) {
+            this.games[i] = new Game(boardSize, PlayerType.AI)
         }
-        this.bestSnake = this.snakes[0]
+
+        this.bestGame = this.games[0]
     }
 
     public done(): boolean {
-        for (const snake of this.snakes) {
-            if (this.snakeRule.isAlive(snake)) {
+        for (const game of this.games) {
+            if (!game.finish()) {
                 return false
             }
 
-            if (this.snakeRule.isAlive(this.bestSnake)) {
+            if (!this.bestGame.finish()) {
                 return false
             }
         }
@@ -37,72 +41,79 @@ class Population {
         return true
     }
 
-    public update(grid: Grid): void {
-        this.updateSingle(this.bestSnake)
-        this.snakes.forEach(this.updateSingle)
+    public update(): void {
+        Population.updateSingle(this.bestGame)
+        this.games.forEach(Population.updateSingle)
     }
 
     public electBestSnake(): void {
-        let max: number = 0
-        let bestSnake: IntelligentSnake
+        let maxFitnessOfGeneration: number = 0
+        let bestGameOfGeneration: Game
 
-        for (const snake of this.snakes) {
-            if (snake.fitness > max) {
-                max = snake.fitness
-                bestSnake = snake
+        for (const game of this.games) {
+            const snake = (game.snake as IntelligentSnake)
+            if (snake.fitness > maxFitnessOfGeneration) {
+                maxFitnessOfGeneration = snake.fitness
+                bestGameOfGeneration = game
             }
         }
 
-        if (max > this.bestFitness) {
-            this.bestFitness = max
-            this.bestSnake = bestSnake
-            this.bestScore = bestSnake.score
+        if (maxFitnessOfGeneration > this.bestFitness) {
+            this.bestFitness = maxFitnessOfGeneration
+            this.bestGame = bestGameOfGeneration
+            this.bestScore = bestGameOfGeneration.score
         }
     }
 
-    public pickParent(): IntelligentSnake {
+    public pickParent(): Snake {
         const rand = Math.random() * this.fitnessSum
         let summation = 0
 
-        for (const snake of this.snakes) {
-            summation = summation + snake.fitness
+        for (const game of this.games) {
+            summation = summation + (game.snake as IntelligentSnake).fitness
             if (summation > rand) {
-                return snake
+                return game.snake
             }
         }
 
-        return this.snakes[0]
+        return this.games[0].snake
     }
+
     public naturalSelection(): void {
-        const snakes = new Array<IntelligentSnake>(this.snakes.length)
+        const games = new Array<Game>(this.games.length)
 
         this.electBestSnake()
         this.calculateFitnessSum()
 
-        snakes[0] = this.bestSnake.clone()
+        games[0] = this.bestGame.clone()
 
-        for(let i = 0; i < this.snakes.length; ++i) {
-            const child = this.pickParent().crossover(this.pickParent())
+        for (let i = 0; i < this.games.length; ++i) {
+            const parent = (this.pickParent() as IntelligentSnake)
+            const partner = (this.pickParent() as IntelligentSnake)
+            const child = parent.crossover(partner)
             child.mutate(this.mutationRate)
-            snakes[i] = child
+            games[i] = this.games[i].clone()
+            games[i].snake = child
         }
 
-        this.snakes = snakes
+        this.games = games
         this.generation = this.generation + 1
     }
 
     public calculateFitness(): void {
-        this.snakes.forEach(snake => snake.calculateFitness())
+        this.games.forEach(game => (game.snake as IntelligentSnake).calculateFitness(game.score))
     }
 
     private calculateFitnessSum(): void {
-        this.fitnessSum = this.snakes.reduce((prev, cur) => prev + cur.fitness, 0)
+        this.fitnessSum = this.games.reduce((prev, cur) => prev + (cur.snake as IntelligentSnake).fitness, 0)
     }
 
-    private updateSingle(snake: IntelligentSnake): void {
-        if (this.snakeRule.isAlive(snake)) {
-            snake.look()
-            snake.makeDecision()
+    private static updateSingle(game: Game): void {
+        if (!game.finish()) {
+            const intelligentSnake = (game.snake as IntelligentSnake)
+            intelligentSnake.look(game.grid)
+            intelligentSnake.makeDecision()
+            game.nextMove()
         }
     }
 }

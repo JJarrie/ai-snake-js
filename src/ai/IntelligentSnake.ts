@@ -1,11 +1,18 @@
 import Direction from "../rule/Direction";
 import EyedSnake from "./EyedSnake";
 import NeuralNetwork from "./NeuralNetwork";
+import BoardSize from "../rule/BoardSize";
 
 class IntelligentSnake extends EyedSnake {
     neuralNetwork: NeuralNetwork
     fitness: number = 0
     lifetime: number = 0
+
+    constructor(boardSize: BoardSize) {
+        super(boardSize)
+        this.neuralNetwork = new NeuralNetwork(24, 16, 4, 2)
+    }
+
 
     public makeDecision(): Direction {
         const decision = this.neuralNetwork.output(this.vision.toArray())
@@ -31,15 +38,15 @@ class IntelligentSnake extends EyedSnake {
         }
     }
 
-    public calculateFitness(): void {
+    public calculateFitness(score: number): void {
         const lifetimeFitness = Math.floor(Math.pow(this.lifetime, 2))
-        this.fitness = (this.score < 10)
-            ? lifetimeFitness * Math.pow(2, this.score)
-            : lifetimeFitness * Math.pow(2, 10) * (this.score - 9)
+        this.fitness = (score < 10)
+            ? lifetimeFitness * Math.pow(2, score)
+            : lifetimeFitness * Math.pow(2, 10) * (score - 9)
     }
 
     public clone(): IntelligentSnake {
-        const snake = new IntelligentSnake(this.boardSize)
+        const snake = (super.clone() as IntelligentSnake)
         snake.neuralNetwork = this.neuralNetwork
 
         return snake

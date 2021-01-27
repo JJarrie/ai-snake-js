@@ -36,6 +36,18 @@ class Position {
         return direction
     }
 
+    public isEqual(position: Position): boolean {
+        return this.x === position.x && this.y === position.y
+    }
+
+    public clone(): Position {
+        return new Position(this.x, this.y)
+    }
+
+    public toString(): string {
+        return `{ x: ${this.x}, y: ${this.y} }`
+    }
+
     static createRandom(boardSize: BoardSize): Position {
         return new Position(
             Math.floor(Math.random() * boardSize.width),

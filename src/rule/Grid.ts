@@ -3,7 +3,11 @@ import Position from "./Position";
 import BoardSize from "./BoardSize";
 import Square from "./Square";
 import Matrix from "../utils/Matrix";
-import Snake from "./Snake";
+
+export interface GridState {
+    boardSize: BoardSize
+    innerGrid: Square[][]
+}
 
 class Grid {
     innerGrid: Matrix<Square>
@@ -12,14 +16,14 @@ class Grid {
     constructor(boardSize: BoardSize) {
         this.boardSize = boardSize
         this.innerGrid = new Matrix<Square>(this.boardSize.width, this.boardSize.height)
+        this.clear()
+    }
+
+    public clear(): void {
         this.innerGrid.fillWithCallback((col: number, row: number): Square => ({
             value: SquareValue.EMPTY,
             position: new Position(row, col)
         }))
-    }
-
-    public getSquare(position: Position): Square {
-        return this.innerGrid.getValue(position.x, position.y)
     }
 
     public setSquareValue(value: SquareValue, position: Position): void {
@@ -33,8 +37,26 @@ class Grid {
             .reduce((prev, cur) => prev.concat(cur), [])
     }
 
-    public setSquareForSnake(snake: Snake) {
-        snake.body.forEach(position => this.setSquareValue(SquareValue.SNAKE, position))
+    public toString(): string {
+        let o = ''
+        this.innerGrid.matrix.forEach(rows => {
+            o = o + rows.map(s => s.value).join('|') + "\n"
+        })
+        return o
+    }
+
+    public toState(): GridState {
+        return {
+            innerGrid: this.innerGrid.matrix,
+            boardSize: this.boardSize
+        }
+    }
+
+    public clone(): Grid {
+        const clone = new Grid(this.boardSize)
+        clone.innerGrid = this.innerGrid.clone()
+
+        return clone
     }
 }
 

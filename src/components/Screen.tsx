@@ -1,18 +1,17 @@
 import * as React from "react"
-import Board from "./Board"
-import ScoreDisplayer from "./ScoreDisplayer";
+import State from "../store/State";
 import GameAction from "../store/actions";
-import {connect} from "react-redux";
 import {Dispatch} from "react";
-import GameState from "./GameState";
+import {connect} from "react-redux";
+import GameDisplayer from "./GameDisplayer";
+import {GameState} from "../rule/Game";
 
-interface GameProps {
+interface ScreenProps {
     changeDirection: (direction: GameAction) => void,
-    newGame: () => void,
-    pause: () => void
+    games: GameState[]
 }
 
-class Game extends React.Component<GameProps> {
+class Screen extends React.Component<ScreenProps> {
     componentDidMount() {
         document.addEventListener('keydown', (e: KeyboardEvent) => {
             switch (e.code) {
@@ -36,23 +35,24 @@ class Game extends React.Component<GameProps> {
         });
     }
 
-    render() {
-        return <div className={'container'}>
-            <div>
-                <ScoreDisplayer/>
-                <Board/>
-                <button onClick={this.props.newGame}>New game</button>
-                <button onClick={this.props.pause}>Pause</button>
-            </div>
-            <GameState />
-        </div>
+    public render() {
+        return (
+            <>
+                {this.props.games.map((g, i) => (
+                        <GameDisplayer game={g} key={`games_${i}`}/>
+                    )
+                )}
+            </>
+        )
     }
 }
 
-const mapDispatchToProps = (dispatch: Dispatch<any>) => ({
-    changeDirection: (direction: GameAction) => dispatch({type: direction}),
-    newGame: () => dispatch({type: GameAction.newGame}),
-    pause: () => dispatch({type: GameAction.pause})
+const mapStateToProps = (state: State) => ({
+    games: state.games
 })
 
-export default connect(null, mapDispatchToProps)(Game);
+const mapDispatchToProps = (dispatch: Dispatch<any>) => ({
+    changeDirection: (direction: GameAction) => dispatch({type: direction})
+})
+
+export default connect(mapStateToProps, mapDispatchToProps)(Screen);

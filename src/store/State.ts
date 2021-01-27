@@ -1,21 +1,13 @@
-import Position from "../rule/Position";
-import Snake from "../rule/Snake";
-import BoardSize from "../rule/BoardSize";
-import Grid from "../rule/Grid";
-import SnakeVision from "../ai/SnakeVision";
-import Population from "../ai/Population";
 import PlayerType from "../rule/PlayerType";
+import BoardSize from "../rule/BoardSize";
+import Direction from "../rule/Direction";
+import {GameState} from "../rule/Game";
 
 interface State {
     playerType: PlayerType,
-    population?: Population,
-    snake: Snake,
-    grid: Grid,
-    food: Position,
-    alive: boolean,
-    score: number,
+    games: GameState[],
+    direction: Direction,
     boardSize: BoardSize
-    vision: SnakeVision
 }
 
 export default State
