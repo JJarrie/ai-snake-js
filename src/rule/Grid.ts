@@ -2,7 +2,7 @@ import SquareValue from "./SquareValue";
 import Position from "./Position";
 import BoardSize from "./BoardSize";
 import Square from "./Square";
-import Matrix from "../utils/Matrix";
+import Array2D from "../utils/Array2D";
 
 export interface GridState {
     boardSize: BoardSize
@@ -10,38 +10,47 @@ export interface GridState {
 }
 
 class Grid {
-    innerGrid: Matrix<Square>
+    innerGrid: Array2D<Square>
     boardSize: BoardSize
 
     constructor(boardSize: BoardSize) {
         this.boardSize = boardSize
-        this.innerGrid = new Matrix<Square>(this.boardSize.width, this.boardSize.height)
+        this.innerGrid = new Array2D<Square>(this.boardSize.height, this.boardSize.width)
         this.clear()
     }
 
     public clear(): void {
-        this.innerGrid.fillWithCallback((col: number, row: number): Square => ({
-            value: SquareValue.EMPTY,
-            position: new Position(row, col)
-        }))
+        this.innerGrid.matrix = [...Array(this.innerGrid.rows)].map(
+            row => [...Array(this.innerGrid.cols)].map(
+                col => ({value: SquareValue.EMPTY, position: new Position(row, col)})
+            )
+        )
     }
 
     public setSquareValue(value: SquareValue, position: Position): void {
-        const square = this.innerGrid.getValue(position.x, position.y)
-        square.value = value
-        this.innerGrid.setValue(position.x, position.y, square)
+        this.innerGrid.set(position.y, position.x, {
+            position,
+            value
+        })
     }
 
     public getSquaresByValue(value: SquareValue): Square[] {
-        return this.innerGrid.matrix.map(line => line.filter(square => square.value === value))
-            .reduce((prev, cur) => prev.concat(cur), [])
+        let squares = new Array<Square>()
+
+        this.innerGrid.matrix.forEach(row => {
+            squares = squares.concat(row.filter(col => col.value === value))
+        })
+
+        return squares
     }
 
     public toString(): string {
         let o = ''
+
         this.innerGrid.matrix.forEach(rows => {
             o = o + rows.map(s => s.value).join('|') + "\n"
         })
+
         return o
     }
 

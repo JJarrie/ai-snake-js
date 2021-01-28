@@ -4,23 +4,27 @@ import BoardSize from "./BoardSize";
 
 class Snake {
     head: Position
-    body: Position[] = []
+    body: Position[]
     direction: Direction
     boardSize: BoardSize
 
     constructor(boardSize: BoardSize) {
         this.boardSize = boardSize
-
-        this.head = new Position(
-            Math.ceil(boardSize.width / 2),
-            Math.ceil(boardSize.height / 2)
-        )
-        this.direction = Direction.NORTH
+        this.reset()
     }
 
     public nextPosition(): void {
         this.nextBodyPosition()
         this.nextHeadPosition()
+    }
+
+    public reset(): void {
+        this.head = new Position(
+            Math.ceil(this.boardSize.width / 2),
+            Math.ceil(this.boardSize.height / 2)
+        )
+        this.direction = Direction.NORTH
+        this.body = []
     }
 
     public clone(): Snake {

@@ -1,6 +1,7 @@
 import Position from "./Position";
 import Snake from "./Snake";
 import BoardSize from "./BoardSize";
+import IntelligentSnake from "../ai/IntelligentSnake";
 
 class SnakeRule {
     boardSize: BoardSize
@@ -10,6 +11,10 @@ class SnakeRule {
     }
 
     public isAlive(snake: Snake): boolean {
+        if (snake instanceof IntelligentSnake && snake.lifeleft === 0) {
+            return false
+        }
+
         return !(this.isOutbound(snake.head) || this.isInHimself(snake))
     }
 

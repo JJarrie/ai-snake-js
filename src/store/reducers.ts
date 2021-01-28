@@ -14,7 +14,7 @@ const getNewDirectionState = (state: State, newDirection: Direction, opppositeDi
         return {...state, direction: getNewDirection(state.direction, newDirection, opppositeDirection)}
     }
 
-    return {...state}
+    return {...state, direction: newDirection}
 }
 
 const reducer: Reducer<State> = (state, action): State => {

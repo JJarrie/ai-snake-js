@@ -20,11 +20,7 @@ class EyedSnake extends Snake {
         bounds[Direction.SOUTH_EAST] = Math.hypot(bounds[Direction.EAST], bounds[Direction.SOUTH])
         bounds[Direction.SOUTH_WEST] = Math.hypot(bounds[Direction.WEST], bounds[Direction.SOUTH])
 
-        this.vision = new SnakeVision(food, bounds, body)
-    }
-
-    public getVision(): SnakeVision {
-        return this.vision
+        this.vision = new SnakeVision(food, body, bounds)
     }
 
     public lookingFor(grid: Grid, value: SquareValue): DistanceByDirection {
@@ -36,6 +32,15 @@ class EyedSnake extends Snake {
             const direction = this.head.directionTo(square.position)
             vision[direction] = distance
         })
+
+        vision[Direction.NORTH] = vision[Direction.NORTH] || 0
+        vision[Direction.SOUTH] = vision[Direction.SOUTH] || 0
+        vision[Direction.EAST] = vision[Direction.EAST] || 0
+        vision[Direction.WEST] = vision[Direction.WEST] || 0
+        vision[Direction.NORTH_EAST] = vision[Direction.NORTH_EAST] || 0
+        vision[Direction.NORTH_WEST] = vision[Direction.NORTH_WEST] || 0
+        vision[Direction.SOUTH_EAST] = vision[Direction.SOUTH_EAST] || 0
+        vision[Direction.SOUTH_WEST] = vision[Direction.SOUTH_WEST] || 0
 
         return vision
     }

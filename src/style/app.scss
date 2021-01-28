@@ -4,6 +4,7 @@ $foodColor: red;
 
 .container {
   display: flex;
+  flex-wrap: wrap;
 }
 
 table {
@@ -11,9 +12,8 @@ table {
 }
 
 td {
-  height: 25px;
-  width: 25px;
-  border: 1px solid black;
+  height: 10px;
+  width: 10px;
 }
 
 .empty {

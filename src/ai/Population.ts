@@ -4,6 +4,7 @@ import SnakeRule from "../rule/SnakeRule";
 import Game from "../rule/Game";
 import PlayerType from "../rule/PlayerType";
 import Snake from "../rule/Snake";
+import {Store} from "redux";
 
 class Population {
     mutationRate: number
@@ -16,9 +17,12 @@ class Population {
     bestFitness: number = 0
     fitnessSum: number = 0
 
-    constructor(size: number, mutationRate: number, boardSize: BoardSize) {
+    store: Store
+
+    constructor(store: Store, size: number, mutationRate: number, boardSize: BoardSize) {
         this.snakeRule = new SnakeRule(boardSize)
         this.games = new Array<Game>(size)
+        this.store = store
 
         for (let i = 0; i < this.games.length; ++i) {
             this.games[i] = new Game(boardSize, PlayerType.AI)
@@ -60,7 +64,7 @@ class Population {
 
         if (maxFitnessOfGeneration > this.bestFitness) {
             this.bestFitness = maxFitnessOfGeneration
-            this.bestGame = bestGameOfGeneration
+            this.bestGame = bestGameOfGeneration.clone()
             this.bestScore = bestGameOfGeneration.score
         }
     }
@@ -80,20 +84,21 @@ class Population {
     }
 
     public naturalSelection(): void {
-        const games = new Array<Game>(this.games.length)
+        const games = new Array<Game>()
 
         this.electBestSnake()
         this.calculateFitnessSum()
 
         games[0] = this.bestGame.clone()
+        games[0].reset()
 
-        for (let i = 0; i < this.games.length; ++i) {
+        for (let i = 1; i < this.games.length; ++i) {
             const parent = (this.pickParent() as IntelligentSnake)
             const partner = (this.pickParent() as IntelligentSnake)
             const child = parent.crossover(partner)
             child.mutate(this.mutationRate)
-            games[i] = this.games[i].clone()
-            games[i].snake = child
+            const newGame = new Game(this.games[i].boardSize, this.games[i].playerType, child)
+            games.push(newGame)
         }
 
         this.games = games

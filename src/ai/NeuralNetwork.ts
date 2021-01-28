@@ -6,7 +6,7 @@ class NeuralNetwork {
     hiddensNodes: number
     outputsNodes: number
     hiddenLayers: number
-    weights: Matrix<number>[]
+    weights: Matrix[]
 
     constructor(inputsNodes: number, hiddensNodes: number, outputsNodes: number, hiddenLayers: number) {
         this.inputsNodes = inputsNodes
@@ -14,34 +14,37 @@ class NeuralNetwork {
         this.outputsNodes = outputsNodes
         this.hiddenLayers = hiddenLayers
 
-        this.weights = new Array<Matrix<number>>(this.hiddenLayers + 1)
-        this.weights[0] = new Matrix<number>(this.hiddensNodes, this.inputsNodes + 1)
+        this.weights = new Array<Matrix>(this.hiddenLayers + 1)
+        this.weights[0] = new Matrix(this.hiddensNodes, this.inputsNodes + 1)
 
         for (let i: number = 1; i < this.hiddenLayers; ++i) {
-            this.weights[i] = new Matrix<number>(this.hiddensNodes, this.hiddensNodes + 1)
+            this.weights[i] = new Matrix(this.hiddensNodes, this.hiddensNodes + 1)
         }
 
-        this.weights[this.weights.length - 1] = new Matrix<number>(this.outputsNodes, this.hiddensNodes + 1)
+        this.weights[this.weights.length - 1] = new Matrix(this.outputsNodes, this.hiddensNodes + 1)
 
         for (const matrix of this.weights) {
-            matrix.fillWithCallback(() => (Math.round(Math.random()) * 2 - 1) * Math.random());
+            matrix.randomize()
         }
+    }
+
+    public mutate(mutationRate: number): void {
+        this.weights.forEach(w => w.mutate(mutationRate))
     }
 
     public output(inputArr: number[]): number[] {
         const inputs = this.weights[0].singleColumnMatrixFromArray(inputArr)
-        let currentBias = inputs.addBias(() => 1)
-        const dotFunction = (curRes: number, a: number, b: number): number => curRes + a * b
-        const activationFunction = (v: number) => Math.max(0, v)
+        let currentBias = inputs.addBias()
+
         for (let i = 0; i < this.hiddenLayers; ++i) {
-            const hiddenInput = this.weights[i].dot(currentBias, 0, dotFunction)
-            const hiddenOutput = hiddenInput.activate(activationFunction)
-            currentBias = hiddenOutput.addBias(() => 1)
+            const hiddenInput = this.weights[i].dot(currentBias)
+            const hiddenOutput = hiddenInput.activate()
+            currentBias = hiddenOutput.addBias()
         }
 
-        const outputInput = this.weights[this.weights.length - 1].dot(currentBias, 0, dotFunction)
+        const outputInput = this.weights[this.weights.length - 1].dot(currentBias)
 
-        return outputInput.activate(activationFunction).toArray()
+        return outputInput.activate().toArray()
     }
 
     public crossover(partner: NeuralNetwork): NeuralNetwork {
@@ -52,10 +55,6 @@ class NeuralNetwork {
         }
 
         return child
-    }
-
-    public mutate(mutationRate: number): void {
-        this.weights.forEach(w => w.mutate(mutationRate, (value: number) => value + Gaussian.random() / 5))
     }
 
     public clone(): NeuralNetwork {

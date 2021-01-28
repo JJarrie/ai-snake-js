@@ -40,7 +40,7 @@ const BoardLine = ({grid, index}: BoardLineState) => (
 );
 
 const Board = ({grid}: BoardState) => (
-    <table>
+    <table style={{margin: '10px'}}>
         <tbody>
         {[...Array(grid.boardSize.height)].map((v, i) =>
             <BoardLine key={`boardline_${i}`} index={i} grid={grid}/>

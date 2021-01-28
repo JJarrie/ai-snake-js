@@ -21,20 +21,24 @@ class Game {
     score: number
     food: Position
 
-    constructor(boardSize: BoardSize, playerType: PlayerType) {
+    constructor(boardSize: BoardSize, playerType: PlayerType, snake?: Snake) {
         this.playerType = playerType
         this.boardSize = boardSize
         this.grid = new Grid(boardSize)
         this.rule = new SnakeRule(boardSize)
         this.score = 0
 
-        switch (playerType) {
-            case PlayerType.AI:
-                this.snake = new IntelligentSnake(boardSize)
-                break
-            case PlayerType.HUMAN:
-            default:
-                this.snake = new Snake(boardSize)
+        if (snake) {
+            this.snake = snake
+        } else {
+            switch (playerType) {
+                case PlayerType.AI:
+                    this.snake = new IntelligentSnake(boardSize)
+                    break
+                case PlayerType.HUMAN:
+                default:
+                    this.snake = new Snake(boardSize)
+            }
         }
 
         this.generateFood()
@@ -46,6 +50,9 @@ class Game {
 
     public nextMove(): void {
         if (this.rule.isEating(this.snake.head, this.food)) {
+            if (this.snake instanceof IntelligentSnake) {
+                this.snake.lifeleft = 50
+            }
             this.snake.body.unshift(this.food)
             this.score = this.score + 1
             this.generateFood()
@@ -85,6 +92,13 @@ class Game {
         clone.score = this.score
 
         return clone
+    }
+
+    public reset(): void {
+        this.generateFood()
+        this.score = 0
+        this.snake.reset()
+        this.updateGrid()
     }
 }
 

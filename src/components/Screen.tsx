@@ -37,12 +37,12 @@ class Screen extends React.Component<ScreenProps> {
 
     public render() {
         return (
-            <>
+            <div className={'container'}>
                 {this.props.games.map((g, i) => (
                         <GameDisplayer game={g} key={`games_${i}`}/>
                     )
                 )}
-            </>
+            </div>
         )
     }
 }

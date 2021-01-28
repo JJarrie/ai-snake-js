@@ -6,7 +6,8 @@ import BoardSize from "../rule/BoardSize";
 class IntelligentSnake extends EyedSnake {
     neuralNetwork: NeuralNetwork
     fitness: number = 0
-    lifetime: number = 0
+    lifetime: number = 100
+    lifeleft: number = 50
 
     constructor(boardSize: BoardSize) {
         super(boardSize)
@@ -14,7 +15,7 @@ class IntelligentSnake extends EyedSnake {
     }
 
 
-    public makeDecision(): Direction {
+    public makeDecision(): void {
         const decision = this.neuralNetwork.output(this.vision.toArray())
         let maxIndex = 0
         let maxValue = 0
@@ -28,14 +29,24 @@ class IntelligentSnake extends EyedSnake {
 
         switch (maxIndex) {
             case 0:
-                return Direction.NORTH;
+                this.direction = Direction.NORTH;
+                break;
             case 1:
-                return Direction.EAST;
+                this.direction = Direction.EAST;
+                break;
             case 2:
-                return Direction.SOUTH;
+                this.direction = Direction.SOUTH;
+                break;
             case 3:
-                return Direction.WEST;
+                this.direction = Direction.WEST;
+                break;
         }
+    }
+
+    public nextPosition() {
+        super.nextPosition();
+        this.lifeleft = this.lifeleft - 1
+        this.lifetime = this.lifetime + 1
     }
 
     public calculateFitness(score: number): void {
@@ -46,10 +57,10 @@ class IntelligentSnake extends EyedSnake {
     }
 
     public clone(): IntelligentSnake {
-        const snake = (super.clone() as IntelligentSnake)
-        snake.neuralNetwork = this.neuralNetwork
+        const clone = new IntelligentSnake(this.boardSize)
+        clone.neuralNetwork = this.neuralNetwork.clone()
 
-        return snake
+        return clone
     }
 
     public crossover(parent: IntelligentSnake): IntelligentSnake {

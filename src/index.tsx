@@ -13,26 +13,13 @@ import Game from "./rule/Game";
 import Population from "./ai/Population";
 
 const playerType = PlayerType.AI
-const boardSize = new BoardSize(25, 25)
+const boardSize = new BoardSize(15, 15)
 
 
 const store = createStore(rootReducer, generateInitialState(playerType, boardSize))
 const game = new Game(boardSize, playerType)
-const population = new Population(2, 0.3, boardSize)
-// mainLoop(PlayerType.HUMAN, {height: 5, width: 5})
+const population = new Population(store,100, 0.3, boardSize)
 
-/*
-const aiLoop = () => {
-    const population = store.getState().population
-    if (population.done()) {
-        population.calculateFitness()
-        population.naturalSelection()
-    } else {
-        population.update()
-        store.dispatch({type: GameAction.nextFrame})
-    }
-}
-*/
 setInterval(() => {
     switch (store.getState().playerType) {
         case PlayerType.HUMAN:
@@ -48,10 +35,11 @@ setInterval(() => {
         case PlayerType.AI:
             if (!population.done()) {
                 population.update()
-                store.dispatch({
-                    type: GameAction.nextFrame,
-                    games: population.games.map(g => g.toState())
-                })
+                store.dispatch({type: GameAction.nextFrame, games: population.games.map(g => g.toState())})
+            } else {
+                console.log('end of generation')
+                population.calculateFitness()
+                population.naturalSelection()
             }
             break
     }
