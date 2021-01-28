@@ -2,16 +2,35 @@ import Direction from "../rule/Direction";
 import EyedSnake from "./EyedSnake";
 import NeuralNetwork from "./NeuralNetwork";
 import BoardSize from "../rule/BoardSize";
+import {SnakeState} from "../rule/Snake";
+import SnakeVision from "./SnakeVision";
+
+export interface IntelligentSnakeState extends SnakeState {
+    fitness: number
+    lifetime: number
+    lifeleft: number
+    vision: SnakeVision
+}
 
 class IntelligentSnake extends EyedSnake {
     neuralNetwork: NeuralNetwork
     fitness: number = 0
-    lifetime: number = 100
-    lifeleft: number = 50
+    lifetime: number = 0
+    lifeleft: number = 0
 
     constructor(boardSize: BoardSize) {
         super(boardSize)
         this.neuralNetwork = new NeuralNetwork(24, 16, 4, 2)
+        this.resetLife()
+    }
+
+    public resetLife(): void {
+        this.lifetime = 0
+        this.addLife()
+    }
+
+    public addLife(): void {
+        this.lifeleft = 100
     }
 
 
@@ -29,16 +48,16 @@ class IntelligentSnake extends EyedSnake {
 
         switch (maxIndex) {
             case 0:
-                this.direction = Direction.NORTH;
+                this.direction = this.direction === Direction.SOUTH ? Direction.SOUTH : Direction.NORTH;
                 break;
             case 1:
-                this.direction = Direction.EAST;
+                this.direction = this.direction === Direction.WEST ? Direction.WEST : Direction.EAST;
                 break;
             case 2:
-                this.direction = Direction.SOUTH;
+                this.direction = this.direction === Direction.NORTH ? Direction.NORTH : Direction.SOUTH;
                 break;
             case 3:
-                this.direction = Direction.WEST;
+                this.direction = this.direction === Direction.EAST ? Direction.EAST : Direction.WEST;
                 break;
         }
     }
@@ -72,6 +91,12 @@ class IntelligentSnake extends EyedSnake {
 
     public mutate(mutationRate: number) {
         this.neuralNetwork.mutate(mutationRate)
+    }
+
+    public toState(): IntelligentSnakeState {
+        const state = super.toState();
+
+        return {...state, fitness: this.fitness, lifeleft: this.lifeleft, lifetime: this.lifetime, vision: this.vision}
     }
 }
 

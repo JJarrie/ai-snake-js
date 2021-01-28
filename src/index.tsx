@@ -13,12 +13,12 @@ import Game from "./rule/Game";
 import Population from "./ai/Population";
 
 const playerType = PlayerType.AI
-const boardSize = new BoardSize(15, 15)
+const boardSize = new BoardSize(20, 20)
 
 
 const store = createStore(rootReducer, generateInitialState(playerType, boardSize))
 const game = new Game(boardSize, playerType)
-const population = new Population(store,100, 0.3, boardSize)
+const population = new Population(store, 2000, 0.05, boardSize)
 
 setInterval(() => {
     switch (store.getState().playerType) {
@@ -26,24 +26,20 @@ setInterval(() => {
             game.snake.direction = store.getState().direction
             if (!game.finish()) {
                 game.nextMove()
-                store.dispatch({
-                    type: GameAction.nextFrame,
-                    games: [game.toState()]
-                })
+                store.dispatch({type: GameAction.nextFrame, game: game.toState()})
             }
             break
         case PlayerType.AI:
             if (!population.done()) {
                 population.update()
-                store.dispatch({type: GameAction.nextFrame, games: population.games.map(g => g.toState())})
+                store.dispatch({type: GameAction.updatePopulation, population: population.toState()})
             } else {
-                console.log('end of generation')
                 population.calculateFitness()
                 population.naturalSelection()
             }
             break
     }
-}, 100)
+}, 4)
 
 ReactDOM.render(
     <Provider store={store}>

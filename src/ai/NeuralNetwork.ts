@@ -1,4 +1,3 @@
-import Gaussian from "../utils/Gaussian";
 import Matrix from "../utils/Matrix";
 
 class NeuralNetwork {
@@ -14,14 +13,14 @@ class NeuralNetwork {
         this.outputsNodes = outputsNodes
         this.hiddenLayers = hiddenLayers
 
-        this.weights = new Array<Matrix>(this.hiddenLayers + 1)
-        this.weights[0] = new Matrix(this.hiddensNodes, this.inputsNodes + 1)
+        this.weights = new Array<Matrix>()
+        this.weights.push(new Matrix(this.hiddensNodes, this.inputsNodes + 1))
 
         for (let i: number = 1; i < this.hiddenLayers; ++i) {
-            this.weights[i] = new Matrix(this.hiddensNodes, this.hiddensNodes + 1)
+            this.weights.push(new Matrix(this.hiddensNodes, this.hiddensNodes + 1))
         }
 
-        this.weights[this.weights.length - 1] = new Matrix(this.outputsNodes, this.hiddensNodes + 1)
+        this.weights.push(new Matrix(this.outputsNodes, this.hiddensNodes + 1))
 
         for (const matrix of this.weights) {
             matrix.randomize()

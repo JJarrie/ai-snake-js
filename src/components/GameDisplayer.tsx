@@ -7,7 +7,10 @@ interface GameDisplayerProps {
 }
 
 const GameDisplayer = ({game}: GameDisplayerProps) => (
-    <Board grid={game.grid}/>
+    <div>
+        <h2>Score: {game.score}</h2>
+        <Board grid={game.grid}/>
+    </div>
 )
 
 export default GameDisplayer

@@ -2,6 +2,12 @@ import Position from "./Position";
 import Direction from "./Direction";
 import BoardSize from "./BoardSize";
 
+export interface SnakeState {
+    head: Position
+    body: Position[]
+    direction: Direction
+}
+
 class Snake {
     head: Position
     body: Position[]
@@ -29,6 +35,15 @@ class Snake {
 
     public clone(): Snake {
         return new Snake(this.boardSize)
+    }
+
+
+    public toState(): SnakeState {
+        return {
+            direction: this.direction,
+            head: this.head,
+            body: this.body
+        }
     }
 
     private nextBodyPosition(): void {

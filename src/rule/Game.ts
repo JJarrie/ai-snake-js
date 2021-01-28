@@ -1,5 +1,5 @@
 import Grid, {GridState} from "./Grid";
-import Snake from "./Snake";
+import Snake, {SnakeState} from "./Snake";
 import BoardSize from "./BoardSize";
 import PlayerType from "./PlayerType";
 import SnakeRule from "./SnakeRule";
@@ -10,6 +10,8 @@ import SquareValue from "./SquareValue";
 export interface GameState {
     grid: GridState
     score: number
+    snake: SnakeState,
+    finish: boolean
 }
 
 class Game {
@@ -26,7 +28,7 @@ class Game {
         this.boardSize = boardSize
         this.grid = new Grid(boardSize)
         this.rule = new SnakeRule(boardSize)
-        this.score = 0
+        this.score = playerType === PlayerType.AI ? 3 : 1
 
         if (snake) {
             this.snake = snake
@@ -51,7 +53,7 @@ class Game {
     public nextMove(): void {
         if (this.rule.isEating(this.snake.head, this.food)) {
             if (this.snake instanceof IntelligentSnake) {
-                this.snake.lifeleft = 50
+                this.snake.addLife()
             }
             this.snake.body.unshift(this.food)
             this.score = this.score + 1
@@ -65,9 +67,12 @@ class Game {
     }
 
     public toState(): GameState {
+        (this.snake as IntelligentSnake).calculateFitness(this.score)
         return {
             grid: this.grid.toState(),
-            score: this.score
+            score: this.score,
+            snake: this.snake.toState(),
+            finish: this.finish()
         }
     }
 
@@ -96,8 +101,11 @@ class Game {
 
     public reset(): void {
         this.generateFood()
-        this.score = 0
+        this.score = this.playerType === PlayerType.AI ? 3 : 1
         this.snake.reset()
+        if (this.snake instanceof IntelligentSnake) {
+            this.snake.resetLife()
+        }
         this.updateGrid()
     }
 }

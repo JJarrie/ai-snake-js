@@ -1,10 +1,20 @@
 import BoardSize from "../rule/BoardSize";
 import IntelligentSnake from "./IntelligentSnake";
 import SnakeRule from "../rule/SnakeRule";
-import Game from "../rule/Game";
+import Game, {GameState} from "../rule/Game";
 import PlayerType from "../rule/PlayerType";
 import Snake from "../rule/Snake";
 import {Store} from "redux";
+
+export interface PopulationState {
+    bestScore: number,
+    generation: number,
+    bestFitness: number,
+    fitnessSum: number
+    bestGeneration: number
+    bestGame: GameState
+    games: GameState[]
+}
 
 class Population {
     mutationRate: number
@@ -14,6 +24,7 @@ class Population {
 
     bestScore: number = 0
     generation: number = 0
+    bestGeneration: number = 0
     bestFitness: number = 0
     fitnessSum: number = 0
 
@@ -58,14 +69,15 @@ class Population {
             const snake = (game.snake as IntelligentSnake)
             if (snake.fitness > maxFitnessOfGeneration) {
                 maxFitnessOfGeneration = snake.fitness
-                bestGameOfGeneration = game
+                bestGameOfGeneration = game.clone()
             }
         }
 
         if (maxFitnessOfGeneration > this.bestFitness) {
+            this.bestGeneration = this.generation
             this.bestFitness = maxFitnessOfGeneration
             this.bestGame = bestGameOfGeneration.clone()
-            this.bestScore = bestGameOfGeneration.score
+            this.bestScore = this.bestGame.score
         }
     }
 
@@ -89,8 +101,8 @@ class Population {
         this.electBestSnake()
         this.calculateFitnessSum()
 
+        this.bestGame.reset()
         games[0] = this.bestGame.clone()
-        games[0].reset()
 
         for (let i = 1; i < this.games.length; ++i) {
             const parent = (this.pickParent() as IntelligentSnake)
@@ -107,6 +119,18 @@ class Population {
 
     public calculateFitness(): void {
         this.games.forEach(game => (game.snake as IntelligentSnake).calculateFitness(game.score))
+    }
+
+    public toState(): PopulationState {
+        return {
+            bestFitness: this.bestFitness,
+            bestGame: this.bestGame.toState(),
+            bestScore: this.bestScore,
+            fitnessSum: this.fitnessSum,
+            games: this.games.map(g => g.toState()),
+            generation: this.generation,
+            bestGeneration: this.bestGeneration
+        }
     }
 
     private calculateFitnessSum(): void {

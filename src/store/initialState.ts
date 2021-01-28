@@ -7,7 +7,6 @@ export const generateInitialState = (playerType: PlayerType, boardSize: BoardSiz
     return {
         playerType,
         direction: Direction.NORTH,
-        games: [],
         boardSize
     }
 }
