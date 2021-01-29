@@ -8,7 +8,7 @@ import {GameState} from "../rule/Game";
 import {PopulationState} from "../ai/Population";
 import Direction from "../rule/Direction";
 import {IntelligentSnakeState} from "../ai/IntelligentSnake";
-import {DistanceByDirection} from "../ai/SnakeVision";
+import {SeenInDirection} from "../ai/EyedSnake";
 
 interface ScreenProps {
     changeDirection: (direction: GameAction) => void,
@@ -45,17 +45,24 @@ class Screen extends React.Component<ScreenProps> {
             return <GameDisplayer game={this.props.game}/>
         }
 
-        const showVision = (visionPart: DistanceByDirection) => (
-            <ul>
-                <li>North: {visionPart[Direction.NORTH]}</li>
-                <li>North East: {visionPart[Direction.NORTH_EAST]}</li>
-                <li>East: {visionPart[Direction.EAST]}</li>
-                <li>South East: {visionPart[Direction.SOUTH_EAST]}</li>
-                <li>South: {visionPart[Direction.SOUTH]}</li>
-                <li>South West: {visionPart[Direction.SOUTH_WEST]}</li>
-                <li>West: {visionPart[Direction.WEST]}</li>
-                <li>North West: {visionPart[Direction.NORTH_WEST]}</li>
-            </ul>
+        const showVision = (label: string, visionPart: SeenInDirection) => (
+            <>
+                <tr>
+                    <td colSpan={2}>{label}</td>
+                </tr>
+                <tr>
+                    <td>Food</td>
+                    <td>{Math.round(visionPart.food * 100) / 100}</td>
+                </tr>
+                <tr>
+                    <td>Body</td>
+                    <td>{Math.round(visionPart.body * 100) / 100}</td>
+                </tr>
+                <tr>
+                    <td>Wall</td>
+                    <td>{Math.round(visionPart.wall * 100) / 100}</td>
+                </tr>
+            </>
         )
 
         if (this.props.population !== undefined) {
@@ -83,23 +90,22 @@ class Screen extends React.Component<ScreenProps> {
                         }
                     })()}</li>
                     <li>Head: {`{ x: ${snakeState.head.x}, y : ${snakeState.head.y} }`}</li>
-                    <li>
-                        Food
-                        {showVision(snakeState.vision.food)}
-                    </li>
-                    <li>
-                        Body
-                        {showVision(snakeState.vision.body)}
-                    </li>
-                    <li>
-                        Bounds
-                        {showVision(snakeState.vision.bounds)}
-                    </li>
-
                     <li>Lifetime: {snakeState.lifetime}</li>
                     <li>Lifeleft: {snakeState.lifeleft}</li>
                     <li>Fitness: {snakeState.fitness}</li>
                 </ul>
+                <table className={'vision'}>
+                    <tbody>
+                    {showVision('North', snakeState.vision[Direction.NORTH])}
+                    {showVision('North-east', snakeState.vision[Direction.NORTH_EAST])}
+                    {showVision('East', snakeState.vision[Direction.EAST])}
+                    {showVision('South-east', snakeState.vision[Direction.SOUTH_EAST])}
+                    {showVision('South', snakeState.vision[Direction.SOUTH])}
+                    {showVision('South-west', snakeState.vision[Direction.SOUTH_WEST])}
+                    {showVision('West', snakeState.vision[Direction.WEST])}
+                    {showVision('North-west', snakeState.vision[Direction.NORTH_WEST])}
+                    </tbody>
+                </table>
             </div>)
         }
 

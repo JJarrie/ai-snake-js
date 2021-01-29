@@ -1,22 +1,21 @@
 import Direction from "../rule/Direction";
-import EyedSnake from "./EyedSnake";
+import EyedSnake, {SeenInDirection} from "./EyedSnake";
 import NeuralNetwork from "./NeuralNetwork";
 import BoardSize from "../rule/BoardSize";
 import {SnakeState} from "../rule/Snake";
-import SnakeVision from "./SnakeVision";
 
 export interface IntelligentSnakeState extends SnakeState {
     fitness: number
     lifetime: number
     lifeleft: number
-    vision: SnakeVision
+    vision: SeenInDirection[]
 }
 
 class IntelligentSnake extends EyedSnake {
     neuralNetwork: NeuralNetwork
     fitness: number = 0
-    lifetime: number = 0
-    lifeleft: number = 0
+    lifetime: number
+    lifeleft: number
 
     constructor(boardSize: BoardSize) {
         super(boardSize)
@@ -26,16 +25,21 @@ class IntelligentSnake extends EyedSnake {
 
     public resetLife(): void {
         this.lifetime = 0
-        this.addLife()
+        this.lifeleft = 200
     }
 
     public addLife(): void {
-        this.lifeleft = 100
+        if (this.lifeleft < 500) {
+            if (this.lifeleft > 400) {
+                this.lifeleft = 500
+            } else {
+                this.lifeleft = this.lifeleft + 100
+            }
+        }
     }
 
-
     public makeDecision(): void {
-        const decision = this.neuralNetwork.output(this.vision.toArray())
+        const decision = this.neuralNetwork.output(this.getVisionAsArray())
         let maxIndex = 0
         let maxValue = 0
 
@@ -48,17 +52,17 @@ class IntelligentSnake extends EyedSnake {
 
         switch (maxIndex) {
             case 0:
-                this.direction = this.direction === Direction.SOUTH ? Direction.SOUTH : Direction.NORTH;
-                break;
+                this.direction = this.direction === Direction.SOUTH ? Direction.SOUTH : Direction.NORTH
+                break
             case 1:
-                this.direction = this.direction === Direction.WEST ? Direction.WEST : Direction.EAST;
-                break;
+                this.direction = this.direction === Direction.WEST ? Direction.WEST : Direction.EAST
+                break
             case 2:
-                this.direction = this.direction === Direction.NORTH ? Direction.NORTH : Direction.SOUTH;
-                break;
+                this.direction = this.direction === Direction.NORTH ? Direction.NORTH : Direction.SOUTH
+                break
             case 3:
-                this.direction = this.direction === Direction.EAST ? Direction.EAST : Direction.WEST;
-                break;
+                this.direction = this.direction === Direction.EAST ? Direction.EAST : Direction.WEST
+                break
         }
     }
 
@@ -69,7 +73,7 @@ class IntelligentSnake extends EyedSnake {
     }
 
     public calculateFitness(score: number): void {
-        const lifetimeFitness = Math.floor(Math.pow(this.lifetime, 2))
+        const lifetimeFitness = Math.floor(this.lifetime * this.lifetime)
         this.fitness = (score < 10)
             ? lifetimeFitness * Math.pow(2, score)
             : lifetimeFitness * Math.pow(2, 10) * (score - 9)
@@ -97,6 +101,11 @@ class IntelligentSnake extends EyedSnake {
         const state = super.toState();
 
         return {...state, fitness: this.fitness, lifeleft: this.lifeleft, lifetime: this.lifetime, vision: this.vision}
+    }
+
+    public updateAlive() {
+        super.updateAlive()
+        this.alive = this.alive && this.lifeleft > 0
     }
 }
 

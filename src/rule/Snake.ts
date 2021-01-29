@@ -6,6 +6,7 @@ export interface SnakeState {
     head: Position
     body: Position[]
     direction: Direction
+    alive: boolean
 }
 
 class Snake {
@@ -13,6 +14,7 @@ class Snake {
     body: Position[]
     direction: Direction
     boardSize: BoardSize
+    alive: boolean = true
 
     constructor(boardSize: BoardSize) {
         this.boardSize = boardSize
@@ -31,6 +33,23 @@ class Snake {
         )
         this.direction = Direction.NORTH
         this.body = []
+        this.alive = true
+    }
+
+    public isOutbound(): boolean {
+        return this.head.y < 0 || this.head.y >= this.boardSize.height || this.head.x < 0 || this.head.x >= this.boardSize.width
+    }
+
+    public isInHimself(): boolean {
+        return this.body.filter(bodyPosition => bodyPosition.isEqual(this.head)).length > 0
+    }
+
+    public updateAlive(): void {
+        this.alive = !(this.isOutbound() || this.isInHimself())
+    }
+
+    public isEating(food: Position): boolean {
+        return this.head.isEqual(food)
     }
 
     public clone(): Snake {
@@ -42,7 +61,8 @@ class Snake {
         return {
             direction: this.direction,
             head: this.head,
-            body: this.body
+            body: this.body,
+            alive: this.alive
         }
     }
 

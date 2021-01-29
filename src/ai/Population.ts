@@ -1,10 +1,9 @@
-import BoardSize from "../rule/BoardSize";
-import IntelligentSnake from "./IntelligentSnake";
-import SnakeRule from "../rule/SnakeRule";
-import Game, {GameState} from "../rule/Game";
-import PlayerType from "../rule/PlayerType";
-import Snake from "../rule/Snake";
-import {Store} from "redux";
+import BoardSize from "../rule/BoardSize"
+import IntelligentSnake from "./IntelligentSnake"
+import Game, {GameState} from "../rule/Game"
+import PlayerType from "../rule/PlayerType"
+import Snake from "../rule/Snake"
+import {Store} from "redux"
 
 export interface PopulationState {
     bestScore: number,
@@ -20,7 +19,6 @@ class Population {
     mutationRate: number
     games: Game[]
     bestGame: Game
-    snakeRule: SnakeRule
 
     bestScore: number = 0
     generation: number = 0
@@ -31,7 +29,6 @@ class Population {
     store: Store
 
     constructor(store: Store, size: number, mutationRate: number, boardSize: BoardSize) {
-        this.snakeRule = new SnakeRule(boardSize)
         this.games = new Array<Game>(size)
         this.store = store
 
@@ -140,7 +137,7 @@ class Population {
     private static updateSingle(game: Game): void {
         if (!game.finish()) {
             const intelligentSnake = (game.snake as IntelligentSnake)
-            intelligentSnake.look(game.grid)
+            intelligentSnake.look(game.food)
             intelligentSnake.makeDecision()
             game.nextMove()
         }

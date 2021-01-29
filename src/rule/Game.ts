@@ -2,7 +2,6 @@ import Grid, {GridState} from "./Grid";
 import Snake, {SnakeState} from "./Snake";
 import BoardSize from "./BoardSize";
 import PlayerType from "./PlayerType";
-import SnakeRule from "./SnakeRule";
 import IntelligentSnake from "../ai/IntelligentSnake";
 import Position from "./Position";
 import SquareValue from "./SquareValue";
@@ -19,7 +18,6 @@ class Game {
     boardSize: BoardSize
     grid: Grid
     snake: Snake
-    rule: SnakeRule
     score: number
     food: Position
 
@@ -27,7 +25,6 @@ class Game {
         this.playerType = playerType
         this.boardSize = boardSize
         this.grid = new Grid(boardSize)
-        this.rule = new SnakeRule(boardSize)
         this.score = playerType === PlayerType.AI ? 3 : 1
 
         if (snake) {
@@ -47,11 +44,11 @@ class Game {
     }
 
     public finish(): boolean {
-        return !this.rule.isAlive(this.snake)
+        return !this.snake.alive
     }
 
     public nextMove(): void {
-        if (this.rule.isEating(this.snake.head, this.food)) {
+        if (this.snake.isEating(this.food)) {
             if (this.snake instanceof IntelligentSnake) {
                 this.snake.addLife()
             }
@@ -61,6 +58,8 @@ class Game {
         }
 
         this.snake.nextPosition()
+        this.snake.updateAlive()
+
         if (!this.finish()) {
             this.updateGrid()
         }
