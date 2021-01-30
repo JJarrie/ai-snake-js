@@ -1,11 +1,11 @@
 class Vector2D {
-    x: number
-    y: number
+    x: number;
+    y: number;
 
     constructor(x: number, y: number) {
-        this.x = x
-        this.y = y
+        this.x = x;
+        this.y = y;
     }
 }
 
-export default Vector2D
+export default Vector2D;

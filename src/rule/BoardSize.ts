@@ -1,11 +1,11 @@
 class BoardSize {
-    width: number
-    height: number
+    width: number;
+    height: number;
 
     constructor(width: number, height: number) {
-        this.width = width
-        this.height = height
+        this.width = width;
+        this.height = height;
     }
 }
 
-export default BoardSize
+export default BoardSize;

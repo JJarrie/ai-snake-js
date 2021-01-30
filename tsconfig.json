@@ -1,11 +1,14 @@
 {
   "compilerOptions": {
-    "outDir": "./build/",
+    "declaration": true,
+    "isolatedModules": true,
+    "emitDeclarationOnly": true,
+    "noEmit": false,
     "sourceMap": true,
     "noImplicitAny": true,
     "module": "commonjs",
-    "target": "ESNext",
-    "jsx": "react"
+    "jsx": "react",
+    "esModuleInterop": true
   },
   "include": [
     "./src/**/*"

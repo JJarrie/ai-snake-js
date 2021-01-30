@@ -1,6 +1,6 @@
-$emptyColor: black;
-$snakeColor: white;
-$foodColor: red;
+$emptyColor: silver;
+$snakeColor: darkolivegreen;
+$foodColor: darkred;
 
 .container {
   display: flex;
@@ -27,12 +27,20 @@ td {
 
 .empty {
   background-color: $emptyColor;
+  border: 1px solid black;
+}
+
+.head {
+  background-color: forestgreen;
+  border: 1px solid lawngreen;
 }
 
 .snake {
   background-color: $snakeColor;
+  border: 1px solid lawngreen;
 }
 
 .food {
   background-color: $foodColor;
+  border: 1px solid red;
 }

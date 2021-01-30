@@ -5,7 +5,7 @@ enum GameAction {
     left,
     right,
     newGame,
-    updatePopulation
+    updatePopulation,
 }
 
-export default GameAction
+export default GameAction;

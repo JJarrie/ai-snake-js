@@ -1,9 +1,9 @@
-import Position from "./Position";
-import SquareValue from "./SquareValue";
+import Position from './Position';
+import SquareValue from './SquareValue';
 
 interface Square {
-    position: Position
-    value: SquareValue
+    position: Position;
+    value: SquareValue;
 }
 
-export default Square
+export default Square;

@@ -9,4 +9,4 @@ enum Direction {
     SOUTH_EAST = 0b110,
 }
 
-export default Direction
+export default Direction;

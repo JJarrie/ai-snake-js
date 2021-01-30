@@ -1,7 +1,8 @@
 enum SquareValue {
     EMPTY,
     SNAKE,
-    FOOD
+    FOOD,
+    HEAD,
 }
 
-export default SquareValue
+export default SquareValue;

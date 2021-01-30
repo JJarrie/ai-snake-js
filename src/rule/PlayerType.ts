@@ -1,6 +1,6 @@
 enum PlayerType {
     HUMAN,
-    AI
+    AI,
 }
 
-export default PlayerType
+export default PlayerType;
