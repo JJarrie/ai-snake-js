@@ -1,8 +1,17 @@
 import Matrix from '../utils/Matrix';
 
+class Activation {
+    public static sigmoid(x: number): number {
+        return 1 / (1 + Math.exp(-x));
+    }
+
+    public static relu(x: number): number {
+        return Math.max(0, x);
+    }
+}
+
 class NeuralNetwork {
     inputsNodes: number;
-    hiddensNodes: number;
     outputsNodes: number;
     hiddenLayers: number[];
     weights: Matrix[];
@@ -16,7 +25,7 @@ class NeuralNetwork {
         this.weights.push(new Matrix(this.hiddenLayers[0], this.inputsNodes + 1));
 
         for (let i = 1; i < this.hiddenLayers.length; ++i) {
-            this.weights.push(new Matrix(this.hiddenLayers[i], this.hiddenLayers[i-1] + 1));
+            this.weights.push(new Matrix(this.hiddenLayers[i], this.hiddenLayers[i - 1] + 1));
         }
 
         this.weights.push(new Matrix(this.outputsNodes, this.hiddenLayers[this.hiddenLayers.length - 1] + 1));
@@ -36,13 +45,13 @@ class NeuralNetwork {
 
         for (let i = 0; i < this.hiddenLayers.length; ++i) {
             const hiddenInput = this.weights[i].dot(currentBias);
-            const hiddenOutput = hiddenInput.activate((x) => Math.max(0, x));
+            const hiddenOutput = hiddenInput.activate(Activation.relu);
             currentBias = hiddenOutput.addBias();
         }
 
         const outputInput = this.weights[this.weights.length - 1].dot(currentBias);
 
-        return outputInput.activate((x) => 1 / (1 + Math.exp(-x))).toArray();
+        return outputInput.activate(Activation.sigmoid).toArray();
     }
 
     public crossover(partner: NeuralNetwork): NeuralNetwork {

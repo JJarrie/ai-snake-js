@@ -117,6 +117,10 @@ class Matrix extends Array2D<number> {
 
         return clone;
     }
+
+    public output(): void {
+        console.log(this.matrix.map((row) => row.map((col) => Math.round(col * 100) / 100).join('|')).join('\n'));
+    }
 }
 
 export default Matrix;
