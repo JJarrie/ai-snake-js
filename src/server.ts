@@ -17,8 +17,8 @@ httpServer.listen(3000, () => {
     console.log('listening on *:3000s');
 });
 
-const boardSize = new BoardSize(15, 15);
-const population = new Population(5000, 0.1, boardSize);
+const boardSize = new BoardSize(20, 20);
+const population = new Population(2000, 0.05, boardSize);
 
 setInterval(() => {
     if (!population.done()) {

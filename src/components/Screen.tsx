@@ -1,12 +1,13 @@
 import * as React from 'react';
 import { Dispatch } from 'react';
+import Direction from '../rule/Direction';
 import State from '../store/State';
 import GameAction from '../store/actions';
 import { connect } from 'react-redux';
 import GameDisplayer from './GameDisplayer';
 import { GameState } from '../rule/Game';
 import { PopulationState } from '../ai/Population';
-import Direction from '../rule/Direction';
+import DirectionCardinal from '../rule/DirectionCardinal';
 import { IntelligentSnakeState } from '../ai/IntelligentSnake';
 import { SeenInDirection } from '../ai/EyedSnake';
 
@@ -45,25 +46,30 @@ class Screen extends React.Component<ScreenProps> {
             return <GameDisplayer game={this.props.game} />;
         }
 
-        const showVision = (label: string, visionPart: SeenInDirection) => (
-            <>
-                <tr>
-                    <td colSpan={2}>{label}</td>
-                </tr>
-                <tr>
-                    <td>Food</td>
-                    <td>{Math.round(visionPart.food * 100) / 100}</td>
-                </tr>
-                <tr>
-                    <td>Body</td>
-                    <td>{Math.round(visionPart.body * 100) / 100}</td>
-                </tr>
-                <tr>
-                    <td>Wall</td>
-                    <td>{Math.round(visionPart.wall * 100) / 100}</td>
-                </tr>
-            </>
-        );
+        const showVision = (label: string, visionPart: SeenInDirection) => {
+            const food = Math.round(visionPart.food * 100) / 100;
+            const body = Math.round(visionPart.body * 100) / 100;
+            const wall = Math.round(visionPart.wall * 100) / 100;
+            return (
+                <>
+                    <tr>
+                        <td colSpan={2}>{label}</td>
+                    </tr>
+                    <tr>
+                        <td>Food</td>
+                        <td style={food > 0 ? { color: 'red' } : {}}>{food}</td>
+                    </tr>
+                    <tr>
+                        <td>Body</td>
+                        <td>{body}</td>
+                    </tr>
+                    <tr>
+                        <td>Wall</td>
+                        <td>{wall}</td>
+                    </tr>
+                </>
+            );
+        };
 
         if (this.props.population !== undefined) {
             const numberFormatter = Intl.NumberFormat('fr-FR', { useGrouping: true });
@@ -83,13 +89,13 @@ class Screen extends React.Component<ScreenProps> {
                             Direction:{' '}
                             {(() => {
                                 switch (snakeState.direction) {
-                                    case Direction.EAST:
+                                    case DirectionCardinal.EAST:
                                         return 'East';
-                                    case Direction.NORTH:
+                                    case DirectionCardinal.NORTH:
                                         return 'North';
-                                    case Direction.SOUTH:
+                                    case DirectionCardinal.SOUTH:
                                         return 'South';
-                                    case Direction.WEST:
+                                    case DirectionCardinal.WEST:
                                         return 'West';
                                 }
                             })()}
@@ -101,14 +107,14 @@ class Screen extends React.Component<ScreenProps> {
                     </ul>
                     <table className={'vision'} style={{ margin: '10px' }}>
                         <tbody>
-                            {showVision('North', snakeState.vision[Direction.NORTH])}
-                            {showVision('North-east', snakeState.vision[Direction.NORTH_EAST])}
-                            {showVision('East', snakeState.vision[Direction.EAST])}
-                            {showVision('South-east', snakeState.vision[Direction.SOUTH_EAST])}
-                            {showVision('South', snakeState.vision[Direction.SOUTH])}
-                            {showVision('South-west', snakeState.vision[Direction.SOUTH_WEST])}
-                            {showVision('West', snakeState.vision[Direction.WEST])}
-                            {showVision('North-west', snakeState.vision[Direction.NORTH_WEST])}
+                            {showVision('Front', snakeState.vision[Direction.FRONT])}
+                            {showVision('Front right', snakeState.vision[Direction.FRONT_RIGHT])}
+                            {showVision('Right', snakeState.vision[Direction.RIGHT])}
+                            {showVision('Back right', snakeState.vision[Direction.BACK_RIGHT])}
+                            {showVision('Back', snakeState.vision[Direction.BACK])}
+                            {showVision('Back left', snakeState.vision[Direction.BACK_LEFT])}
+                            {showVision('Left', snakeState.vision[Direction.LEFT])}
+                            {showVision('Front left', snakeState.vision[Direction.FRONT_LEFT])}
                         </tbody>
                     </table>
                     <table className={'vision'} style={{ margin: '10px' }}>
@@ -118,13 +124,11 @@ class Screen extends React.Component<ScreenProps> {
                                     {(() => {
                                         switch (k) {
                                             case 0:
-                                                return 'North';
+                                                return 'Continue';
                                             case 1:
-                                                return 'East';
+                                                return 'Left';
                                             case 2:
-                                                return 'South';
-                                            case 3:
-                                                return 'West';
+                                                return 'Right';
                                         }
                                     })()}
                                 </td>

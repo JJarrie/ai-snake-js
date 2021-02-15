@@ -51,7 +51,7 @@ class NeuralNetwork {
 
         const outputInput = this.weights[this.weights.length - 1].dot(currentBias);
 
-        return outputInput.activate(Activation.sigmoid).toArray();
+        return outputInput.activate(Activation.relu).toArray();
     }
 
     public crossover(partner: NeuralNetwork): NeuralNetwork {

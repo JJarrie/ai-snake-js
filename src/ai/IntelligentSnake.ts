@@ -1,6 +1,6 @@
-import { Simulate } from 'react-dom/test-utils';
 import BoardSize from '../rule/BoardSize';
-import Direction from '../rule/Direction';
+import { turnLeft90, turnRight90 } from '../rule/Direction';
+import DirectionCardinal from '../rule/DirectionCardinal';
 import { SnakeState } from '../rule/Snake';
 import EyedSnake, { SeenInDirection } from './EyedSnake';
 import NeuralNetwork from './NeuralNetwork';
@@ -23,7 +23,7 @@ class IntelligentSnake extends EyedSnake {
 
     constructor(boardSize: BoardSize) {
         super(boardSize);
-        this.neuralNetwork = new NeuralNetwork(28, [16, 16], 4);
+        this.neuralNetwork = new NeuralNetwork(28, [16], 3);
         this.resetLife();
     }
 
@@ -49,10 +49,10 @@ class IntelligentSnake extends EyedSnake {
 
     public makeDecision(): void {
         const inputs = this.getVisionAsArray();
-        inputs.push(this.direction === Direction.NORTH ? 1 : 0);
-        inputs.push(this.direction === Direction.EAST ? 1 : 0);
-        inputs.push(this.direction === Direction.SOUTH ? 1 : 0);
-        inputs.push(this.direction === Direction.WEST ? 1 : 0);
+        inputs.push(this.direction === DirectionCardinal.NORTH ? 1 : 0);
+        inputs.push(this.direction === DirectionCardinal.EAST ? 1 : 0);
+        inputs.push(this.direction === DirectionCardinal.SOUTH ? 1 : 0);
+        inputs.push(this.direction === DirectionCardinal.WEST ? 1 : 0);
         this.lastDecision = this.neuralNetwork.output(inputs);
 
         let maxIndex = 0;
@@ -67,16 +67,14 @@ class IntelligentSnake extends EyedSnake {
 
         switch (maxIndex) {
             case 0:
-                this.direction = this.direction === Direction.SOUTH ? Direction.SOUTH : Direction.NORTH;
                 break;
             case 1:
-                this.direction = this.direction === Direction.WEST ? Direction.WEST : Direction.EAST;
+                this.direction = turnLeft90(this.direction);
                 break;
             case 2:
-                this.direction = this.direction === Direction.NORTH ? Direction.NORTH : Direction.SOUTH;
+                this.direction = turnRight90(this.direction);
                 break;
-            case 3:
-                this.direction = this.direction === Direction.EAST ? Direction.EAST : Direction.WEST;
+            default:
                 break;
         }
     }
@@ -88,9 +86,11 @@ class IntelligentSnake extends EyedSnake {
     }
 
     public calculateFitness(score: number): void {
-        const lifetimeFitness = Math.floor(Math.pow(this.lifetime - this.penalty, 2));
         this.fitness =
-            score < 10 ? lifetimeFitness * Math.pow(2, score) : lifetimeFitness * Math.pow(2, 10) * (score - 9);
+            this.lifetime +
+            (Math.pow(2, score) + Math.pow(score, 2.1) * 500) -
+            Math.pow(0.25 * this.lifetime, 1.3) * Math.pow(score, 1.2);
+        this.fitness = Math.max(this.fitness, 0.1);
     }
 
     public clone(): IntelligentSnake {

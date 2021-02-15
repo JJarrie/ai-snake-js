@@ -1,12 +1,12 @@
 import State from './State';
 import BoardSize from '../rule/BoardSize';
 import PlayerType from '../rule/PlayerType';
-import Direction from '../rule/Direction';
+import DirectionCardinal from '../rule/DirectionCardinal';
 
 export const generateInitialState = (playerType: PlayerType, boardSize: BoardSize): State => {
     return {
         playerType,
-        direction: Direction.NORTH,
+        direction: DirectionCardinal.NORTH,
         boardSize,
     };
 };

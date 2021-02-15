@@ -1,18 +1,18 @@
 import Position from './Position';
-import Direction from './Direction';
+import DirectionCardinal from './DirectionCardinal';
 import BoardSize from './BoardSize';
 
 export interface SnakeState {
     head: Position;
     body: Position[];
-    direction: Direction;
+    direction: DirectionCardinal;
     alive: boolean;
 }
 
 class Snake {
     head: Position;
     body: Position[];
-    direction: Direction;
+    direction: DirectionCardinal;
     boardSize: BoardSize;
     alive = true;
 
@@ -31,8 +31,8 @@ class Snake {
             Math.floor(this.boardSize.width / 2),
             Math.floor(this.boardSize.height / 2),
         );
-        this.direction = Direction.NORTH;
-        this.body = []; // [this.head.clone(), this.head.clone()];
+        this.direction = DirectionCardinal.NORTH;
+        this.body = [];
         this.alive = true;
     }
 
@@ -79,16 +79,16 @@ class Snake {
 
     private nextHeadPosition(): void {
         switch (this.direction) {
-            case Direction.EAST:
+            case DirectionCardinal.EAST:
                 this.head = new Position(this.head.x + 1, this.head.y);
                 break;
-            case Direction.NORTH:
+            case DirectionCardinal.NORTH:
                 this.head = new Position(this.head.x, this.head.y - 1);
                 break;
-            case Direction.SOUTH:
+            case DirectionCardinal.SOUTH:
                 this.head = new Position(this.head.x, this.head.y + 1);
                 break;
-            case Direction.WEST:
+            case DirectionCardinal.WEST:
                 this.head = new Position(this.head.x - 1, this.head.y);
                 break;
         }

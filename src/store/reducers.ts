@@ -1,18 +1,18 @@
 import { Reducer } from 'redux';
-import Direction from '../rule/Direction';
+import DirectionCardinal from '../rule/DirectionCardinal';
 import State from './State';
 import GameAction from './actions';
 import { generateInitialState } from './initialState';
 
 const getNewDirection = (
-    currentDirection: Direction,
-    newDirection: Direction,
-    oppositeDirection: Direction,
-): Direction => {
+    currentDirection: DirectionCardinal,
+    newDirection: DirectionCardinal,
+    oppositeDirection: DirectionCardinal,
+): DirectionCardinal => {
     return currentDirection === oppositeDirection ? currentDirection : newDirection;
 };
 
-const getNewDirectionState = (state: State, newDirection: Direction, opppositeDirection: Direction): State => ({
+const getNewDirectionState = (state: State, newDirection: DirectionCardinal, opppositeDirection: DirectionCardinal): State => ({
     ...state,
     direction: getNewDirection(state.direction, newDirection, opppositeDirection),
 });
@@ -26,13 +26,13 @@ const reducer: Reducer<State> = (state, action): State => {
         case GameAction.updatePopulation:
             return { ...state, population: action.population };
         case GameAction.up:
-            return getNewDirectionState(state, Direction.NORTH, Direction.SOUTH);
+            return getNewDirectionState(state, DirectionCardinal.NORTH, DirectionCardinal.SOUTH);
         case GameAction.down:
-            return getNewDirectionState(state, Direction.SOUTH, Direction.NORTH);
+            return getNewDirectionState(state, DirectionCardinal.SOUTH, DirectionCardinal.NORTH);
         case GameAction.left:
-            return getNewDirectionState(state, Direction.WEST, Direction.EAST);
+            return getNewDirectionState(state, DirectionCardinal.WEST, DirectionCardinal.EAST);
         case GameAction.right:
-            return getNewDirectionState(state, Direction.EAST, Direction.WEST);
+            return getNewDirectionState(state, DirectionCardinal.EAST, DirectionCardinal.WEST);
         default:
             return { ...state };
     }

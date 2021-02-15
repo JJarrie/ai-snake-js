@@ -1,5 +1,5 @@
 import BoardSize from './BoardSize';
-import Direction from './Direction';
+import DirectionCardinal from './DirectionCardinal';
 import Vector2D from '../utils/Vector2D';
 
 class Position {
@@ -15,23 +15,23 @@ class Position {
         return Math.abs(Math.sqrt(Math.pow(position.x - this.x, 2) + Math.pow(position.y - this.y, 2)));
     }
 
-    public directionTo(position: Position): Direction {
-        let direction: Direction = 0;
+    public directionTo(position: Position): DirectionCardinal {
+        let direction: DirectionCardinal = 0;
 
         if (this.x > position.x) {
-            direction = direction | Direction.WEST;
+            direction = direction | DirectionCardinal.WEST;
         }
 
         if (this.x < position.x) {
-            direction = direction | Direction.EAST;
+            direction = direction | DirectionCardinal.EAST;
         }
 
         if (this.y > position.y) {
-            direction = direction | Direction.NORTH;
+            direction = direction | DirectionCardinal.NORTH;
         }
 
         if (this.y < position.y) {
-            direction = direction | Direction.SOUTH;
+            direction = direction | DirectionCardinal.SOUTH;
         }
 
         return direction;
