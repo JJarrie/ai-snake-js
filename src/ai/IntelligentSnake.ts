@@ -23,7 +23,7 @@ class IntelligentSnake extends EyedSnake {
 
     constructor(boardSize: BoardSize) {
         super(boardSize);
-        this.neuralNetwork = new NeuralNetwork(28, [16], 3);
+        this.neuralNetwork = new NeuralNetwork(24, [16], 3);
         this.resetLife();
     }
 
@@ -49,10 +49,10 @@ class IntelligentSnake extends EyedSnake {
 
     public makeDecision(): void {
         const inputs = this.getVisionAsArray();
-        inputs.push(this.direction === DirectionCardinal.NORTH ? 1 : 0);
-        inputs.push(this.direction === DirectionCardinal.EAST ? 1 : 0);
-        inputs.push(this.direction === DirectionCardinal.SOUTH ? 1 : 0);
-        inputs.push(this.direction === DirectionCardinal.WEST ? 1 : 0);
+        // inputs.push(this.direction === DirectionCardinal.NORTH ? 1 : 0);
+        // inputs.push(this.direction === DirectionCardinal.EAST ? 1 : 0);
+        // inputs.push(this.direction === DirectionCardinal.SOUTH ? 1 : 0);
+        // inputs.push(this.direction === DirectionCardinal.WEST ? 1 : 0);
         this.lastDecision = this.neuralNetwork.output(inputs);
 
         let maxIndex = 0;
