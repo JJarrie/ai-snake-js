@@ -9,10 +9,6 @@ class Array2D<T> {
         this.matrix = [...Array(rows)].map(() => [...Array(cols)]);
     }
 
-    public get(row: number, col: number): T {
-        return this.matrix[row][col];
-    }
-
     public set(row: number, col: number, value: T): void {
         this.matrix[row][col] = value;
     }

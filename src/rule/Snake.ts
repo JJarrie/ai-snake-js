@@ -54,10 +54,6 @@ class Snake {
         return this.head.isEqual(food);
     }
 
-    public clone(): Snake {
-        return new Snake(this.boardSize);
-    }
-
     public toState(): SnakeState {
         return {
             direction: this.direction,

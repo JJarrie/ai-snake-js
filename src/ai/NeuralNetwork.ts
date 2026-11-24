@@ -1,10 +1,6 @@
 import Matrix from '../utils/Matrix';
 
 class Activation {
-    public static sigmoid(x: number): number {
-        return 1 / (1 + Math.exp(-x));
-    }
-
     public static relu(x: number): number {
         return Math.max(0, x);
     }

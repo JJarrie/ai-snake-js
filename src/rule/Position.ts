@@ -18,10 +18,6 @@ class Position {
         return new Position(this.x, this.y);
     }
 
-    public toString(): string {
-        return `{ x: ${this.x}, y: ${this.y} }`;
-    }
-
     public addVector(vector: Vector2D): Position {
         return new Position(this.x + vector.x, this.y + vector.y);
     }
