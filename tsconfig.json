@@ -5,6 +5,7 @@
     "emitDeclarationOnly": true,
     "noEmit": false,
     "sourceMap": true,
+    "strict": false,
     "noImplicitAny": true,
     "module": "commonjs",
     "jsx": "react",

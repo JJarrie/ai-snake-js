@@ -1,7 +1,7 @@
 import SquareValue from './SquareValue';
 import Position from './Position';
 import BoardSize from './BoardSize';
-import Square from './Square';
+import type Square from './Square';
 import Array2D from '../utils/Array2D';
 
 export interface GridState {

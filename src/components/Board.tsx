@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { GridState } from '../rule/Grid';
+import type { GridState } from '../rule/Grid';
 import SquareValue from '../rule/SquareValue';
 
 interface BoardState {
@@ -44,9 +44,9 @@ const BoardLine = ({ grid, index }: BoardLineState) => (
 const Board = ({ grid }: BoardState) => (
     <table>
         <tbody>
-        {[...Array(grid.boardSize.height)].map((v, i) => (
-            <BoardLine key={`boardline_${i}`} index={i} grid={grid} />
-        ))}
+            {[...Array(grid.boardSize.height)].map((v, i) => (
+                <BoardLine key={`boardline_${i}`} index={i} grid={grid} />
+            ))}
         </tbody>
     </table>
 );

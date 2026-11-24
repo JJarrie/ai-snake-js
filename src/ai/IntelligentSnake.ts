@@ -1,7 +1,7 @@
 import BoardSize from '../rule/BoardSize';
 import { turnLeft90, turnRight90 } from '../rule/Direction';
-import { SnakeState } from '../rule/Snake';
-import EyedSnake, { SeenInDirection } from './EyedSnake';
+import type { SnakeState } from '../rule/Snake';
+import EyedSnake, { type SeenInDirection } from './EyedSnake';
 import NeuralNetwork from './NeuralNetwork';
 
 export interface IntelligentSnakeState extends SnakeState {

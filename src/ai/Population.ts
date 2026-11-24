@@ -1,6 +1,6 @@
 import BoardSize from '../rule/BoardSize';
 import IntelligentSnake from './IntelligentSnake';
-import Game, { GameState } from '../rule/Game';
+import Game, { type GameState } from '../rule/Game';
 import Snake from '../rule/Snake';
 
 export interface PopulationState {
