@@ -47,6 +47,9 @@ class Screen extends React.Component<ScreenProps> {
                     <GameDisplayer game={this.props.population.bestGame} />
                     <ul style={{ margin: '10px' }}>
                         <li>Generation: {this.props.population.generation}</li>
+                        <li>
+                            Episode: {this.props.population.episode}/{this.props.population.episodes}
+                        </li>
                         <li>Best Generation: {this.props.population.bestGeneration}</li>
                         <li>Best score: {this.props.population.bestScore}</li>
                         <li>Fitness sum: {numberFormatter.format(this.props.population.fitnessSum)}</li>
