@@ -1,9 +1,9 @@
 import * as React from 'react';
-import * as ReactDOM from 'react-dom';
+import { createRoot } from 'react-dom/client';
 import { Provider } from 'react-redux';
 import { createStore } from 'redux';
 import SocketIO from 'socket.io-client';
-import { PopulationState } from './ai/Population';
+import type { PopulationState } from './ai/Population';
 import Screen from './components/Screen';
 import BoardSize from './rule/BoardSize';
 import GameAction from './store/actions';
@@ -21,9 +21,8 @@ socket.on('update population', (arg: { population: PopulationState }) => {
     });
 });
 
-ReactDOM.render(
+createRoot(document.getElementById('app') as HTMLElement).render(
     <Provider store={store}>
         <Screen />
     </Provider>,
-    document.getElementById('app'),
 );

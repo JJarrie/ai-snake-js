@@ -7,6 +7,8 @@ module.exports = {
         server: './src/server.ts'
     },
     target: 'node',
+    // Optional native addons of ws, required inside try/catch.
+    externals: { bufferutil: 'commonjs bufferutil', 'utf-8-validate': 'commonjs utf-8-validate' },
     devtool: 'source-map',
     resolve: {
         extensions: ['.ts', '.tsx', '.js', '.json', '.scss'],

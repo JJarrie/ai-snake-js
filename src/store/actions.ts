@@ -1,5 +1,5 @@
 enum GameAction {
-    updatePopulation,
+    updatePopulation = 'updatePopulation',
 }
 
 export default GameAction;
