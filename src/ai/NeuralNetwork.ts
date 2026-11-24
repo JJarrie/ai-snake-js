@@ -50,7 +50,7 @@ class NeuralNetwork {
 
         for (let i = 0; i < this.hiddenLayers.length; ++i) {
             const hiddenInput = this.weights[i].dot(currentBias);
-            const hiddenOutput = hiddenInput.activate(Activation.relu);
+            const hiddenOutput = hiddenInput.activate((x) => Activation.relu(x));
             currentBias = hiddenOutput.addBias();
         }
 

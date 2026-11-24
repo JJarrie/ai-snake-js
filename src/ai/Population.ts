@@ -50,7 +50,7 @@ class Population {
 
     public update(): void {
         Population.updateSingle(this.bestGame);
-        this.games.forEach(Population.updateSingle);
+        this.games.forEach((game) => Population.updateSingle(game));
     }
 
     public electBestSnake(): void {

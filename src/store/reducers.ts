@@ -8,7 +8,10 @@ export interface UpdatePopulationAction {
     population: PopulationState;
 }
 
-const reducer: Reducer<State, UpdatePopulationAction> = (state, action): State => {
+const reducer: Reducer<State, UpdatePopulationAction> = (initialOrCurrent, action): State => {
+    // createStore always receives a preloaded state, so it is never undefined here.
+    const state = initialOrCurrent as State;
+
     switch (action.type) {
         case GameAction.updatePopulation:
             return { ...state, population: action.population };
