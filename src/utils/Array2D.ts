@@ -6,7 +6,7 @@ class Array2D<T> {
     constructor(rows: number, cols: number) {
         this.rows = rows;
         this.cols = cols;
-        this.matrix = [...Array(rows)].map((_) => [...Array(cols)]);
+        this.matrix = [...Array(rows)].map(() => [...Array(cols)]);
     }
 
     public get(row: number, col: number): T {

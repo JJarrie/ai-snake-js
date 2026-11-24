@@ -1,12 +1,12 @@
 import * as React from 'react';
 import Direction from '../rule/Direction';
-import State from '../store/State';
+import type State from '../store/State';
 import { connect } from 'react-redux';
 import GameDisplayer from './GameDisplayer';
-import { PopulationState } from '../ai/Population';
+import type { PopulationState } from '../ai/Population';
 import DirectionCardinal from '../rule/DirectionCardinal';
-import { IntelligentSnakeState } from '../ai/IntelligentSnake';
-import { SeenInDirection } from '../ai/EyedSnake';
+import type { IntelligentSnakeState } from '../ai/IntelligentSnake';
+import type { SeenInDirection } from '../ai/EyedSnake';
 
 interface ScreenProps {
     population?: PopulationState;

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { GameState } from '../rule/Game';
+import type { GameState } from '../rule/Game';
 import Board from './Board';
 
 interface GameDisplayerProps {

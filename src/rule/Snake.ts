@@ -27,10 +27,7 @@ class Snake {
     }
 
     public reset(): void {
-        this.head = new Position(
-            Math.floor(this.boardSize.width / 2),
-            Math.floor(this.boardSize.height / 2),
-        );
+        this.head = new Position(Math.floor(this.boardSize.width / 2), Math.floor(this.boardSize.height / 2));
         this.direction = DirectionCardinal.NORTH;
         this.body = [];
         this.alive = true;

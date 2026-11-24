@@ -1,6 +1,6 @@
 import BoardSize from '../rule/BoardSize';
 import IntelligentSnake from './IntelligentSnake';
-import Game, { GameState } from '../rule/Game';
+import Game, { type GameState } from '../rule/Game';
 import Snake from '../rule/Snake';
 
 export interface PopulationState {
@@ -50,7 +50,7 @@ class Population {
 
     public update(): void {
         Population.updateSingle(this.bestGame);
-        this.games.forEach(Population.updateSingle);
+        this.games.forEach((game) => Population.updateSingle(game));
     }
 
     public electBestSnake(): void {

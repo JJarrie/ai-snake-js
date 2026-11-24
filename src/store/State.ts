@@ -1,5 +1,5 @@
 import BoardSize from '../rule/BoardSize';
-import { PopulationState } from '../ai/Population';
+import type { PopulationState } from '../ai/Population';
 
 interface State {
     population?: PopulationState;

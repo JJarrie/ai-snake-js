@@ -1,5 +1,5 @@
-import Grid, { GridState } from './Grid';
-import { SnakeState } from './Snake';
+import Grid, { type GridState } from './Grid';
+import type { SnakeState } from './Snake';
 import BoardSize from './BoardSize';
 import IntelligentSnake from '../ai/IntelligentSnake';
 import Position from './Position';
