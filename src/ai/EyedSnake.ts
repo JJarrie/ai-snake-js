@@ -13,7 +13,7 @@ export interface SeenInDirection {
 class EyedSnake extends Snake {
     vision: SeenInDirection[] = [];
 
-    public lookInDirection(directionVector: Vector2D, food: Position): SeenInDirection {
+    public lookInDirection(directionVector: Vector2D, food: Position, bodyKeys: Set<string>): SeenInDirection {
         let position = this.head.clone();
         let distance = 1;
         let foodSeen = false;
@@ -27,7 +27,7 @@ class EyedSnake extends Snake {
                 seenInDirection.food = distance;
             }
 
-            if (!bodySeen && this.positionIsInBody(position)) {
+            if (!bodySeen && bodyKeys.has(`${position.x},${position.y}`)) {
                 bodySeen = true;
                 seenInDirection.body = distance;
             }
@@ -43,37 +43,46 @@ class EyedSnake extends Snake {
 
     public look(food: Position): void {
         this.vision = [];
+        const bodyKeys = new Set(this.body.map((p) => `${p.x},${p.y}`));
         this.vision[Direction.FRONT] = this.lookInDirection(
             EyedSnake.mapVectorToDirection(mapCardinalToCurrentDirection(this.direction, Direction.FRONT)),
             food,
+            bodyKeys,
         );
         this.vision[Direction.BACK] = this.lookInDirection(
             EyedSnake.mapVectorToDirection(mapCardinalToCurrentDirection(this.direction, Direction.BACK)),
             food,
+            bodyKeys,
         );
         this.vision[Direction.LEFT] = this.lookInDirection(
             EyedSnake.mapVectorToDirection(mapCardinalToCurrentDirection(this.direction, Direction.LEFT)),
             food,
+            bodyKeys,
         );
         this.vision[Direction.RIGHT] = this.lookInDirection(
             EyedSnake.mapVectorToDirection(mapCardinalToCurrentDirection(this.direction, Direction.RIGHT)),
             food,
+            bodyKeys,
         );
         this.vision[Direction.FRONT_LEFT] = this.lookInDirection(
             EyedSnake.mapVectorToDirection(mapCardinalToCurrentDirection(this.direction, Direction.FRONT_LEFT)),
             food,
+            bodyKeys,
         );
         this.vision[Direction.FRONT_RIGHT] = this.lookInDirection(
             EyedSnake.mapVectorToDirection(mapCardinalToCurrentDirection(this.direction, Direction.FRONT_RIGHT)),
             food,
+            bodyKeys,
         );
         this.vision[Direction.BACK_LEFT] = this.lookInDirection(
             EyedSnake.mapVectorToDirection(mapCardinalToCurrentDirection(this.direction, Direction.BACK_LEFT)),
             food,
+            bodyKeys,
         );
         this.vision[Direction.BACK_RIGHT] = this.lookInDirection(
             EyedSnake.mapVectorToDirection(mapCardinalToCurrentDirection(this.direction, Direction.BACK_RIGHT)),
             food,
+            bodyKeys,
         );
     }
 
@@ -125,10 +134,6 @@ class EyedSnake extends Snake {
             case DirectionCardinal.NORTH_WEST:
                 return new Vector2D(-1, -1);
         }
-    }
-
-    private positionIsInBody(position: Position): boolean {
-        return this.body.filter((bodyPosition) => bodyPosition.isEqual(position)).length > 0;
     }
 
     private positionIsOutbound(position: Position): boolean {

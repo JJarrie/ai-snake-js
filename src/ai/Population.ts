@@ -25,6 +25,7 @@ class Population {
     fitnessSum = 0;
 
     constructor(size: number, mutationRate: number, boardSize: BoardSize) {
+        this.mutationRate = mutationRate;
         this.games = new Array<Game>(size);
 
         for (let i = 0; i < this.games.length; ++i) {
