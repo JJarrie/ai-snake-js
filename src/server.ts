@@ -2,6 +2,12 @@ import * as SocketIo from 'socket.io';
 import { createServer } from 'http';
 import Population from './ai/Population';
 import BoardSize from './rule/BoardSize';
+import { envNumber } from './utils/env';
+
+// Validate the config before opening the port.
+const port = envNumber('PORT', 3000, 0, 65535);
+const populationSize = envNumber('POPULATION_SIZE', 2000, 2, 100000);
+const mutationRate = envNumber('MUTATION_RATE', 0.05, 0, 1);
 
 const httpServer = createServer();
 const io = new SocketIo.Server(httpServer, {
@@ -13,17 +19,12 @@ const io = new SocketIo.Server(httpServer, {
 
 io.on('connection', () => console.log('an user connected'));
 
-const port = Number(process.env.PORT ?? 3000);
 httpServer.listen(port, () => {
     console.log(`listening on *:${port}`);
 });
 
 const boardSize = new BoardSize(20, 20);
-const population = new Population(
-    Number(process.env.POPULATION_SIZE ?? 2000),
-    Number(process.env.MUTATION_RATE ?? 0.05),
-    boardSize,
-);
+const population = new Population(populationSize, mutationRate, boardSize);
 
 const EMIT_INTERVAL_MS = 33;
 let lastEmit = 0;
