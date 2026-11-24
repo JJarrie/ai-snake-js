@@ -61,14 +61,14 @@ class Game {
 
         this.snake.nextPosition();
         this.snake.updateAlive();
-
-        if (!this.finish()) {
-            this.updateGrid();
-        }
     }
 
     public toState(): GameState {
         (this.snake as IntelligentSnake).calculateFitness(this.score);
+        // Grid is built only for displayed games; a dead snake keeps its last drawn frame.
+        if (!this.finish()) {
+            this.updateGrid();
+        }
         return {
             grid: this.grid.toState(),
             score: this.score,
@@ -107,7 +107,6 @@ class Game {
         if (this.snake instanceof IntelligentSnake) {
             this.snake.resetLife();
         }
-        this.updateGrid();
     }
 }
 
