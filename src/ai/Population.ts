@@ -1,7 +1,6 @@
 import BoardSize from '../rule/BoardSize';
 import IntelligentSnake from './IntelligentSnake';
 import Game, { GameState } from '../rule/Game';
-import PlayerType from '../rule/PlayerType';
 import Snake from '../rule/Snake';
 
 export interface PopulationState {
@@ -29,10 +28,10 @@ class Population {
         this.games = new Array<Game>(size);
 
         for (let i = 0; i < this.games.length; ++i) {
-            this.games[i] = new Game(boardSize, PlayerType.AI);
+            this.games[i] = new Game(boardSize);
         }
 
-        this.bestGame = this.games[0];
+        this.bestGame = this.games[0].cloneBrain();
     }
 
     public done(): boolean {
@@ -60,7 +59,7 @@ class Population {
 
         for (let i = 0; i < this.games.length; ++i) {
             const snake = this.games[i].snake as IntelligentSnake;
-            if ((i === 0 ? this.bestFitness : snake.fitness) > maxFitnessOfGeneration) {
+            if (snake.fitness > maxFitnessOfGeneration) {
                 maxFitnessOfGeneration = snake.fitness;
                 maxIndex = i;
             }
@@ -69,8 +68,8 @@ class Population {
         if (maxFitnessOfGeneration > this.bestFitness) {
             this.bestGeneration = this.generation;
             this.bestFitness = maxFitnessOfGeneration;
-            this.bestGame = this.games[maxIndex].clone();
-            this.bestScore = this.bestGame.score;
+            this.bestScore = this.games[maxIndex].score;
+            this.bestGame = this.games[maxIndex].cloneBrain();
         }
     }
 
@@ -95,14 +94,14 @@ class Population {
         this.calculateFitnessSum();
 
         this.bestGame.reset();
-        games[0] = this.bestGame.clone();
+        games[0] = this.bestGame.cloneBrain();
 
         for (let i = 1; i < this.games.length; ++i) {
             const parent = this.pickParent() as IntelligentSnake;
             const partner = this.pickParent() as IntelligentSnake;
             const child = parent.crossover(partner);
             child.mutate(this.mutationRate);
-            const newGame = new Game(this.games[i].boardSize, this.games[i].playerType, child);
+            const newGame = new Game(this.games[i].boardSize, child);
             games.push(newGame);
         }
 
@@ -126,10 +125,7 @@ class Population {
     }
 
     private calculateFitnessSum(): void {
-        this.fitnessSum = this.bestFitness;
-        this.fitnessSum =
-            this.bestFitness +
-            this.games.slice(1).reduce((prev, cur) => prev + (cur.snake as IntelligentSnake).fitness, 0);
+        this.fitnessSum = this.games.reduce((prev, cur) => prev + (cur.snake as IntelligentSnake).fitness, 0);
     }
 
     private static updateSingle(game: Game): void {

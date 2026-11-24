@@ -1,6 +1,5 @@
 import BoardSize from '../rule/BoardSize';
 import { turnLeft90, turnRight90 } from '../rule/Direction';
-import DirectionCardinal from '../rule/DirectionCardinal';
 import { SnakeState } from '../rule/Snake';
 import EyedSnake, { SeenInDirection } from './EyedSnake';
 import NeuralNetwork from './NeuralNetwork';
@@ -19,22 +18,16 @@ class IntelligentSnake extends EyedSnake {
     lifetime: number;
     lifeleft: number;
     fitness = 0;
-    penalty = 0;
 
-    constructor(boardSize: BoardSize) {
+    constructor(boardSize: BoardSize, neuralNetwork?: NeuralNetwork) {
         super(boardSize);
-        this.neuralNetwork = new NeuralNetwork(24, [16], 3);
+        this.neuralNetwork = neuralNetwork ?? new NeuralNetwork(24, [16], 3);
         this.resetLife();
     }
 
     public resetLife(): void {
         this.lifetime = 0;
         this.lifeleft = 200;
-        this.penalty = 0;
-    }
-
-    public addPenalty(): void {
-        this.penalty = this.penalty + 0.5;
     }
 
     public addLife(): void {
@@ -49,14 +42,10 @@ class IntelligentSnake extends EyedSnake {
 
     public makeDecision(): void {
         const inputs = this.getVisionAsArray();
-        // inputs.push(this.direction === DirectionCardinal.NORTH ? 1 : 0);
-        // inputs.push(this.direction === DirectionCardinal.EAST ? 1 : 0);
-        // inputs.push(this.direction === DirectionCardinal.SOUTH ? 1 : 0);
-        // inputs.push(this.direction === DirectionCardinal.WEST ? 1 : 0);
         this.lastDecision = this.neuralNetwork.output(inputs);
 
         let maxIndex = 0;
-        let maxValue = 0;
+        let maxValue = -Infinity;
 
         for (let i = 0; i < this.lastDecision.length; ++i) {
             if (this.lastDecision[i] > maxValue) {
@@ -94,17 +83,11 @@ class IntelligentSnake extends EyedSnake {
     }
 
     public clone(): IntelligentSnake {
-        const clone = new IntelligentSnake(this.boardSize);
-        clone.neuralNetwork = this.neuralNetwork.clone();
-
-        return clone;
+        return new IntelligentSnake(this.boardSize, this.neuralNetwork.clone());
     }
 
     public crossover(parent: IntelligentSnake): IntelligentSnake {
-        const child = new IntelligentSnake(this.boardSize);
-        child.neuralNetwork = this.neuralNetwork.crossover(parent.neuralNetwork);
-
-        return child;
+        return new IntelligentSnake(this.boardSize, this.neuralNetwork.crossover(parent.neuralNetwork));
     }
 
     public mutate(mutationRate: number): void {

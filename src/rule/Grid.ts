@@ -35,26 +35,6 @@ class Grid {
         });
     }
 
-    public getSquaresByValue(value: SquareValue): Square[] {
-        let squares = new Array<Square>();
-
-        this.innerGrid.matrix.forEach((row) => {
-            squares = squares.concat(row.filter((col) => col.value === value));
-        });
-
-        return squares;
-    }
-
-    public toString(): string {
-        let o = '';
-
-        this.innerGrid.matrix.forEach((rows) => {
-            o = o + rows.map((s) => s.value).join('|') + '\n';
-        });
-
-        return o;
-    }
-
     public toState(): GridState {
         return {
             innerGrid: this.innerGrid.matrix,
