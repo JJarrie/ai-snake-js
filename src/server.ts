@@ -19,8 +19,10 @@ const io = new SocketIo.Server(httpServer, {
 
 io.on('connection', () => console.log('an user connected'));
 
-httpServer.listen(port, () => {
-    console.log(`listening on *:${port}`);
+// Local only by default: the stream has no authentication.
+const host = process.env.HOST ?? '127.0.0.1';
+httpServer.listen(port, host, () => {
+    console.log(`listening on ${host}:${port}`);
 });
 
 const boardSize = new BoardSize(20, 20);
