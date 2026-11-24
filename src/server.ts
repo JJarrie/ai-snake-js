@@ -20,10 +20,19 @@ httpServer.listen(3000, () => {
 const boardSize = new BoardSize(20, 20);
 const population = new Population(2000, 0.05, boardSize);
 
+const EMIT_INTERVAL_MS = 33;
+let lastEmit = 0;
+
 setInterval(() => {
     if (!population.done()) {
         population.update();
-        io.emit('update population', { population: population.toState() });
+
+        const now = Date.now();
+        // Throttled, and volatile so a slow client drops frames instead of buffering them.
+        if (io.engine.clientsCount > 0 && now - lastEmit >= EMIT_INTERVAL_MS) {
+            lastEmit = now;
+            io.volatile.emit('update population', { population: population.toState() });
+        }
     } else {
         population.calculateFitness();
         population.naturalSelection();

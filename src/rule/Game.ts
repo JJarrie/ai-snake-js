@@ -55,8 +55,8 @@ class Game {
             this.snake.body.unshift(this.food);
             this.score = this.score + 1;
             this.generateFood();
-        } else {
-            (this.snake as IntelligentSnake).addPenalty();
+        } else if (this.snake instanceof IntelligentSnake) {
+            this.snake.addPenalty();
         }
 
         this.snake.nextPosition();
@@ -64,7 +64,9 @@ class Game {
     }
 
     public toState(): GameState {
-        (this.snake as IntelligentSnake).calculateFitness(this.score);
+        if (this.snake instanceof IntelligentSnake) {
+            this.snake.calculateFitness(this.score);
+        }
         // Grid is built only for displayed games; a dead snake keeps its last drawn frame.
         if (!this.finish()) {
             this.updateGrid();

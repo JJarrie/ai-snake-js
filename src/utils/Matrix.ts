@@ -8,18 +8,20 @@ class Matrix extends Array2D<number> {
     }
 
     public dot(n: Matrix): Matrix {
+        if (this.cols !== n.rows) {
+            throw new Error(`Cannot multiply ${this.rows}x${this.cols} matrix by ${n.rows}x${n.cols} matrix`);
+        }
+
         const result = new Matrix(this.rows, n.cols);
 
-        if (this.cols === n.rows) {
-            for (let i = 0; i < this.rows; ++i) {
-                for (let j = 0; j < n.cols; ++j) {
-                    let sum = 0;
-                    for (let k = 0; k < this.cols; ++k) {
-                        sum = sum + this.matrix[i][k] * n.matrix[k][j];
-                    }
-
-                    result.matrix[i][j] = sum;
+        for (let i = 0; i < this.rows; ++i) {
+            for (let j = 0; j < n.cols; ++j) {
+                let sum = 0;
+                for (let k = 0; k < this.cols; ++k) {
+                    sum = sum + this.matrix[i][k] * n.matrix[k][j];
                 }
+
+                result.matrix[i][j] = sum;
             }
         }
 
