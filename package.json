@@ -9,12 +9,9 @@
     "@babel/preset-env": "^7.12.11",
     "@babel/preset-react": "^7.12.10",
     "@babel/preset-typescript": "^7.12.7",
-    "@types/express": "^4.17.11",
     "@types/react": "^17.0.0",
     "@types/react-dom": "^17.0.0",
     "@types/react-redux": "^7.1.16",
-    "@types/socket.io": "^2.1.13",
-    "@types/socket.io-client": "^1.4.35",
     "@typescript-eslint/eslint-plugin": "^4.14.1",
     "@typescript-eslint/parser": "^4.14.1",
     "chokidar": "^3.5.1",
@@ -38,13 +35,8 @@
     "webpack-dev-server": "^3.11.2"
   },
   "dependencies": {
-    "@tensorflow/tfjs-node-gpu": "^3.0.0",
     "babel-loader": "^8.2.2",
-    "concurrently": "^5.3.0",
-    "express": "4",
-    "husky": "^5.0.8",
     "nodemon": "^2.0.7",
-    "pinst": "^2.1.4",
     "react": "^17.0.1",
     "react-dom": "^17.0.1",
     "react-redux": "^7.2.2",
@@ -59,19 +51,6 @@
     "nodemon": "nodemon build/server.js",
     "build": "webpack --mode production",
     "test": "vitest run",
-    "lint": "eslint 'src/**/*.{js,ts,tsx}' --quiet --fix",
-    "postinstall": "husky install",
-    "prepublishOnly": "pinst --disable",
-    "postpublish": "pinst --enable"
-  },
-  "husky": {
-    "hooks": {
-      "pre-commit": "lint-staged"
-    }
-  },
-  "lint-staged": {
-    ".{js,ts,tsx}": [
-      "eslint --fix"
-    ]
+    "lint": "eslint 'src/**/*.{js,ts,tsx}' --quiet --fix"
   }
 }

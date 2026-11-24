@@ -2,11 +2,10 @@ import { describe, expect, it, vi } from 'vitest';
 import IntelligentSnake from '../ai/IntelligentSnake';
 import BoardSize from './BoardSize';
 import Game from './Game';
-import PlayerType from './PlayerType';
 
 describe('Game', () => {
-    it.each([PlayerType.HUMAN, PlayerType.AI])('grows by one square when the snake eats (%s)', (playerType) => {
-        const game = new Game(new BoardSize(20, 20), playerType);
+    it('grows by one square when the snake eats', () => {
+        const game = new Game(new BoardSize(20, 20));
 
         game.food = game.snake.head.clone().addVector({ x: 0, y: 5 });
         game.nextMove();
@@ -18,28 +17,23 @@ describe('Game', () => {
         expect(game.score).toBe(1);
         expect(game.snake.body).toHaveLength(2);
     });
-
-    it('builds a state for a human game without crashing', () => {
-        const game = new Game(new BoardSize(20, 20), PlayerType.HUMAN);
-
-        expect(() => game.toState()).not.toThrow();
-    });
 });
 
 describe('Game food and cloning', () => {
     it('never puts food on the snake head', () => {
+        const game = new Game(new BoardSize(20, 20));
         // First draw lands on the head (10, 10), the second one on (2, 2).
         const random = vi.spyOn(Math, 'random');
         random.mockReturnValueOnce(0.5).mockReturnValueOnce(0.5).mockReturnValueOnce(0.1).mockReturnValueOnce(0.1);
 
-        const game = new Game(new BoardSize(20, 20), PlayerType.HUMAN);
+        game.reset();
 
         expect(game.food).toMatchObject({ x: 2, y: 2 });
         random.mockRestore();
     });
 
     it('cloneBrain keeps the network but starts a fresh game', () => {
-        const game = new Game(new BoardSize(20, 20), PlayerType.AI);
+        const game = new Game(new BoardSize(20, 20));
         game.score = 7;
 
         const clone = game.cloneBrain();

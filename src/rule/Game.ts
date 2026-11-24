@@ -1,7 +1,6 @@
 import Grid, { GridState } from './Grid';
-import Snake, { SnakeState } from './Snake';
+import { SnakeState } from './Snake';
 import BoardSize from './BoardSize';
-import PlayerType from './PlayerType';
 import IntelligentSnake from '../ai/IntelligentSnake';
 import Position from './Position';
 import SquareValue from './SquareValue';
@@ -14,31 +13,17 @@ export interface GameState {
 }
 
 class Game {
-    playerType: PlayerType;
     boardSize: BoardSize;
     grid: Grid;
-    snake: Snake;
+    snake: IntelligentSnake;
     score: number;
     food: Position;
 
-    constructor(boardSize: BoardSize, playerType: PlayerType, snake?: Snake) {
-        this.playerType = playerType;
+    constructor(boardSize: BoardSize, snake?: IntelligentSnake) {
         this.boardSize = boardSize;
         this.grid = new Grid(boardSize);
         this.score = 0;
-
-        if (snake) {
-            this.snake = snake;
-        } else {
-            switch (playerType) {
-                case PlayerType.AI:
-                    this.snake = new IntelligentSnake(boardSize);
-                    break;
-                case PlayerType.HUMAN:
-                default:
-                    this.snake = new Snake(boardSize);
-            }
-        }
+        this.snake = snake ?? new IntelligentSnake(boardSize);
 
         this.generateFood();
     }
@@ -49,14 +34,10 @@ class Game {
 
     public nextMove(): void {
         if (this.snake.isEating(this.food)) {
-            if (this.snake instanceof IntelligentSnake) {
-                this.snake.addLife();
-            }
+            this.snake.addLife();
             this.snake.body.unshift(this.food);
             this.score = this.score + 1;
             this.generateFood();
-        } else if (this.snake instanceof IntelligentSnake) {
-            this.snake.addPenalty();
         }
 
         this.snake.nextPosition();
@@ -64,9 +45,7 @@ class Game {
     }
 
     public toState(): GameState {
-        if (this.snake instanceof IntelligentSnake) {
-            this.snake.calculateFitness(this.score);
-        }
+        this.snake.calculateFitness(this.score);
         // Grid is built only for displayed games; a dead snake keeps its last drawn frame.
         if (!this.finish()) {
             this.updateGrid();
@@ -94,15 +73,13 @@ class Game {
 
     /** New game with a copy of this snake's brain; score, food and grid start from scratch. */
     public cloneBrain(): Game {
-        return new Game(this.boardSize, this.playerType, this.snake.clone());
+        return new Game(this.boardSize, this.snake.clone());
     }
 
     public reset(): void {
         this.score = 0;
         this.snake.reset();
-        if (this.snake instanceof IntelligentSnake) {
-            this.snake.resetLife();
-        }
+        this.snake.resetLife();
         this.generateFood();
     }
 }

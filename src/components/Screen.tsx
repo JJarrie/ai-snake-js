@@ -1,51 +1,19 @@
 import * as React from 'react';
-import { Dispatch } from 'react';
 import Direction from '../rule/Direction';
 import State from '../store/State';
-import GameAction from '../store/actions';
 import { connect } from 'react-redux';
 import GameDisplayer from './GameDisplayer';
-import { GameState } from '../rule/Game';
 import { PopulationState } from '../ai/Population';
 import DirectionCardinal from '../rule/DirectionCardinal';
 import { IntelligentSnakeState } from '../ai/IntelligentSnake';
 import { SeenInDirection } from '../ai/EyedSnake';
 
 interface ScreenProps {
-    changeDirection: (direction: GameAction) => void;
-    game?: GameState;
     population?: PopulationState;
 }
 
 class Screen extends React.Component<ScreenProps> {
-    componentDidMount() {
-        document.addEventListener('keydown', (e: KeyboardEvent) => {
-            switch (e.code) {
-                case 'KeyW':
-                case 'ArrowUp':
-                    this.props.changeDirection(GameAction.up);
-                    break;
-                case 'KeyA':
-                case 'ArrowLeft':
-                    this.props.changeDirection(GameAction.left);
-                    break;
-                case 'KeyS':
-                case 'ArrowDown':
-                    this.props.changeDirection(GameAction.down);
-                    break;
-                case 'KeyD':
-                case 'ArrowRight':
-                    this.props.changeDirection(GameAction.right);
-                    break;
-            }
-        });
-    }
-
     public render() {
-        if (this.props.game !== undefined) {
-            return <GameDisplayer game={this.props.game} />;
-        }
-
         const showVision = (label: string, visionPart: SeenInDirection) => {
             const food = Math.round(visionPart.food * 100) / 100;
             const body = Math.round(visionPart.body * 100) / 100;
@@ -146,11 +114,6 @@ class Screen extends React.Component<ScreenProps> {
 
 const mapStateToProps = (state: State) => ({
     population: state.population,
-    game: state.game,
 });
 
-const mapDispatchToProps = (dispatch: Dispatch<any>) => ({
-    changeDirection: (direction: GameAction) => dispatch({ type: direction }),
-});
-
-export default connect(mapStateToProps, mapDispatchToProps)(Screen);
+export default connect(mapStateToProps)(Screen);

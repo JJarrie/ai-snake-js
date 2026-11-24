@@ -1,5 +1,4 @@
 import BoardSize from './BoardSize';
-import DirectionCardinal from './DirectionCardinal';
 import Vector2D from '../utils/Vector2D';
 
 class Position {
@@ -9,32 +8,6 @@ class Position {
     constructor(x: number, y: number) {
         this.x = x;
         this.y = y;
-    }
-
-    public distanceFrom(position: Position): number {
-        return Math.abs(Math.sqrt(Math.pow(position.x - this.x, 2) + Math.pow(position.y - this.y, 2)));
-    }
-
-    public directionTo(position: Position): DirectionCardinal {
-        let direction: DirectionCardinal = 0;
-
-        if (this.x > position.x) {
-            direction = direction | DirectionCardinal.WEST;
-        }
-
-        if (this.x < position.x) {
-            direction = direction | DirectionCardinal.EAST;
-        }
-
-        if (this.y > position.y) {
-            direction = direction | DirectionCardinal.NORTH;
-        }
-
-        if (this.y < position.y) {
-            direction = direction | DirectionCardinal.SOUTH;
-        }
-
-        return direction;
     }
 
     public isEqual(position: Position): boolean {

@@ -1,7 +1,6 @@
 import BoardSize from '../rule/BoardSize';
 import IntelligentSnake from './IntelligentSnake';
 import Game, { GameState } from '../rule/Game';
-import PlayerType from '../rule/PlayerType';
 import Snake from '../rule/Snake';
 
 export interface PopulationState {
@@ -29,7 +28,7 @@ class Population {
         this.games = new Array<Game>(size);
 
         for (let i = 0; i < this.games.length; ++i) {
-            this.games[i] = new Game(boardSize, PlayerType.AI);
+            this.games[i] = new Game(boardSize);
         }
 
         this.bestGame = this.games[0];
@@ -102,7 +101,7 @@ class Population {
             const partner = this.pickParent() as IntelligentSnake;
             const child = parent.crossover(partner);
             child.mutate(this.mutationRate);
-            const newGame = new Game(this.games[i].boardSize, this.games[i].playerType, child);
+            const newGame = new Game(this.games[i].boardSize, child);
             games.push(newGame);
         }
 
