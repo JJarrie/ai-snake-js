@@ -43,7 +43,7 @@ class Snake {
     }
 
     public isInHimself(): boolean {
-        return this.body.filter((bodyPosition) => bodyPosition.isEqual(this.head)).length > 0;
+        return this.body.some((bodyPosition) => bodyPosition.isEqual(this.head));
     }
 
     public updateAlive(): void {

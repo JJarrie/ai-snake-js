@@ -13,23 +13,24 @@ export interface SeenInDirection {
 class EyedSnake extends Snake {
     vision: SeenInDirection[] = [];
 
-    public lookInDirection(directionVector: Vector2D, food: Position, bodyKeys: Set<string>): SeenInDirection {
+    public lookInDirection(directionVector: Vector2D, food: Position, bodyKeys: Set<number>): SeenInDirection {
         let position = this.head.clone();
         let distance = 1;
         let foodSeen = false;
         let bodySeen = false;
+        // Every value is 1 / distance (0 = not seen), so closer always means a bigger input.
         const seenInDirection = { food: 0, body: 0, wall: 0 };
         position = position.addVector(directionVector);
 
         while (!this.positionIsOutbound(position)) {
             if (!foodSeen && position.isEqual(food)) {
                 foodSeen = true;
-                seenInDirection.food = distance;
+                seenInDirection.food = 1 / distance;
             }
 
-            if (!bodySeen && bodyKeys.has(`${position.x},${position.y}`)) {
+            if (!bodySeen && bodyKeys.has(position.y * this.boardSize.width + position.x)) {
                 bodySeen = true;
-                seenInDirection.body = distance;
+                seenInDirection.body = 1 / distance;
             }
 
             position = position.addVector(directionVector);
@@ -43,7 +44,7 @@ class EyedSnake extends Snake {
 
     public look(food: Position): void {
         this.vision = [];
-        const bodyKeys = new Set(this.body.map((p) => `${p.x},${p.y}`));
+        const bodyKeys = new Set(this.body.map((p) => p.y * this.boardSize.width + p.x));
         this.vision[Direction.FRONT] = this.lookInDirection(
             EyedSnake.mapVectorToDirection(mapCardinalToCurrentDirection(this.direction, Direction.FRONT)),
             food,
