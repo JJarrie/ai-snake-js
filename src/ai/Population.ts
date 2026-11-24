@@ -31,7 +31,7 @@ class Population {
             this.games[i] = new Game(boardSize);
         }
 
-        this.bestGame = this.games[0];
+        this.bestGame = this.games[0].cloneBrain();
     }
 
     public done(): boolean {

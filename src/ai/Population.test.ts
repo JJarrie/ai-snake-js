@@ -32,3 +32,11 @@ describe('Population', () => {
         expect(population.fitnessSum).toBeCloseTo(expected);
     });
 });
+
+describe('Population first generation', () => {
+    it('replays the best game separately from games[0]', () => {
+        const population = new Population(3, 0, new BoardSize(20, 20));
+
+        expect(population.bestGame).not.toBe(population.games[0]);
+    });
+});
