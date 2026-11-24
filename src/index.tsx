@@ -11,7 +11,7 @@ import { generateInitialState } from './store/initialState';
 import rootReducer from './store/reducers';
 import './style/app.scss';
 
-const socket = SocketIO('http://localhost:3000');
+const socket = SocketIO(process.env.SOCKET_URL as string);
 const store = createStore(rootReducer, generateInitialState(new BoardSize(20, 20)));
 
 socket.on('update population', (arg: { population: PopulationState }) => {

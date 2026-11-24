@@ -16,10 +16,15 @@ class NeuralNetwork {
     hiddenLayers: number[];
     weights: Matrix[];
 
-    constructor(inputsNodes: number, hiddenLayers: number[], outputsNodes: number) {
+    constructor(inputsNodes: number, hiddenLayers: number[], outputsNodes: number, weights?: Matrix[]) {
         this.inputsNodes = inputsNodes;
         this.outputsNodes = outputsNodes;
         this.hiddenLayers = hiddenLayers;
+
+        if (weights) {
+            this.weights = weights;
+            return;
+        }
 
         this.weights = new Array<Matrix>();
         this.weights.push(new Matrix(this.hiddenLayers[0], this.inputsNodes + 1));
@@ -55,23 +60,21 @@ class NeuralNetwork {
     }
 
     public crossover(partner: NeuralNetwork): NeuralNetwork {
-        const child = new NeuralNetwork(this.inputsNodes, this.hiddenLayers, this.outputsNodes);
-
-        for (let i = 0; i < this.weights.length; ++i) {
-            child.weights[i] = this.weights[i].crossover(partner.weights[i]);
-        }
-
-        return child;
+        return new NeuralNetwork(
+            this.inputsNodes,
+            this.hiddenLayers,
+            this.outputsNodes,
+            this.weights.map((w, i) => w.crossover(partner.weights[i])),
+        );
     }
 
     public clone(): NeuralNetwork {
-        const clone = new NeuralNetwork(this.inputsNodes, this.hiddenLayers, this.outputsNodes);
-
-        for (let i = 0; i < this.weights.length; ++i) {
-            clone.weights[i] = this.weights[i].clone();
-        }
-
-        return clone;
+        return new NeuralNetwork(
+            this.inputsNodes,
+            this.hiddenLayers,
+            this.outputsNodes,
+            this.weights.map((w) => w.clone()),
+        );
     }
 }
 

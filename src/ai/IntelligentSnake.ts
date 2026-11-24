@@ -19,9 +19,9 @@ class IntelligentSnake extends EyedSnake {
     lifeleft: number;
     fitness = 0;
 
-    constructor(boardSize: BoardSize) {
+    constructor(boardSize: BoardSize, neuralNetwork?: NeuralNetwork) {
         super(boardSize);
-        this.neuralNetwork = new NeuralNetwork(24, [16], 3);
+        this.neuralNetwork = neuralNetwork ?? new NeuralNetwork(24, [16], 3);
         this.resetLife();
     }
 
@@ -83,17 +83,11 @@ class IntelligentSnake extends EyedSnake {
     }
 
     public clone(): IntelligentSnake {
-        const clone = new IntelligentSnake(this.boardSize);
-        clone.neuralNetwork = this.neuralNetwork.clone();
-
-        return clone;
+        return new IntelligentSnake(this.boardSize, this.neuralNetwork.clone());
     }
 
     public crossover(parent: IntelligentSnake): IntelligentSnake {
-        const child = new IntelligentSnake(this.boardSize);
-        child.neuralNetwork = this.neuralNetwork.crossover(parent.neuralNetwork);
-
-        return child;
+        return new IntelligentSnake(this.boardSize, this.neuralNetwork.crossover(parent.neuralNetwork));
     }
 
     public mutate(mutationRate: number): void {

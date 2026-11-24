@@ -1,6 +1,7 @@
 'use strict';
 
 const path = require('path');
+const webpack = require('webpack');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 module.exports = {
@@ -9,6 +10,7 @@ module.exports = {
     },
     target: 'web',
     plugins: [
+        new webpack.EnvironmentPlugin({ SOCKET_URL: 'http://localhost:3000' }),
         new HtmlWebpackPlugin({
             template: './src/index.html',
             scriptLoading: 'defer',
