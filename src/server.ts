@@ -8,6 +8,7 @@ import { envNumber } from './utils/env';
 const port = envNumber('PORT', 3000, 0, 65535);
 const populationSize = envNumber('POPULATION_SIZE', 2000, 2, 100000);
 const mutationRate = envNumber('MUTATION_RATE', 0.05, 0, 1);
+const episodes = envNumber('EPISODES', 3, 1, 20);
 
 const httpServer = createServer();
 const io = new SocketIo.Server(httpServer, {
@@ -26,7 +27,7 @@ httpServer.listen(port, host, () => {
 });
 
 const boardSize = new BoardSize(20, 20);
-const population = new Population(populationSize, mutationRate, boardSize);
+const population = new Population(populationSize, mutationRate, boardSize, episodes);
 
 const EMIT_INTERVAL_MS = 33;
 let lastEmit = 0;
@@ -42,7 +43,6 @@ setInterval(() => {
             io.volatile.emit('update population', { population: population.toState() });
         }
     } else {
-        population.calculateFitness();
-        population.naturalSelection();
+        population.finishEpisode();
     }
 }, 4);

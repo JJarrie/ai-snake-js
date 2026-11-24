@@ -7,12 +7,18 @@ export interface PopulationState {
     generation: number;
     bestFitness: number;
     fitnessSum: number;
+    episode: number;
+    episodes: number;
     bestGeneration: number;
     bestGame: GameState;
 }
 
 class Population {
     mutationRate: number;
+    // Each snake is judged on several games (new food each time) and its fitness is the average:
+    // a single lucky food layout no longer selects a snake that circles without seeking food.
+    episodes: number;
+    episode = 0;
     games: Game[];
     bestGame: Game;
 
@@ -22,8 +28,14 @@ class Population {
     bestFitness = 0;
     fitnessSum = 0;
 
-    constructor(size: number, mutationRate: number, boardSize: BoardSize) {
+    private fitnessTotals: number[];
+    private scoreTotals: number[];
+
+    constructor(size: number, mutationRate: number, boardSize: BoardSize, episodes = 1) {
         this.mutationRate = mutationRate;
+        this.episodes = episodes;
+        this.fitnessTotals = new Array<number>(size).fill(0);
+        this.scoreTotals = new Array<number>(size).fill(0);
         this.games = new Array<Game>(size);
 
         for (let i = 0; i < this.games.length; ++i) {
@@ -67,7 +79,7 @@ class Population {
         if (maxFitnessOfGeneration > this.bestFitness) {
             this.bestGeneration = this.generation;
             this.bestFitness = maxFitnessOfGeneration;
-            this.bestScore = this.games[maxIndex].score;
+            this.bestScore = Math.round(this.scoreTotals[maxIndex] / this.episodes) || this.games[maxIndex].score;
             this.bestGame = this.games[maxIndex].cloneBrain();
         }
     }
@@ -108,6 +120,28 @@ class Population {
         this.generation = this.generation + 1;
     }
 
+    /** Ends one game of every snake; after the last episode, averages the fitness and breeds the next generation. */
+    public finishEpisode(): void {
+        this.calculateFitness();
+        this.games.forEach((game, i) => {
+            this.fitnessTotals[i] += game.snake.fitness;
+            this.scoreTotals[i] += game.score;
+        });
+        this.episode = this.episode + 1;
+
+        if (this.episode < this.episodes) {
+            this.games.forEach((game) => game.reset());
+            this.bestGame.reset();
+            return;
+        }
+
+        this.games.forEach((game, i) => (game.snake.fitness = this.fitnessTotals[i] / this.episodes));
+        this.naturalSelection();
+        this.episode = 0;
+        this.fitnessTotals.fill(0);
+        this.scoreTotals.fill(0);
+    }
+
     public calculateFitness(): void {
         this.games.forEach((game) => game.snake.calculateFitness(game.score));
     }
@@ -118,6 +152,8 @@ class Population {
             bestGame: this.bestGame.toState(),
             bestScore: this.bestScore,
             fitnessSum: this.fitnessSum,
+            episode: this.episode + 1,
+            episodes: this.episodes,
             generation: this.generation,
             bestGeneration: this.bestGeneration,
         };

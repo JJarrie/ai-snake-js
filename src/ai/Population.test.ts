@@ -40,3 +40,22 @@ describe('Population first generation', () => {
         expect(population.bestGame).not.toBe(population.games[0]);
     });
 });
+
+describe('Population episodes', () => {
+    it('plays several games per generation before breeding', () => {
+        const population = new Population(4, 0, new BoardSize(20, 20), 2);
+
+        while (!population.done()) population.update();
+        population.finishEpisode();
+
+        expect(population.generation).toBe(1);
+        expect(population.done()).toBe(false);
+        expect(population.games.every((g) => g.snake.alive && g.score === 0)).toBe(true);
+
+        while (!population.done()) population.update();
+        population.finishEpisode();
+
+        expect(population.generation).toBe(2);
+        expect(population.toState().episode).toBe(1);
+    });
+});
