@@ -56,7 +56,7 @@ class IntelligentSnake extends EyedSnake {
         this.lastDecision = this.neuralNetwork.output(inputs);
 
         let maxIndex = 0;
-        let maxValue = 0;
+        let maxValue = -Infinity;
 
         for (let i = 0; i < this.lastDecision.length; ++i) {
             if (this.lastDecision[i] > maxValue) {

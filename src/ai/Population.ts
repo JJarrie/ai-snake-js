@@ -60,7 +60,7 @@ class Population {
 
         for (let i = 0; i < this.games.length; ++i) {
             const snake = this.games[i].snake as IntelligentSnake;
-            if ((i === 0 ? this.bestFitness : snake.fitness) > maxFitnessOfGeneration) {
+            if (snake.fitness > maxFitnessOfGeneration) {
                 maxFitnessOfGeneration = snake.fitness;
                 maxIndex = i;
             }
@@ -126,10 +126,7 @@ class Population {
     }
 
     private calculateFitnessSum(): void {
-        this.fitnessSum = this.bestFitness;
-        this.fitnessSum =
-            this.bestFitness +
-            this.games.slice(1).reduce((prev, cur) => prev + (cur.snake as IntelligentSnake).fitness, 0);
+        this.fitnessSum = this.games.reduce((prev, cur) => prev + (cur.snake as IntelligentSnake).fitness, 0);
     }
 
     private static updateSingle(game: Game): void {
