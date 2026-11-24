@@ -89,26 +89,21 @@ class Game {
     private generateFood(): void {
         do {
             this.food = Position.createRandom(this.boardSize);
-        } while (this.snake.body.filter((p) => p.isEqual(this.food)).length > 0);
+        } while (this.food.isEqual(this.snake.head) || this.snake.body.some((p) => p.isEqual(this.food)));
     }
 
-    public clone(): Game {
-        const clone = new Game(this.boardSize, this.playerType);
-        clone.food = this.food.clone();
-        clone.snake = this.snake.clone();
-        clone.grid = this.grid.clone();
-        clone.score = this.score;
-
-        return clone;
+    /** New game with a copy of this snake's brain; score, food and grid start from scratch. */
+    public cloneBrain(): Game {
+        return new Game(this.boardSize, this.playerType, this.snake.clone());
     }
 
     public reset(): void {
-        this.generateFood();
         this.score = 0;
         this.snake.reset();
         if (this.snake instanceof IntelligentSnake) {
             this.snake.resetLife();
         }
+        this.generateFood();
     }
 }
 

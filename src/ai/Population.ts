@@ -69,8 +69,8 @@ class Population {
         if (maxFitnessOfGeneration > this.bestFitness) {
             this.bestGeneration = this.generation;
             this.bestFitness = maxFitnessOfGeneration;
-            this.bestGame = this.games[maxIndex].clone();
-            this.bestScore = this.bestGame.score;
+            this.bestScore = this.games[maxIndex].score;
+            this.bestGame = this.games[maxIndex].cloneBrain();
         }
     }
 
@@ -95,7 +95,7 @@ class Population {
         this.calculateFitnessSum();
 
         this.bestGame.reset();
-        games[0] = this.bestGame.clone();
+        games[0] = this.bestGame.cloneBrain();
 
         for (let i = 1; i < this.games.length; ++i) {
             const parent = this.pickParent() as IntelligentSnake;
