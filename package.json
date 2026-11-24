@@ -40,10 +40,12 @@
     "watch": "npm-run-all -p nodemon watch:client watch:server",
     "watch:client": "webpack serve --hot --mode development --config webpack.client.config.js",
     "watch:server": "webpack --watch --mode development --config webpack.server.config.js",
-    "nodemon": "nodemon build/server.js",
-    "build": "webpack --mode production",
+    "nodemon": "nodemon --watch build/server.js --exec \"node build/server.js\"",
+    "build": "npm-run-all -p build:client build:server",
     "test": "vitest run",
     "lint": "oxlint --type-aware && prettier --check src",
-    "format": "prettier --write src"
+    "format": "prettier --write src",
+    "build:client": "webpack --mode production --config webpack.client.config.js",
+    "build:server": "webpack --mode production --config webpack.server.config.js"
   }
 }
