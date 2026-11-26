@@ -56,6 +56,18 @@ describe('Population', () => {
     });
 });
 
+describe('Population network size', () => {
+    it('builds the first generation with the requested hidden layer, kept by the next ones', () => {
+        const population = new Population(4, boardSize, new ClassicGa(0.1), 1, 8);
+        expect(population.games[0].snake.neuralNetwork.hiddenLayers).toEqual([8]);
+
+        population.calculateFitness();
+        population.naturalSelection();
+
+        expect(population.games[1].snake.neuralNetwork.hiddenLayers).toEqual([8]);
+    });
+});
+
 describe('Population replay', () => {
     it('is not stepped by training and does not hold a generation back', () => {
         const population = new Population(3, boardSize, new ClassicGa(0.1));
