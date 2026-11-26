@@ -18,6 +18,8 @@ class IntelligentSnake extends EyedSnake {
     lifetime: number;
     lifeleft: number;
     fitness = 0;
+    /** How many times each decision (continue, left, right) was taken in this game. */
+    decisions = [0, 0, 0];
 
     constructor(boardSize: BoardSize, neuralNetwork?: NeuralNetwork) {
         super(boardSize);
@@ -28,6 +30,16 @@ class IntelligentSnake extends EyedSnake {
     public resetLife(): void {
         this.lifetime = 0;
         this.lifeleft = 200;
+        this.decisions = [0, 0, 0];
+    }
+
+    /** Behaviour descriptor in [0, 1]^2: share of moves that turn, share of turns that go left. */
+    public behavior(): number[] {
+        const [straight, left, right] = this.decisions;
+        const turns = left + right;
+        const moves = straight + turns;
+
+        return [moves > 0 ? turns / moves : 0, turns > 0 ? left / turns : 0.5];
     }
 
     public addLife(): void {
@@ -53,6 +65,7 @@ class IntelligentSnake extends EyedSnake {
                 maxIndex = i;
             }
         }
+        this.decisions[maxIndex] = this.decisions[maxIndex] + 1;
 
         switch (maxIndex) {
             case 0:
@@ -84,14 +97,6 @@ class IntelligentSnake extends EyedSnake {
 
     public clone(): IntelligentSnake {
         return new IntelligentSnake(this.boardSize, this.neuralNetwork.clone());
-    }
-
-    public crossover(parent: IntelligentSnake): IntelligentSnake {
-        return new IntelligentSnake(this.boardSize, this.neuralNetwork.crossover(parent.neuralNetwork));
-    }
-
-    public mutate(mutationRate: number): void {
-        this.neuralNetwork.mutate(mutationRate);
     }
 
     public toState(): IntelligentSnakeState {

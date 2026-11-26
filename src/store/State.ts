@@ -1,8 +1,12 @@
 import BoardSize from '../rule/BoardSize';
 import type { PopulationState } from '../ai/Population';
 
+export interface StrategyState extends PopulationState {
+    paused: boolean;
+}
+
 interface State {
-    population?: PopulationState;
+    populations?: StrategyState[];
     boardSize: BoardSize;
 }
 

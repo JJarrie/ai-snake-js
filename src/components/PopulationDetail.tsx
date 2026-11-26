@@ -1,0 +1,114 @@
+import * as React from 'react';
+import Direction from '../rule/Direction';
+import GameDisplayer from './GameDisplayer';
+import type { PopulationState } from '../ai/Population';
+import DirectionCardinal from '../rule/DirectionCardinal';
+import type { IntelligentSnakeState } from '../ai/IntelligentSnake';
+import type { SeenInDirection } from '../ai/EyedSnake';
+
+interface PopulationDetailProps {
+    population: PopulationState;
+}
+
+class PopulationDetail extends React.Component<PopulationDetailProps> {
+    public render() {
+        const showVision = (label: string, visionPart: SeenInDirection) => {
+            const food = Math.round(visionPart.food * 100) / 100;
+            const body = Math.round(visionPart.body * 100) / 100;
+            const wall = Math.round(visionPart.wall * 100) / 100;
+            return (
+                <>
+                    <tr>
+                        <td colSpan={2}>{label}</td>
+                    </tr>
+                    <tr>
+                        <td>Food</td>
+                        <td style={food > 0 ? { color: 'red' } : {}}>{food}</td>
+                    </tr>
+                    <tr>
+                        <td>Body</td>
+                        <td>{body}</td>
+                    </tr>
+                    <tr>
+                        <td>Wall</td>
+                        <td>{wall}</td>
+                    </tr>
+                </>
+            );
+        };
+
+        if (this.props.population !== undefined) {
+            const numberFormatter = Intl.NumberFormat('fr-FR', { useGrouping: true });
+            const snakeState = this.props.population.bestGame.snake as IntelligentSnakeState;
+            return (
+                <div style={{ display: 'flex' }}>
+                    <GameDisplayer game={this.props.population.bestGame} />
+                    <ul style={{ margin: '10px' }}>
+                        <li>Strategy: {this.props.population.name}</li>
+                        <li>Generation: {this.props.population.generation}</li>
+                        <li>Best Generation: {this.props.population.bestGeneration}</li>
+                        <li>Best score: {this.props.population.bestScore}</li>
+                        <li>Fitness sum: {numberFormatter.format(this.props.population.fitnessSum)}</li>
+                        <li>Best fitness: {numberFormatter.format(this.props.population.bestFitness)}</li>
+                        <li>--------------------</li>
+                        <li>Finish: {this.props.population.bestGame.finish ? 'Oui' : 'Non'}</li>
+                        <li>
+                            Direction:{' '}
+                            {(() => {
+                                switch (snakeState.direction) {
+                                    case DirectionCardinal.EAST:
+                                        return 'East';
+                                    case DirectionCardinal.NORTH:
+                                        return 'North';
+                                    case DirectionCardinal.SOUTH:
+                                        return 'South';
+                                    case DirectionCardinal.WEST:
+                                        return 'West';
+                                }
+                            })()}
+                        </li>
+                        <li>Head: {`{ x: ${snakeState.head.x}, y : ${snakeState.head.y} }`}</li>
+                        <li>Lifetime: {snakeState.lifetime}</li>
+                        <li>Lifeleft: {snakeState.lifeleft}</li>
+                        <li>Fitness: {numberFormatter.format(snakeState.fitness)}</li>
+                    </ul>
+                    <table className={'vision'} style={{ margin: '10px' }}>
+                        <tbody>
+                            {showVision('Front', snakeState.vision[Direction.FRONT])}
+                            {showVision('Front right', snakeState.vision[Direction.FRONT_RIGHT])}
+                            {showVision('Right', snakeState.vision[Direction.RIGHT])}
+                            {showVision('Back right', snakeState.vision[Direction.BACK_RIGHT])}
+                            {showVision('Back', snakeState.vision[Direction.BACK])}
+                            {showVision('Back left', snakeState.vision[Direction.BACK_LEFT])}
+                            {showVision('Left', snakeState.vision[Direction.LEFT])}
+                            {showVision('Front left', snakeState.vision[Direction.FRONT_LEFT])}
+                        </tbody>
+                    </table>
+                    <table className={'vision'} style={{ margin: '10px' }}>
+                        {snakeState.lastDecision.map((d, k) => (
+                            <tr key={`d_${k}`}>
+                                <td>
+                                    {(() => {
+                                        switch (k) {
+                                            case 0:
+                                                return 'Continue';
+                                            case 1:
+                                                return 'Left';
+                                            case 2:
+                                                return 'Right';
+                                        }
+                                    })()}
+                                </td>
+                                <td>{Math.round(d * 100) / 100}</td>
+                            </tr>
+                        ))}
+                    </table>
+                </div>
+            );
+        }
+
+        return null;
+    }
+}
+
+export default PopulationDetail;

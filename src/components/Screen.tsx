@@ -1,119 +1,67 @@
 import * as React from 'react';
-import Direction from '../rule/Direction';
-import type State from '../store/State';
 import { connect } from 'react-redux';
-import GameDisplayer from './GameDisplayer';
-import type { PopulationState } from '../ai/Population';
-import DirectionCardinal from '../rule/DirectionCardinal';
-import type { IntelligentSnakeState } from '../ai/IntelligentSnake';
-import type { SeenInDirection } from '../ai/EyedSnake';
+import type State from '../store/State';
+import type { StrategyState } from '../store/State';
+import ArchiveMap from './ArchiveMap';
+import Board from './Board';
+import PopulationDetail from './PopulationDetail';
+import ScoreChart from './ScoreChart';
+
+const COLORS = ['#e6194b', '#3cb44b', '#4363d8', '#f58231', '#911eb4', '#008080'];
 
 interface ScreenProps {
-    population?: PopulationState;
+    populations?: StrategyState[];
+    onToggle: (name: string) => void;
 }
 
-class Screen extends React.Component<ScreenProps> {
-    public render() {
-        const showVision = (label: string, visionPart: SeenInDirection) => {
-            const food = Math.round(visionPart.food * 100) / 100;
-            const body = Math.round(visionPart.body * 100) / 100;
-            const wall = Math.round(visionPart.wall * 100) / 100;
-            return (
-                <>
-                    <tr>
-                        <td colSpan={2}>{label}</td>
-                    </tr>
-                    <tr>
-                        <td>Food</td>
-                        <td style={food > 0 ? { color: 'red' } : {}}>{food}</td>
-                    </tr>
-                    <tr>
-                        <td>Body</td>
-                        <td>{body}</td>
-                    </tr>
-                    <tr>
-                        <td>Wall</td>
-                        <td>{wall}</td>
-                    </tr>
-                </>
-            );
-        };
+const Screen = ({ populations, onToggle }: ScreenProps) => {
+    const [selected, setSelected] = React.useState(0);
 
-        if (this.props.population !== undefined) {
-            const numberFormatter = Intl.NumberFormat('fr-FR', { useGrouping: true });
-            const snakeState = this.props.population.bestGame.snake as IntelligentSnakeState;
-            return (
-                <div style={{ display: 'flex' }}>
-                    <GameDisplayer game={this.props.population.bestGame} />
-                    <ul style={{ margin: '10px' }}>
-                        <li>Generation: {this.props.population.generation}</li>
-                        <li>Best Generation: {this.props.population.bestGeneration}</li>
-                        <li>Best score: {this.props.population.bestScore}</li>
-                        <li>Fitness sum: {numberFormatter.format(this.props.population.fitnessSum)}</li>
-                        <li>Best fitness: {numberFormatter.format(this.props.population.bestFitness)}</li>
-                        <li>--------------------</li>
-                        <li>Finish: {this.props.population.bestGame.finish ? 'Oui' : 'Non'}</li>
-                        <li>
-                            Direction:{' '}
-                            {(() => {
-                                switch (snakeState.direction) {
-                                    case DirectionCardinal.EAST:
-                                        return 'East';
-                                    case DirectionCardinal.NORTH:
-                                        return 'North';
-                                    case DirectionCardinal.SOUTH:
-                                        return 'South';
-                                    case DirectionCardinal.WEST:
-                                        return 'West';
-                                }
-                            })()}
-                        </li>
-                        <li>Head: {`{ x: ${snakeState.head.x}, y : ${snakeState.head.y} }`}</li>
-                        <li>Lifetime: {snakeState.lifetime}</li>
-                        <li>Lifeleft: {snakeState.lifeleft}</li>
-                        <li>Fitness: {numberFormatter.format(snakeState.fitness)}</li>
-                    </ul>
-                    <table className={'vision'} style={{ margin: '10px' }}>
-                        <tbody>
-                            {showVision('Front', snakeState.vision[Direction.FRONT])}
-                            {showVision('Front right', snakeState.vision[Direction.FRONT_RIGHT])}
-                            {showVision('Right', snakeState.vision[Direction.RIGHT])}
-                            {showVision('Back right', snakeState.vision[Direction.BACK_RIGHT])}
-                            {showVision('Back', snakeState.vision[Direction.BACK])}
-                            {showVision('Back left', snakeState.vision[Direction.BACK_LEFT])}
-                            {showVision('Left', snakeState.vision[Direction.LEFT])}
-                            {showVision('Front left', snakeState.vision[Direction.FRONT_LEFT])}
-                        </tbody>
-                    </table>
-                    <table className={'vision'} style={{ margin: '10px' }}>
-                        {snakeState.lastDecision.map((d, k) => (
-                            <tr key={`d_${k}`}>
-                                <td>
-                                    {(() => {
-                                        switch (k) {
-                                            case 0:
-                                                return 'Continue';
-                                            case 1:
-                                                return 'Left';
-                                            case 2:
-                                                return 'Right';
-                                        }
-                                    })()}
-                                </td>
-                                <td>{Math.round(d * 100) / 100}</td>
-                            </tr>
-                        ))}
-                    </table>
-                </div>
-            );
-        }
-
+    if (populations === undefined) {
         return null;
     }
-}
+
+    const detail = populations[selected] ?? populations[0];
+
+    return (
+        <div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-start' }}>
+                <ScoreChart populations={populations} colors={COLORS} />
+                {populations.map((p, k) => (
+                    <div key={p.name} className={`strategy${k === selected ? ' selected' : ''}`}>
+                        <h3 style={{ color: COLORS[k % COLORS.length] }}>{p.name}</h3>
+                        <label>
+                            <input
+                                type="checkbox"
+                                aria-label={`Run ${p.name}`}
+                                checked={!p.paused}
+                                onChange={() => onToggle(p.name)}
+                            />{' '}
+                            Running
+                        </label>
+                        <div>
+                            Generation {p.generation} · Best score {p.bestScore}
+                        </div>
+                        <button
+                            type="button"
+                            className="mini"
+                            aria-pressed={k === selected}
+                            aria-label={`Show details of ${p.name}`}
+                            onClick={() => setSelected(k)}
+                        >
+                            <Board grid={p.bestGame.grid} />
+                        </button>
+                        {p.archive && <ArchiveMap archive={p.archive} color={COLORS[k % COLORS.length]} />}
+                    </div>
+                ))}
+            </div>
+            <PopulationDetail population={detail} />
+        </div>
+    );
+};
 
 const mapStateToProps = (state: State) => ({
-    population: state.population,
+    populations: state.populations,
 });
 
 export default connect(mapStateToProps)(Screen);

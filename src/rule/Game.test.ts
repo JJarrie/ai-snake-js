@@ -1,7 +1,8 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import IntelligentSnake from '../ai/IntelligentSnake';
 import BoardSize from './BoardSize';
 import Game from './Game';
+import Position from './Position';
 
 describe('Game', () => {
     it('grows by one square when the snake eats', () => {
@@ -21,15 +22,31 @@ describe('Game', () => {
 
 describe('Game food and cloning', () => {
     it('never puts food on the snake head', () => {
-        const game = new Game(new BoardSize(20, 20));
-        // First draw lands on the head (10, 10), the second one on (2, 2).
-        const random = vi.spyOn(Math, 'random');
-        random.mockReturnValueOnce(0.5).mockReturnValueOnce(0.5).mockReturnValueOnce(0.1).mockReturnValueOnce(0.1);
+        for (let seed = 0; seed < 500; ++seed) {
+            const game = new Game(new BoardSize(20, 20), undefined, seed);
+            expect(game.food.isEqual(game.snake.head)).toBe(false);
+        }
+    });
 
-        game.reset();
+    it('draws the same food sequence for the same seed, whatever the snake body', () => {
+        const a = new Game(new BoardSize(20, 20), undefined, 42);
+        const b = new Game(new BoardSize(20, 20), undefined, 42);
+        expect(b.food).toEqual(a.food);
 
-        expect(game.food).toMatchObject({ x: 2, y: 2 });
-        random.mockRestore();
+        // A longer body in b must not shift the next foods of b.
+        b.snake.body.push(new Position(0, 0), new Position(0, 1));
+        for (let i = 0; i < 5; ++i) {
+            a.food = a.snake.head.clone();
+            b.food = b.snake.head.clone();
+            a.nextMove();
+            b.nextMove();
+            if (!b.snake.body.some((p) => p.isEqual(a.food))) {
+                expect(b.food).toEqual(a.food);
+            }
+        }
+
+        a.reset();
+        expect(a.food).toEqual(new Game(new BoardSize(20, 20), undefined, 42).food);
     });
 
     it('cloneBrain keeps the network but starts a fresh game', () => {
