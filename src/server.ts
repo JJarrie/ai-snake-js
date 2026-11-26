@@ -16,6 +16,8 @@ const port = envNumber('PORT', 3000, 0, 65535);
 // Per strategy: all strategies run in the same loop.
 const populationSize = envNumber('POPULATION_SIZE', 500, 2, 100000);
 const mutationRate = envNumber('MUTATION_RATE', 0.05, 0, 1);
+// Display pace of the record replays, independent of the training speed.
+const replayMovesPerSecond = envNumber('REPLAY_MOVES_PER_SECOND', 15, 1, 1000);
 
 const httpServer = createServer();
 const io = new SocketIo.Server(httpServer, {
@@ -74,3 +76,6 @@ setInterval(() => {
         });
     }
 }, 4);
+
+// Replays keep moving while a strategy is paused: they only show its record.
+setInterval(() => populations.forEach((p) => p.stepReplay()), 1000 / replayMovesPerSecond);

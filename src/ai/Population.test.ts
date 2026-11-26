@@ -56,6 +56,30 @@ describe('Population', () => {
     });
 });
 
+describe('Population replay', () => {
+    it('is not stepped by training and does not hold a generation back', () => {
+        const population = new Population(3, boardSize, new ClassicGa(0.1));
+        population.games.forEach((g) => (g.snake.alive = false));
+
+        population.update();
+
+        expect(population.bestGame.snake.lifetime).toBe(0);
+        expect(population.done()).toBe(true);
+    });
+
+    it('moves one step per stepReplay and restarts once over', () => {
+        const population = new Population(3, boardSize, new ClassicGa(0.1));
+
+        population.stepReplay();
+        expect(population.bestGame.snake.lifetime).toBe(1);
+
+        population.bestGame.snake.alive = false;
+        population.stepReplay();
+        expect(population.bestGame.finish()).toBe(false);
+        expect(population.bestGame.snake.lifetime).toBe(1);
+    });
+});
+
 describe('Population first generation', () => {
     it('replays the best game separately from games[0]', () => {
         const population = new Population(3, boardSize, new ClassicGa(0));
