@@ -7,6 +7,7 @@ const valid: Settings = {
     boardSize: 20,
     hiddenNeurons: 16,
     replayMovesPerSecond: 15,
+    game: 'snake',
 };
 
 describe('validateSettings', () => {
@@ -23,6 +24,8 @@ describe('validateSettings', () => {
         ['below the minimum', { ...valid, populationSize: 9 }],
         ['above the maximum', { ...valid, hiddenNeurons: 65 }],
         ['a fraction for an integer setting', { ...valid, boardSize: 20.5 }],
+        ['an unknown game', { ...valid, game: 'chess' }],
+        ['a missing game', { ...valid, game: undefined }],
     ])('rejects %s', (_, input) => {
         expect(() => validateSettings(input)).toThrow();
     });
@@ -32,5 +35,6 @@ describe('requiresReset', () => {
     it('is false when only the replay speed changes', () => {
         expect(requiresReset(valid, { ...valid, replayMovesPerSecond: 30 })).toBe(false);
         expect(requiresReset(valid, { ...valid, hiddenNeurons: 8 })).toBe(true);
+        expect(requiresReset(valid, { ...valid, game: 'cars' })).toBe(true);
     });
 });

@@ -1,11 +1,5 @@
-import BoardSize from '../rule/BoardSize';
-import IntelligentSnake from './IntelligentSnake';
+import type { Episode, EpisodeState, GameDefinition } from '../game/Episode';
 import NeuralNetwork from './NeuralNetwork';
-
-/** 8 directions x (food, body, wall) in; continue, left, right out. */
-const INPUTS = 24;
-const OUTPUTS = 3;
-import Game, { type GameState } from '../rule/Game';
 import type EvolutionStrategy from './strategy/EvolutionStrategy';
 import { deriveSeed, randomSeed } from '../utils/SeededRandom';
 
@@ -16,19 +10,23 @@ export interface PopulationState {
     bestFitness: number;
     fitnessSum: number;
     bestGeneration: number;
-    bestGame: GameState;
+    /** Replay of the record episode. */
+    replay: EpisodeState;
     /** Best score of each finished generation. */
     history: number[];
     archive?: (number | null)[][];
 }
 
+/** One strategy training networks on one game; knows nothing of the game's rules. */
 class Population {
     strategy: EvolutionStrategy;
-    boardSize: BoardSize;
-    /** Populations sharing a base seed play the same food sequence at the same generation. */
+    game: GameDefinition;
+    /** Populations sharing a base seed face the same world at the same generation. */
     baseSeed: number;
-    games: Game[];
-    bestGame: Game;
+    episodes: Episode[];
+    /** Fitness of each episode, set by calculateFitness. */
+    fitness: number[] = [];
+    replay: Episode;
     history: number[] = [];
 
     bestScore = 0;
@@ -39,90 +37,89 @@ class Population {
 
     constructor(
         size: number,
-        boardSize: BoardSize,
+        game: GameDefinition,
         strategy: EvolutionStrategy,
         baseSeed = randomSeed(),
         hiddenNeurons = 16,
     ) {
         this.strategy = strategy;
-        this.boardSize = boardSize;
+        this.game = game;
         this.baseSeed = baseSeed;
-        this.games = new Array<Game>(size);
 
-        for (let i = 0; i < this.games.length; ++i) {
-            // Later generations inherit this network shape from the strategy's brains.
-            const brain = new NeuralNetwork(INPUTS, [hiddenNeurons], OUTPUTS);
-            this.games[i] = new Game(boardSize, new IntelligentSnake(boardSize, brain), this.generationSeed());
-        }
-
-        this.bestGame = this.games[0].cloneBrain();
+        const seed = this.generationSeed();
+        // Later generations inherit this network shape from the strategy's brains.
+        this.episodes = [...Array(size)].map(() =>
+            game.createEpisode(new NeuralNetwork(game.inputs, [hiddenNeurons], game.outputs), seed),
+        );
+        this.replay = game.createEpisode(this.episodes[0].brain.clone(), seed);
     }
 
     public done(): boolean {
-        return this.games.every((game) => game.finish());
+        return this.episodes.every((episode) => episode.finished());
     }
 
     public update(): void {
-        this.games.forEach((game) => Population.updateSingle(game));
+        this.episodes.forEach((episode) => episode.step());
     }
 
     /** One move of the record replay, which runs at display pace, apart from training; loops once over. */
     public stepReplay(): void {
-        if (this.bestGame.finish()) {
-            this.bestGame.reset();
+        if (this.replay.finished()) {
+            this.replay.reset();
         }
-        Population.updateSingle(this.bestGame);
+        this.replay.step();
     }
 
-    public electBestSnake(): void {
+    public electBest(): void {
         let maxFitnessOfGeneration = 0;
         let maxIndex = 0;
 
-        for (let i = 0; i < this.games.length; ++i) {
-            const snake = this.games[i].snake;
-            if (snake.fitness > maxFitnessOfGeneration) {
-                maxFitnessOfGeneration = snake.fitness;
+        this.fitness.forEach((fitness, i) => {
+            if (fitness > maxFitnessOfGeneration) {
+                maxFitnessOfGeneration = fitness;
                 maxIndex = i;
             }
-        }
+        });
 
         if (maxFitnessOfGeneration > this.bestFitness) {
+            const best = this.episodes[maxIndex];
             this.bestGeneration = this.generation;
             this.bestFitness = maxFitnessOfGeneration;
-            this.bestScore = this.games[maxIndex].score;
-            // Same seed as the record game, so the displayed best replays it exactly.
-            this.bestGame = this.games[maxIndex].cloneBrain();
+            this.bestScore = best.score;
+            // Same seed as the record episode, so the displayed best replays it exactly.
+            this.replay = this.game.createEpisode(best.brain.clone(), best.seed);
         }
     }
 
     public naturalSelection(): void {
-        this.electBestSnake();
-        this.calculateFitnessSum();
-        this.history.push(this.games.reduce((max, game) => Math.max(max, game.score), 0));
+        this.electBest();
+        this.fitnessSum = this.fitness.reduce((sum, f) => sum + f, 0);
+        this.history.push(this.episodes.reduce((max, episode) => Math.max(max, episode.score), 0));
 
         const brains = this.strategy.nextGeneration(
-            this.games.map((game) => ({
-                brain: game.snake.neuralNetwork,
-                fitness: game.snake.fitness,
-                behavior: game.snake.behavior(),
+            this.episodes.map((episode, i) => ({
+                brain: episode.brain,
+                fitness: this.fitness[i],
+                behavior: episode.behavior(),
             })),
-            this.bestGame.snake.neuralNetwork,
+            this.replay.brain,
         );
 
         this.generation = this.generation + 1;
         const seed = this.generationSeed();
-        this.games = brains.map((brain) => new Game(this.boardSize, new IntelligentSnake(this.boardSize, brain), seed));
+        this.episodes = brains.map((brain) => this.game.createEpisode(brain, seed));
+        this.fitness = [];
     }
 
     public calculateFitness(): void {
-        this.games.forEach((game) => game.snake.calculateFitness(game.score));
+        this.fitness = this.episodes.map((episode) => episode.fitness());
     }
 
     public toState(): PopulationState {
         return {
             name: this.strategy.name,
             bestFitness: this.bestFitness,
-            bestGame: this.bestGame.toState(),
+            replay: this.replay.toState(),
             bestScore: this.bestScore,
             fitnessSum: this.fitnessSum,
             generation: this.generation,
@@ -134,19 +131,6 @@ class Population {
 
     private generationSeed(): number {
         return deriveSeed(this.baseSeed, this.generation);
-    }
-
-    private calculateFitnessSum(): void {
-        this.fitnessSum = this.games.reduce((prev, cur) => prev + cur.snake.fitness, 0);
-    }
-
-    private static updateSingle(game: Game): void {
-        if (!game.finish()) {
-            const intelligentSnake = game.snake;
-            intelligentSnake.look(game.food);
-            intelligentSnake.makeDecision();
-            game.nextMove();
-        }
     }
 }
 

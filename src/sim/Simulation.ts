@@ -1,7 +1,7 @@
 import { stepInLockstep } from '../ai/lockstep';
 import Population, { type PopulationState } from '../ai/Population';
 import { createStrategies } from '../ai/strategy/registry';
-import BoardSize from '../rule/BoardSize';
+import { createGame } from '../game/registry';
 import { randomSeed } from '../utils/SeededRandom';
 import { requiresReset, validateSettings, type Settings } from './settings';
 
@@ -100,12 +100,12 @@ class Simulation {
 
     private createPopulations(): Population[] {
         const { populationSize, mutationRate, boardSize, hiddenNeurons } = this.settings;
-        const board = new BoardSize(boardSize, boardSize);
-        // One base seed for all: at the same generation, every strategy plays the same food sequence.
+        const game = createGame(this.settings.game, boardSize);
+        // One base seed for all: at the same generation, every strategy faces the same world.
         const baseSeed = randomSeed();
 
         return createStrategies(mutationRate).map(
-            (strategy) => new Population(populationSize, board, strategy, baseSeed, hiddenNeurons),
+            (strategy) => new Population(populationSize, game, strategy, baseSeed, hiddenNeurons),
         );
     }
 }

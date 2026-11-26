@@ -1,7 +1,7 @@
 import * as React from 'react';
 import type { StrategyState } from '../sim/Simulation';
 import ArchiveMap from './ArchiveMap';
-import Board from './Board';
+import EpisodeView from './EpisodeView';
 import { colorOf } from './commands';
 
 interface StrategyCardProps {
@@ -44,7 +44,7 @@ const StrategyCard = ({ population: p, index, leader, onToggle }: StrategyCardPr
                 </div>
             </dl>
             <div className="card-boards">
-                <Board grid={p.bestGame.grid} size={150} label={`Record replay of ${p.name}`} />
+                <EpisodeView episode={p.replay} size={150} label={`Record replay of ${p.name}`} />
                 {p.archive && <ArchiveMap archive={p.archive} color={color} />}
             </div>
         </article>

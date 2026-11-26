@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest';
+import type { Episode } from '../game/Episode';
+import type SnakeEpisode from '../game/snake/SnakeEpisode';
 import type { Settings } from './settings';
 import Simulation from './Simulation';
 
@@ -8,19 +10,21 @@ const settings: Settings = {
     boardSize: 12,
     hiddenNeurons: 6,
     replayMovesPerSecond: 10,
+    game: 'snake',
 };
 
-const lifetime = (simulation: Simulation) => simulation.populations[0].games[0].snake.lifetime;
+const snakeGame = (episode: Episode) => (episode as SnakeEpisode).game;
+const lifetime = (simulation: Simulation) => snakeGame(simulation.populations[0].episodes[0]).snake.lifetime;
 
 describe('Simulation', () => {
     it('builds every strategy from the settings', () => {
         const simulation = new Simulation(settings);
-        const game = simulation.populations[0].games[0];
+        const episode = simulation.populations[0].episodes[0];
 
         expect(simulation.populations).toHaveLength(6);
-        expect(simulation.populations[0].games).toHaveLength(10);
-        expect(game.boardSize.width).toBe(12);
-        expect(game.snake.neuralNetwork.hiddenLayers).toEqual([6]);
+        expect(simulation.populations[0].episodes).toHaveLength(10);
+        expect(snakeGame(episode).boardSize.width).toBe(12);
+        expect(episode.brain.hiddenLayers).toEqual([6]);
     });
 
     it('trains only while running', () => {
@@ -66,7 +70,20 @@ describe('Simulation', () => {
 
         simulation.configure({ ...settings, replayMovesPerSecond: 30, boardSize: 15 });
         expect(simulation.populations[0]).not.toBe(before);
-        expect(simulation.populations[0].boardSize.width).toBe(15);
+        expect(snakeGame(simulation.populations[0].episodes[0]).boardSize.width).toBe(15);
+    });
+
+    it('switches every strategy to another game with the same algorithms', () => {
+        const simulation = new Simulation(settings);
+
+        simulation.configure({ ...settings, game: 'cars' });
+
+        simulation.populations.forEach((p) => {
+            expect(p.game.id).toBe('cars');
+            expect(p.episodes[0].brain.inputsNodes).toBe(8);
+        });
+        simulation.tick();
+        expect(simulation.toState().populations[0].replay.view.kind).toBe('cars');
     });
 
     it('keeps its settings when the new ones are invalid', () => {
@@ -78,7 +95,7 @@ describe('Simulation', () => {
 
     it('moves the replays at the configured pace, only while running', () => {
         const simulation = new Simulation(settings);
-        const replay = () => simulation.populations[0].bestGame.snake.lifetime;
+        const replay = () => snakeGame(simulation.populations[0].replay).snake.lifetime;
 
         simulation.stepReplays(1000);
         simulation.stepReplays(1050);

@@ -1,11 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import BoardSize from '../rule/BoardSize';
+import type SnakeEpisode from '../game/snake/SnakeEpisode';
+import { createSnakeGame } from '../game/snake/SnakeEpisode';
 import { stepInLockstep } from './lockstep';
 import Population from './Population';
 import ClassicGa from './strategy/ClassicGa';
 
-const create = () => new Population(3, new BoardSize(20, 20), new ClassicGa(0.1), 1);
-const finish = (p: Population) => [...p.games, p.bestGame].forEach((g) => (g.snake.alive = false));
+const create = () => new Population(3, createSnakeGame(20), new ClassicGa(0.1), 1);
+const snakes = (p: Population) => [...p.episodes, p.replay].map((e) => (e as SnakeEpisode).game.snake);
+const finish = (p: Population) => snakes(p).forEach((s) => (s.alive = false));
+const lifetime = (p: Population) => snakes(p)[0].lifetime;
 
 describe('stepInLockstep', () => {
     it('waits for every population to finish before starting the next generation', () => {
@@ -20,7 +23,7 @@ describe('stepInLockstep', () => {
         stepInLockstep([fast, slow]);
         expect([fast.generation, slow.generation]).toEqual([2, 2]);
         // The new generation already made its first move.
-        expect(fast.games[0].snake.lifetime).toBe(1);
+        expect(lifetime(fast)).toBe(1);
     });
 
     it('lets a population that fell behind catch up while the others wait', () => {
@@ -29,11 +32,11 @@ describe('stepInLockstep', () => {
         finish(ahead);
         stepInLockstep([ahead]);
         expect(ahead.generation).toBe(2);
-        const aheadLifetime = ahead.games[0].snake.lifetime;
+        const aheadLifetime = lifetime(ahead);
 
         stepInLockstep([ahead, behind]);
 
-        expect(ahead.games[0].snake.lifetime).toBe(aheadLifetime);
-        expect(behind.games[0].snake.lifetime).toBe(1);
+        expect(lifetime(ahead)).toBe(aheadLifetime);
+        expect(lifetime(behind)).toBe(1);
     });
 });

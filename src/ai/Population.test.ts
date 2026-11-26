@@ -1,30 +1,32 @@
 import { describe, expect, it } from 'vitest';
-import BoardSize from '../rule/BoardSize';
+import type { Episode } from '../game/Episode';
+import type SnakeEpisode from '../game/snake/SnakeEpisode';
+import { createSnakeGame } from '../game/snake/SnakeEpisode';
 import Population from './Population';
 import ClassicGa from './strategy/ClassicGa';
 
-const boardSize = new BoardSize(20, 20);
+const snakeGame = createSnakeGame(20);
+const snakeOf = (episode: Episode) => (episode as SnakeEpisode).game.snake;
 
 describe('Population', () => {
     it('mutates children with the strategy mutation rate', () => {
-        const population = new Population(10, boardSize, new ClassicGa(1));
+        const population = new Population(10, snakeGame, new ClassicGa(1));
 
         population.calculateFitness();
-        const parentWeights = population.games.map((g) => g.snake.neuralNetwork.weights[0].matrix[0][0]);
+        const parentWeights = population.episodes.map((e) => e.brain.weights[0].matrix[0][0]);
 
         population.naturalSelection();
 
-        // games[0] is the untouched best clone; every other child is mutated at rate 1.
-        const child = population.games[1].snake;
-        expect(parentWeights).not.toContain(child.neuralNetwork.weights[0].matrix[0][0]);
+        // episodes[0] is the untouched best clone; every other child is mutated at rate 1.
+        expect(parentWeights).not.toContain(population.episodes[1].brain.weights[0].matrix[0][0]);
     });
 
-    it('sums fitness over every game of the generation', () => {
-        const population = new Population(5, boardSize, new ClassicGa(0));
+    it('sums fitness over every episode of the generation', () => {
+        const population = new Population(5, snakeGame, new ClassicGa(0));
         population.calculateFitness();
         population.naturalSelection();
         population.calculateFitness();
-        const expected = population.games.reduce((sum, g) => sum + g.snake.fitness, 0);
+        const expected = population.episodes.reduce((sum, e) => sum + e.fitness(), 0);
 
         population.naturalSelection();
 
@@ -32,70 +34,73 @@ describe('Population', () => {
     });
 
     it('records the best score of each generation and keeps its size', () => {
-        const population = new Population(4, boardSize, new ClassicGa(0.1));
+        const population = new Population(4, snakeGame, new ClassicGa(0.1));
         population.calculateFitness();
         population.naturalSelection();
 
         expect(population.history).toHaveLength(1);
-        expect(population.games).toHaveLength(4);
+        expect(population.episodes).toHaveLength(4);
         expect(population.generation).toBe(2);
     });
 
-    it('gives every game of a generation the same seed, shared between populations', () => {
-        const a = new Population(3, boardSize, new ClassicGa(0.1), 7);
-        const b = new Population(3, boardSize, new ClassicGa(0.1), 7);
+    it('gives every episode of a generation the same seed, shared between populations', () => {
+        const a = new Population(3, snakeGame, new ClassicGa(0.1), 7);
+        const b = new Population(3, snakeGame, new ClassicGa(0.1), 7);
         a.calculateFitness();
         a.naturalSelection();
 
-        const seeds = new Set(a.games.map((g) => g.seed));
+        const seeds = new Set(a.episodes.map((e) => e.seed));
         expect(seeds.size).toBe(1);
-        expect(b.games[0].seed).not.toBe(a.games[0].seed);
+        expect(b.episodes[0].seed).not.toBe(a.episodes[0].seed);
         b.calculateFitness();
         b.naturalSelection();
-        expect(b.games[0].seed).toBe(a.games[0].seed);
+        expect(b.episodes[0].seed).toBe(a.episodes[0].seed);
     });
 });
 
 describe('Population network size', () => {
-    it('builds the first generation with the requested hidden layer, kept by the next ones', () => {
-        const population = new Population(4, boardSize, new ClassicGa(0.1), 1, 8);
-        expect(population.games[0].snake.neuralNetwork.hiddenLayers).toEqual([8]);
+    it('builds the first generation with the game inputs/outputs and the requested hidden layer', () => {
+        const population = new Population(4, snakeGame, new ClassicGa(0.1), 1, 8);
+        const brain = population.episodes[0].brain;
+        expect([brain.inputsNodes, brain.hiddenLayers, brain.outputsNodes]).toEqual([24, [8], 3]);
 
         population.calculateFitness();
         population.naturalSelection();
 
-        expect(population.games[1].snake.neuralNetwork.hiddenLayers).toEqual([8]);
+        expect(population.episodes[1].brain.hiddenLayers).toEqual([8]);
     });
 });
 
 describe('Population replay', () => {
     it('is not stepped by training and does not hold a generation back', () => {
-        const population = new Population(3, boardSize, new ClassicGa(0.1));
-        population.games.forEach((g) => (g.snake.alive = false));
+        const population = new Population(3, snakeGame, new ClassicGa(0.1));
+        population.episodes.forEach((e) => (snakeOf(e).alive = false));
 
         population.update();
 
-        expect(population.bestGame.snake.lifetime).toBe(0);
+        expect(snakeOf(population.replay).lifetime).toBe(0);
         expect(population.done()).toBe(true);
     });
 
     it('moves one step per stepReplay and restarts once over', () => {
-        const population = new Population(3, boardSize, new ClassicGa(0.1));
+        const population = new Population(3, snakeGame, new ClassicGa(0.1));
 
         population.stepReplay();
-        expect(population.bestGame.snake.lifetime).toBe(1);
+        expect(snakeOf(population.replay).lifetime).toBe(1);
 
-        population.bestGame.snake.alive = false;
+        snakeOf(population.replay).alive = false;
         population.stepReplay();
-        expect(population.bestGame.finish()).toBe(false);
-        expect(population.bestGame.snake.lifetime).toBe(1);
+        expect(population.replay.finished()).toBe(false);
+        expect(snakeOf(population.replay).lifetime).toBe(1);
     });
-});
 
-describe('Population first generation', () => {
-    it('replays the best game separately from games[0]', () => {
-        const population = new Population(3, boardSize, new ClassicGa(0));
+    it('replays the record episode with its own seed', () => {
+        const population = new Population(3, snakeGame, new ClassicGa(0.1));
+        expect(population.replay).not.toBe(population.episodes[0]);
 
-        expect(population.bestGame).not.toBe(population.games[0]);
+        population.calculateFitness();
+        population.naturalSelection();
+
+        expect(population.replay.seed).not.toBe(population.episodes[0].seed);
     });
 });

@@ -333,3 +333,40 @@ button {
 .food {
     background-color: $foodColor;
 }
+
+.cars-view {
+    display: block;
+    background: $emptyColor;
+    border: 1px solid $border;
+
+    .asphalt {
+        fill: #2a2f3a;
+        stroke: $muted;
+        stroke-width: 0.6;
+    }
+
+    .infield {
+        fill: $emptyColor;
+        stroke: $muted;
+        stroke-width: 0.6;
+    }
+
+    .start-line {
+        stroke: $text;
+        stroke-width: 1;
+        stroke-dasharray: 1 1;
+    }
+
+    .ray {
+        stroke: rgba($accent, 0.35);
+        stroke-width: 0.4;
+    }
+
+    .car {
+        fill: $headColor;
+    }
+
+    .car.crashed {
+        fill: $danger;
+    }
+}
