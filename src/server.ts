@@ -2,11 +2,7 @@ import * as SocketIo from 'socket.io';
 import { createServer } from 'http';
 import { stepInLockstep } from './ai/lockstep';
 import Population from './ai/Population';
-import ClassicGa from './ai/strategy/ClassicGa';
-import DeepGa from './ai/strategy/DeepGa';
-import MapElites from './ai/strategy/MapElites';
-import OpenAiEs from './ai/strategy/OpenAiEs';
-import SepCmaEs from './ai/strategy/SepCmaEs';
+import { createStrategies } from './ai/strategy/registry';
 import { randomSeed } from './utils/SeededRandom';
 import BoardSize from './rule/BoardSize';
 import { envNumber } from './utils/env';
@@ -38,15 +34,9 @@ httpServer.listen(port, host, () => {
 const boardSize = new BoardSize(20, 20);
 // One base seed for all: at the same generation, every strategy plays the same food sequence.
 const baseSeed = randomSeed();
-const strategies = [
-    new ClassicGa(mutationRate),
-    new DeepGa(),
-    new OpenAiEs(),
-    new SepCmaEs(),
-    new MapElites('uniform'),
-    new MapElites('novelty'),
-];
-const populations = strategies.map((strategy) => new Population(populationSize, boardSize, strategy, baseSeed));
+const populations = createStrategies(mutationRate).map(
+    (strategy) => new Population(populationSize, boardSize, strategy, baseSeed),
+);
 const paused = new Set<string>();
 
 io.on('connection', (socket) => {

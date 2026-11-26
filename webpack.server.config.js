@@ -4,7 +4,8 @@ const path = require('path');
 
 module.exports = {
     entry: {
-        server: './src/server.ts'
+        server: './src/server.ts',
+        bench: './src/bench.ts',
     },
     target: 'node',
     // Optional native addons of ws, required inside try/catch.
