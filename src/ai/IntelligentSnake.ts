@@ -86,14 +86,6 @@ class IntelligentSnake extends EyedSnake {
         return new IntelligentSnake(this.boardSize, this.neuralNetwork.clone());
     }
 
-    public crossover(parent: IntelligentSnake): IntelligentSnake {
-        return new IntelligentSnake(this.boardSize, this.neuralNetwork.crossover(parent.neuralNetwork));
-    }
-
-    public mutate(mutationRate: number): void {
-        this.neuralNetwork.mutate(mutationRate);
-    }
-
     public toState(): IntelligentSnakeState {
         const state = super.toState();
 

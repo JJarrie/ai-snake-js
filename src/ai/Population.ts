@@ -1,20 +1,29 @@
 import BoardSize from '../rule/BoardSize';
 import IntelligentSnake from './IntelligentSnake';
 import Game, { type GameState } from '../rule/Game';
+import type EvolutionStrategy from './strategy/EvolutionStrategy';
+import { deriveSeed, randomSeed } from '../utils/SeededRandom';
 
 export interface PopulationState {
+    name: string;
     bestScore: number;
     generation: number;
     bestFitness: number;
     fitnessSum: number;
     bestGeneration: number;
     bestGame: GameState;
+    /** Best score of each finished generation. */
+    history: number[];
 }
 
 class Population {
-    mutationRate: number;
+    strategy: EvolutionStrategy;
+    boardSize: BoardSize;
+    /** Populations sharing a base seed play the same food sequence at the same generation. */
+    baseSeed: number;
     games: Game[];
     bestGame: Game;
+    history: number[] = [];
 
     bestScore = 0;
     generation = 1;
@@ -22,12 +31,14 @@ class Population {
     bestFitness = 0;
     fitnessSum = 0;
 
-    constructor(size: number, mutationRate: number, boardSize: BoardSize) {
-        this.mutationRate = mutationRate;
+    constructor(size: number, boardSize: BoardSize, strategy: EvolutionStrategy, baseSeed = randomSeed()) {
+        this.strategy = strategy;
+        this.boardSize = boardSize;
+        this.baseSeed = baseSeed;
         this.games = new Array<Game>(size);
 
         for (let i = 0; i < this.games.length; ++i) {
-            this.games[i] = new Game(boardSize);
+            this.games[i] = new Game(boardSize, undefined, this.generationSeed());
         }
 
         this.bestGame = this.games[0].cloneBrain();
@@ -68,44 +79,26 @@ class Population {
             this.bestGeneration = this.generation;
             this.bestFitness = maxFitnessOfGeneration;
             this.bestScore = this.games[maxIndex].score;
+            // Same seed as the record game, so the displayed best replays it exactly.
             this.bestGame = this.games[maxIndex].cloneBrain();
         }
     }
 
-    public pickParent(): IntelligentSnake {
-        const rand = Math.floor(Math.random() * this.fitnessSum);
-        let summation = 0;
-
-        for (const game of this.games) {
-            summation = summation + game.snake.fitness;
-            if (summation > rand) {
-                return game.snake;
-            }
-        }
-
-        return this.games[0].snake;
-    }
-
     public naturalSelection(): void {
-        const games = new Array<Game>();
-
         this.electBestSnake();
         this.calculateFitnessSum();
+        this.history.push(this.games.reduce((max, game) => Math.max(max, game.score), 0));
 
         this.bestGame.reset();
-        games[0] = this.bestGame.cloneBrain();
 
-        for (let i = 1; i < this.games.length; ++i) {
-            const parent = this.pickParent();
-            const partner = this.pickParent();
-            const child = parent.crossover(partner);
-            child.mutate(this.mutationRate);
-            const newGame = new Game(this.games[i].boardSize, child);
-            games.push(newGame);
-        }
+        const brains = this.strategy.nextGeneration(
+            this.games.map((game) => ({ brain: game.snake.neuralNetwork, fitness: game.snake.fitness })),
+            this.bestGame.snake.neuralNetwork,
+        );
 
-        this.games = games;
         this.generation = this.generation + 1;
+        const seed = this.generationSeed();
+        this.games = brains.map((brain) => new Game(this.boardSize, new IntelligentSnake(this.boardSize, brain), seed));
     }
 
     public calculateFitness(): void {
@@ -114,13 +107,19 @@ class Population {
 
     public toState(): PopulationState {
         return {
+            name: this.strategy.name,
             bestFitness: this.bestFitness,
             bestGame: this.bestGame.toState(),
             bestScore: this.bestScore,
             fitnessSum: this.fitnessSum,
             generation: this.generation,
             bestGeneration: this.bestGeneration,
+            history: this.history,
         };
+    }
+
+    private generationSeed(): number {
+        return deriveSeed(this.baseSeed, this.generation);
     }
 
     private calculateFitnessSum(): void {

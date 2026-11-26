@@ -1,6 +1,7 @@
 import * as SocketIo from 'socket.io';
 import { createServer } from 'http';
 import Population from './ai/Population';
+import ClassicGa from './ai/strategy/ClassicGa';
 import BoardSize from './rule/BoardSize';
 import { envNumber } from './utils/env';
 
@@ -26,7 +27,7 @@ httpServer.listen(port, host, () => {
 });
 
 const boardSize = new BoardSize(20, 20);
-const population = new Population(populationSize, mutationRate, boardSize);
+const population = new Population(populationSize, boardSize, new ClassicGa(mutationRate));
 
 const EMIT_INTERVAL_MS = 33;
 let lastEmit = 0;
