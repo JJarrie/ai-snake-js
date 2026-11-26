@@ -46,22 +46,19 @@ class Population {
     }
 
     public done(): boolean {
-        for (const game of this.games) {
-            if (!game.finish()) {
-                return false;
-            }
-
-            if (!this.bestGame.finish()) {
-                return false;
-            }
-        }
-
-        return true;
+        return this.games.every((game) => game.finish());
     }
 
     public update(): void {
-        Population.updateSingle(this.bestGame);
         this.games.forEach((game) => Population.updateSingle(game));
+    }
+
+    /** One move of the record replay, which runs at display pace, apart from training; loops once over. */
+    public stepReplay(): void {
+        if (this.bestGame.finish()) {
+            this.bestGame.reset();
+        }
+        Population.updateSingle(this.bestGame);
     }
 
     public electBestSnake(): void {
@@ -89,8 +86,6 @@ class Population {
         this.electBestSnake();
         this.calculateFitnessSum();
         this.history.push(this.games.reduce((max, game) => Math.max(max, game.score), 0));
-
-        this.bestGame.reset();
 
         const brains = this.strategy.nextGeneration(
             this.games.map((game) => ({
