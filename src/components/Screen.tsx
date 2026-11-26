@@ -4,7 +4,7 @@ import type State from '../store/State';
 import type { StrategyState } from '../store/State';
 import ArchiveMap from './ArchiveMap';
 import Board from './Board';
-import PopulationDetail from './PopulationDetail';
+import GameDisplayer from './GameDisplayer';
 import ScoreChart from './ScoreChart';
 
 const COLORS = ['#e6194b', '#3cb44b', '#4363d8', '#f58231', '#911eb4', '#008080'];
@@ -15,20 +15,23 @@ interface ScreenProps {
 }
 
 const Screen = ({ populations, onToggle }: ScreenProps) => {
-    const [selected, setSelected] = React.useState(0);
-
-    if (populations === undefined) {
+    if (populations === undefined || populations.length === 0) {
         return null;
     }
 
-    const detail = populations[selected] ?? populations[0];
+    // The big board replays the record game of the strategy holding the best score so far.
+    const leader = populations.reduce((best, p, k) => (p.bestScore > populations[best].bestScore ? k : best), 0);
 
     return (
-        <div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-start' }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-start' }}>
+            <div style={{ margin: '10px' }}>
+                <h2 style={{ color: COLORS[leader % COLORS.length], margin: 0 }}>{populations[leader].name}</h2>
+                <GameDisplayer game={populations[leader].bestGame} />
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-start', flex: 1 }}>
                 <ScoreChart populations={populations} colors={COLORS} />
                 {populations.map((p, k) => (
-                    <div key={p.name} className={`strategy${k === selected ? ' selected' : ''}`}>
+                    <div key={p.name} className={`strategy${k === leader ? ' leader' : ''}`}>
                         <h3 style={{ color: COLORS[k % COLORS.length] }}>{p.name}</h3>
                         <label>
                             <input
@@ -42,20 +45,13 @@ const Screen = ({ populations, onToggle }: ScreenProps) => {
                         <div>
                             Generation {p.generation} · Best score {p.bestScore}
                         </div>
-                        <button
-                            type="button"
-                            className="mini"
-                            aria-pressed={k === selected}
-                            aria-label={`Show details of ${p.name}`}
-                            onClick={() => setSelected(k)}
-                        >
+                        <div className="mini">
                             <Board grid={p.bestGame.grid} />
-                        </button>
+                        </div>
                         {p.archive && <ArchiveMap archive={p.archive} color={COLORS[k % COLORS.length]} />}
                     </div>
                 ))}
             </div>
-            <PopulationDetail population={detail} />
         </div>
     );
 };
