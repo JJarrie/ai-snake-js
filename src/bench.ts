@@ -18,6 +18,7 @@ interface Options {
     game: GameId;
     boardSize: number;
     obstacles: boolean;
+    recurrent: boolean;
 }
 
 interface Task {
@@ -48,6 +49,7 @@ const readOptions = (): Options => {
     return {
         game,
         obstacles: process.env.BENCH_OBSTACLES === '1',
+        recurrent: process.env.BENCH_RECURRENT === '1',
         boardSize: envNumber('BOARD_SIZE', 20, SETTING_LIMITS.boardSize.min, SETTING_LIMITS.boardSize.max),
         runs: envNumber('BENCH_RUNS', 5, 1, 1000),
         generations: envNumber('BENCH_GENERATIONS', 50, 1, 100000),
@@ -68,7 +70,14 @@ const work = (): void => {
     const start = Date.now();
     // Run i uses seed i + 1 for every strategy: runs are paired on the same worlds (food, tracks, obstacles).
     const game = createGame(options.game, options.boardSize, options.obstacles);
-    const history = runOnce(strategy, game, options.populationSize, options.generations, task.run + 1);
+    const history = runOnce(
+        strategy,
+        game,
+        options.populationSize,
+        options.generations,
+        task.run + 1,
+        options.recurrent,
+    );
     parentPort?.postMessage({ ...task, history, ms: Date.now() - start } satisfies Result);
 };
 
@@ -125,7 +134,7 @@ const main = async (): Promise<void> => {
     );
     const workers = envNumber('BENCH_WORKERS', Math.max(1, availableParallelism() - 1), 1, 1024);
     console.log(
-        `${options.game}${options.obstacles ? ' with obstacles' : ''}: ${tasks.length} runs (${options.strategies.length} strategies x ${options.runs}), ` +
+        `${options.game}${options.obstacles ? ' with obstacles' : ''}${options.recurrent ? ', recurrent' : ''}:${tasks.length} runs (${options.strategies.length} strategies x ${options.runs}), ` +
             `${options.generations} generations of ${options.populationSize} individuals, ${workers} workers`,
     );
 

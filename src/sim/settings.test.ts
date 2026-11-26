@@ -9,6 +9,7 @@ const valid: Settings = {
     replayMovesPerSecond: 15,
     game: 'snake',
     obstacles: false,
+    recurrent: false,
 };
 
 describe('validateSettings', () => {
@@ -29,6 +30,7 @@ describe('validateSettings', () => {
         ['a missing game', { ...valid, game: undefined }],
         ['obstacles that are not a boolean', { ...valid, obstacles: 'yes' }],
         ['missing obstacles', { ...valid, obstacles: undefined }],
+        ['recurrent that is not a boolean', { ...valid, recurrent: 1 }],
     ])('rejects %s', (_, input) => {
         expect(() => validateSettings(input)).toThrow();
     });
@@ -40,5 +42,6 @@ describe('requiresReset', () => {
         expect(requiresReset(valid, { ...valid, hiddenNeurons: 8 })).toBe(true);
         expect(requiresReset(valid, { ...valid, game: 'cars' })).toBe(true);
         expect(requiresReset(valid, { ...valid, obstacles: true })).toBe(true);
+        expect(requiresReset(valid, { ...valid, recurrent: true })).toBe(true);
     });
 });

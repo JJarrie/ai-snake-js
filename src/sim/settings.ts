@@ -19,11 +19,16 @@ export const SETTING_LIMITS = {
 } satisfies Record<string, Limit>;
 
 export type SettingKey = keyof typeof SETTING_LIMITS;
+
+/** On/off settings: random obstacles in the game, memory (recurrent network) in the agents. */
+export const SWITCH_KEYS = ['obstacles', 'recurrent'] as const;
+export type SwitchKey = (typeof SWITCH_KEYS)[number];
+
 /**
- * The game being trained, whether its random obstacles are on, plus the numeric settings.
- * Changing the game or the obstacles restarts the training.
+ * The game being trained, the switches, plus the numeric settings.
+ * Changing the game or a switch restarts the training.
  */
-export type Settings = Record<SettingKey, number> & { game: GameId; obstacles: boolean };
+export type Settings = Record<SettingKey, number> & Record<SwitchKey, boolean> & { game: GameId };
 
 export const SETTING_KEYS = Object.keys(SETTING_LIMITS) as SettingKey[];
 
@@ -37,9 +42,14 @@ export const validateSettings = (input: unknown): Settings => {
     if (!isGameId(values.game)) {
         throw new Error(`game must be one of ${GAME_IDS.join(', ')}`);
     }
-    if (typeof values.obstacles !== 'boolean') {
-        throw new Error('obstacles must be true or false');
-    }
+    const switches = Object.fromEntries(
+        SWITCH_KEYS.map((key) => {
+            if (typeof values[key] !== 'boolean') {
+                throw new Error(`${key} must be true or false`);
+            }
+            return [key, values[key]];
+        }),
+    ) as Record<SwitchKey, boolean>;
 
     const numbers = Object.fromEntries(
         SETTING_KEYS.map((key) => {
@@ -56,10 +66,10 @@ export const validateSettings = (input: unknown): Settings => {
         }),
     ) as Record<SettingKey, number>;
 
-    return { ...numbers, game: values.game, obstacles: values.obstacles };
+    return { ...numbers, ...switches, game: values.game };
 };
 
 export const requiresReset = (current: Settings, next: Settings): boolean =>
     current.game !== next.game ||
-    current.obstacles !== next.obstacles ||
+    SWITCH_KEYS.some((key) => current[key] !== next[key]) ||
     SETTING_KEYS.some((key) => !(SETTING_LIMITS[key] as Limit).live && current[key] !== next[key]);

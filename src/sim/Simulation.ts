@@ -99,13 +99,13 @@ class Simulation {
     }
 
     private createPopulations(): Population[] {
-        const { populationSize, mutationRate, boardSize, hiddenNeurons } = this.settings;
+        const { populationSize, mutationRate, boardSize, hiddenNeurons, recurrent } = this.settings;
         const game = createGame(this.settings.game, boardSize, this.settings.obstacles);
         // One base seed for all: at the same generation, every strategy faces the same world.
         const baseSeed = randomSeed();
 
         return createStrategies(mutationRate).map(
-            (strategy) => new Population(populationSize, game, strategy, baseSeed, hiddenNeurons),
+            (strategy) => new Population(populationSize, game, strategy, baseSeed, hiddenNeurons, recurrent),
         );
     }
 }
