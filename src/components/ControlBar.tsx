@@ -3,12 +3,13 @@ import type { Control } from '../sim/Simulation';
 import type { Commands } from './commands';
 
 interface ControlBarProps {
+    gameName: string;
     running: boolean;
     generation: number;
     commands: Commands;
 }
 
-const ControlBar = ({ running, generation, commands }: ControlBarProps) => {
+const ControlBar = ({ gameName, running, generation, commands }: ControlBarProps) => {
     const [error, setError] = React.useState<string>();
 
     const run = async (action: Control) => setError(await commands.control(action));
@@ -21,7 +22,7 @@ const ControlBar = ({ running, generation, commands }: ControlBarProps) => {
 
     return (
         <header className="control-bar">
-            <h1>Snake neuroevolution</h1>
+            <h1>Neuroevolution · {gameName}</h1>
             <span className={`status ${running ? 'running' : 'paused'}`} role="status">
                 {running ? 'Running' : 'Paused'} · generation {generation}
             </span>

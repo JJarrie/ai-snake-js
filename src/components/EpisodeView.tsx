@@ -1,6 +1,7 @@
 import * as React from 'react';
 import type { EpisodeState } from '../game/Episode';
 import Board from './Board';
+import CarsView from './CarsView';
 
 interface EpisodeViewProps {
     episode: EpisodeState;
@@ -14,6 +15,8 @@ const EpisodeView = ({ episode, size, label }: EpisodeViewProps) => {
     switch (episode.view.kind) {
         case 'snake':
             return <Board grid={episode.view.grid} size={size} label={label} />;
+        case 'cars':
+            return <CarsView view={episode.view} size={size} label={label} />;
     }
 };
 

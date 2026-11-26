@@ -2,6 +2,7 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 import type { SimulationState } from '../sim/Simulation';
 import type State from '../store/State';
+import { GAME_NAMES } from '../game/registry';
 import EpisodeView from './EpisodeView';
 import { colorOf, type Commands } from './commands';
 import ControlBar from './ControlBar';
@@ -28,6 +29,7 @@ const Screen = ({ simulation, commands }: ScreenProps) => {
     return (
         <div className="app">
             <ControlBar
+                gameName={GAME_NAMES[settings.game]}
                 running={running}
                 generation={Number.isFinite(generation) ? generation : champion.generation}
                 commands={commands}
