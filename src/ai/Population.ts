@@ -14,6 +14,7 @@ export interface PopulationState {
     bestGame: GameState;
     /** Best score of each finished generation. */
     history: number[];
+    archive?: (number | null)[][];
 }
 
 class Population {
@@ -92,7 +93,11 @@ class Population {
         this.bestGame.reset();
 
         const brains = this.strategy.nextGeneration(
-            this.games.map((game) => ({ brain: game.snake.neuralNetwork, fitness: game.snake.fitness })),
+            this.games.map((game) => ({
+                brain: game.snake.neuralNetwork,
+                fitness: game.snake.fitness,
+                behavior: game.snake.behavior(),
+            })),
             this.bestGame.snake.neuralNetwork,
         );
 
@@ -115,6 +120,7 @@ class Population {
             generation: this.generation,
             bestGeneration: this.bestGeneration,
             history: this.history,
+            archive: this.strategy.archive?.(),
         };
     }
 

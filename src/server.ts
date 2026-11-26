@@ -3,7 +3,9 @@ import { createServer } from 'http';
 import Population from './ai/Population';
 import ClassicGa from './ai/strategy/ClassicGa';
 import DeepGa from './ai/strategy/DeepGa';
+import MapElites from './ai/strategy/MapElites';
 import OpenAiEs from './ai/strategy/OpenAiEs';
+import SepCmaEs from './ai/strategy/SepCmaEs';
 import { randomSeed } from './utils/SeededRandom';
 import BoardSize from './rule/BoardSize';
 import { envNumber } from './utils/env';
@@ -33,7 +35,7 @@ httpServer.listen(port, host, () => {
 const boardSize = new BoardSize(20, 20);
 // One base seed for all: at the same generation, every strategy plays the same food sequence.
 const baseSeed = randomSeed();
-const populations = [new ClassicGa(mutationRate), new DeepGa(), new OpenAiEs()].map(
+const populations = [new ClassicGa(mutationRate), new DeepGa(), new OpenAiEs(), new SepCmaEs(), new MapElites()].map(
     (strategy) => new Population(populationSize, boardSize, strategy, baseSeed),
 );
 const paused = new Set<string>();

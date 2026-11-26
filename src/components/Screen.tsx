@@ -2,6 +2,7 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 import type State from '../store/State';
 import type { StrategyState } from '../store/State';
+import ArchiveMap from './ArchiveMap';
 import Board from './Board';
 import PopulationDetail from './PopulationDetail';
 import ScoreChart from './ScoreChart';
@@ -50,6 +51,7 @@ const Screen = ({ populations, onToggle }: ScreenProps) => {
                         >
                             <Board grid={p.bestGame.grid} />
                         </button>
+                        {p.archive && <ArchiveMap archive={p.archive} color={COLORS[k % COLORS.length]} />}
                     </div>
                 ))}
             </div>
