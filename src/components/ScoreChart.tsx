@@ -1,51 +1,74 @@
 import * as React from 'react';
-import type { StrategyState } from '../store/State';
+import type { StrategyState } from '../sim/Simulation';
+import { colorOf } from './commands';
 
-const WIDTH = 600;
-const HEIGHT = 200;
-const PADDING = 30;
+const WIDTH = 640;
+const HEIGHT = 280;
+const LEFT = 40;
+const RIGHT = 12;
+const TOP = 12;
+const BOTTOM = 32;
+
+/** About `count` round tick values from 0 to `max`. */
+const ticks = (max: number, count: number): number[] => {
+    const step = Math.max(1, Math.ceil(max / count));
+
+    return [...Array(Math.floor(max / step) + 1)].map((_, i) => i * step);
+};
 
 interface ScoreChartProps {
     populations: StrategyState[];
-    colors: string[];
 }
 
 /** Best score per generation, one line per strategy, on shared axes. */
-const ScoreChart = ({ populations, colors }: ScoreChartProps) => {
-    const maxGeneration = Math.max(2, ...populations.map((p) => p.history.length));
-    const maxScore = Math.max(1, ...populations.flatMap((p) => p.history));
-    const x = (i: number) => PADDING + (i / (maxGeneration - 1)) * (WIDTH - 2 * PADDING);
-    const y = (score: number) => HEIGHT - PADDING - (score / maxScore) * (HEIGHT - 2 * PADDING);
+const ScoreChart = ({ populations }: ScoreChartProps) => {
+    const generations = Math.max(1, ...populations.map((p) => p.history.length));
+    const maxScore = Math.max(5, ...populations.flatMap((p) => p.history));
+    const x = (i: number) => LEFT + (generations > 1 ? (i / (generations - 1)) * (WIDTH - LEFT - RIGHT) : 0);
+    const y = (score: number) => HEIGHT - BOTTOM - (score / maxScore) * (HEIGHT - TOP - BOTTOM);
 
     return (
-        <svg
-            width={WIDTH}
-            height={HEIGHT}
-            role="img"
-            aria-label="Best score per generation for each strategy"
-            style={{ margin: '10px' }}
-        >
-            <line x1={PADDING} y1={HEIGHT - PADDING} x2={WIDTH - PADDING} y2={HEIGHT - PADDING} stroke="gray" />
-            <line x1={PADDING} y1={PADDING} x2={PADDING} y2={HEIGHT - PADDING} stroke="gray" />
-            <text x={PADDING - 5} y={PADDING} textAnchor="end" fontSize={12}>
-                {maxScore}
-            </text>
-            <text x={PADDING - 5} y={HEIGHT - PADDING} textAnchor="end" fontSize={12}>
-                0
-            </text>
-            <text x={WIDTH - PADDING} y={HEIGHT - PADDING + 15} textAnchor="end" fontSize={12}>
-                Generation {maxGeneration}
-            </text>
-            {populations.map((p, k) => (
-                <polyline
-                    key={p.name}
-                    fill="none"
-                    stroke={colors[k % colors.length]}
-                    strokeWidth={1.5}
-                    points={p.history.map((score, i) => `${x(i)},${y(score)}`).join(' ')}
-                />
-            ))}
-        </svg>
+        <figure className="panel chart">
+            <figcaption>Best score per generation</figcaption>
+            <svg viewBox={`0 0 ${WIDTH} ${HEIGHT}`} role="img" aria-label="Best score per generation for each strategy">
+                {ticks(maxScore, 5).map((score) => (
+                    <g key={`y_${score}`}>
+                        <line x1={LEFT} x2={WIDTH - RIGHT} y1={y(score)} y2={y(score)} className="grid-line" />
+                        <text x={LEFT - 6} y={y(score) + 4} textAnchor="end" className="tick">
+                            {score}
+                        </text>
+                    </g>
+                ))}
+                {ticks(generations, 6)
+                    .filter((g) => g >= 1)
+                    .map((g) => (
+                        <text key={`x_${g}`} x={x(g - 1)} y={HEIGHT - BOTTOM + 16} textAnchor="middle" className="tick">
+                            {g}
+                        </text>
+                    ))}
+                <text x={WIDTH - RIGHT} y={HEIGHT - 2} textAnchor="end" className="tick">
+                    generation
+                </text>
+                {populations.map((p, k) => (
+                    <polyline
+                        key={p.name}
+                        fill="none"
+                        stroke={colorOf(k)}
+                        strokeWidth={2}
+                        strokeOpacity={p.paused ? 0.35 : 1}
+                        points={p.history.map((score, i) => `${x(i)},${y(score)}`).join(' ')}
+                    />
+                ))}
+            </svg>
+            <ul className="legend">
+                {populations.map((p, k) => (
+                    <li key={p.name}>
+                        <span className="swatch" style={{ background: colorOf(k) }} />
+                        {p.name}
+                    </li>
+                ))}
+            </ul>
+        </figure>
     );
 };
 

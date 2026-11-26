@@ -14,7 +14,7 @@ const ArchiveMap = ({ archive, color }: ArchiveMapProps) => {
     const size = archive.length * CELL;
 
     return (
-        <figure style={{ margin: '5px 0' }}>
+        <figure className="archive">
             <svg
                 width={size}
                 height={size}
@@ -30,7 +30,7 @@ const ArchiveMap = ({ archive, color }: ArchiveMapProps) => {
                             y={(archive.length - 1 - y) * CELL}
                             width={CELL - 1}
                             height={CELL - 1}
-                            fill={fitness === null ? '#eee' : color}
+                            fill={fitness === null ? '#262b36' : color}
                             fillOpacity={fitness === null ? 1 : 0.15 + (0.85 * Math.log10(1 + fitness)) / maxLog}
                         >
                             <title>{fitness === null ? 'empty' : `fitness ${Math.round(fitness)}`}</title>
@@ -38,7 +38,7 @@ const ArchiveMap = ({ archive, color }: ArchiveMapProps) => {
                     )),
                 )}
             </svg>
-            <figcaption style={{ fontSize: 12 }}>
+            <figcaption>
                 → turn rate, ↑ left share · {filled.length}/{archive.length ** 2} cells
             </figcaption>
         </figure>

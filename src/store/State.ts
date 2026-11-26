@@ -1,13 +1,8 @@
-import BoardSize from '../rule/BoardSize';
-import type { PopulationState } from '../ai/Population';
-
-export interface StrategyState extends PopulationState {
-    paused: boolean;
-}
+import type { SimulationState } from '../sim/Simulation';
 
 interface State {
-    populations?: StrategyState[];
-    boardSize: BoardSize;
+    /** Undefined until the server sends its first update. */
+    simulation?: SimulationState;
 }
 
 export default State;
