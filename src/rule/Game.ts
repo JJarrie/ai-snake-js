@@ -6,8 +6,8 @@ import Position from './Position';
 import SquareValue from './SquareValue';
 import { deriveSeed, randomSeed, seededRandom } from '../utils/SeededRandom';
 
-/** One wall segment (2 to 4 cells) per this many cells: 8 segments on a 20 x 20 board. */
-const OBSTACLE_CELLS_PER_SEGMENT = 50;
+/** One wall segment (2 to 4 cells) per this many cells: 4 segments on a 20 x 20 board. */
+const OBSTACLE_CELLS_PER_SEGMENT = 100;
 /** No wall within this many cells of the snake's start. */
 const SAFE_RADIUS = 3;
 

@@ -52,7 +52,7 @@ describe('track', () => {
 describe('cones', () => {
     it('are part of the seeded track, on the track and spread out', () => {
         const track = createTrack(7);
-        expect(track.cones).toHaveLength(12);
+        expect(track.cones).toHaveLength(8);
         expect(track.cones).toEqual(createTrack(7).cones);
 
         track.cones.forEach((cone) => {

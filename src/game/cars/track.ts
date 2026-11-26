@@ -18,7 +18,7 @@ export interface Track {
 
 export const TRACK_SEGMENTS = 120;
 export const CONE_RADIUS = 1.5;
-const CONES = 12;
+const CONES = 8;
 /** Segments after the start line left free of cones. */
 const CONE_FREE_START = 8;
 /** Cones sit at most this far from the centre line, so a car always fits on one side. */

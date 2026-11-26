@@ -28,7 +28,7 @@ describe('Game obstacles', () => {
         expect(new Game(board, undefined, 3).obstacleKeys.size).toBe(0);
 
         const a = new Game(board, undefined, 3, true);
-        expect(a.obstacleKeys.size).toBeGreaterThan(8);
+        expect(a.obstacleKeys.size).toBeGreaterThan(3);
         expect([...a.obstacleKeys]).toEqual([...new Game(board, undefined, 3, true).obstacleKeys]);
         expect([...a.obstacleKeys]).not.toEqual([...new Game(board, undefined, 4, true).obstacleKeys]);
     });
