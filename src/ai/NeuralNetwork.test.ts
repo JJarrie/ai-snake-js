@@ -21,6 +21,14 @@ describe('recurrent NeuralNetwork', () => {
         expect(network.toVector()).toHaveLength(6 * 11 + 2 * 7);
     });
 
+    it('starts with small memory weights, so the sensors drive the first decisions', () => {
+        const network = new NeuralNetwork(4, [6], 2, undefined, true);
+
+        network.weights[0].matrix.forEach((row) => {
+            row.slice(4, 10).forEach((w) => expect(Math.abs(w)).toBeLessThanOrEqual(0.1));
+        });
+    });
+
     it('keeps its memory bounded over long episodes', () => {
         for (let n = 0; n < 10; ++n) {
             const network = new NeuralNetwork(24, [16], 3, undefined, true);

@@ -1,5 +1,8 @@
 import Matrix from '../utils/Matrix';
 
+/** Initial scale of the memory (state to first layer) weights, relative to the others. */
+const RECURRENT_INIT_SCALE = 0.1;
+
 class Activation {
     public static relu(x: number): number {
         return Math.max(0, x);
@@ -49,6 +52,16 @@ class NeuralNetwork {
 
         for (const matrix of this.weights) {
             matrix.randomize();
+        }
+
+        if (recurrent) {
+            // Small initial memory weights: at full scale the looped-back state drowns the sensor inputs.
+            const first = this.weights[0];
+            first.matrix = first.matrix.map((row) =>
+                row.map((w, col) =>
+                    col >= this.inputsNodes && col < this.inputsNodes + memory ? w * RECURRENT_INIT_SCALE : w,
+                ),
+            );
         }
     }
 
