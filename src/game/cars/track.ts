@@ -12,9 +12,17 @@ export interface Track {
     left: Point[];
     right: Point[];
     halfWidth: number;
+    /** Cone positions, used only when obstacles are on. */
+    cones: Point[];
 }
 
 export const TRACK_SEGMENTS = 120;
+export const CONE_RADIUS = 1.5;
+const CONES = 8;
+/** Segments after the start line left free of cones. */
+const CONE_FREE_START = 8;
+/** Cones sit at most this far from the centre line, so a car always fits on one side. */
+const CONE_MAX_OFFSET = 4.5;
 const RADIUS = 100;
 const HALF_WIDTH = 7;
 /**
@@ -56,7 +64,38 @@ export const createTrack = (seed: number): Track => {
             return { x: c.x + side * nx * HALF_WIDTH, y: c.y + side * ny * HALF_WIDTH };
         });
 
-    return { center, left: offset(1), right: offset(-1), halfWidth: HALF_WIDTH };
+    const left = offset(1);
+
+    // Drawn after the waves, so they never change the track itself. One cone per stretch of
+    // track: two cones never share a segment and block both sides.
+    const stretch = (TRACK_SEGMENTS - CONE_FREE_START) / CONES;
+    const cones = [...Array(CONES)].map((_, i) => {
+        const segment = CONE_FREE_START + Math.floor(i * stretch + random() * (stretch - 2));
+        const side = (random() * 2 - 1) * CONE_MAX_OFFSET;
+        const c = center[segment];
+        const nx = (left[segment].x - c.x) / HALF_WIDTH;
+        const ny = (left[segment].y - c.y) / HALF_WIDTH;
+
+        return { x: c.x + nx * side, y: c.y + ny * side };
+    });
+
+    return { center, left, right: offset(-1), halfWidth: HALF_WIDTH, cones };
+};
+
+/** Distance along the ray (origin, unit direction) to the circle, 0 from inside, or Infinity if it misses. */
+export const rayCircleHit = (origin: Point, dx: number, dy: number, center: Point, radius: number): number => {
+    const ox = center.x - origin.x;
+    const oy = center.y - origin.y;
+    const along = ox * dx + oy * dy;
+    const squaredGap = ox * ox + oy * oy - along * along;
+    if (squaredGap > radius * radius) {
+        return Infinity;
+    }
+    const half = Math.sqrt(radius * radius - squaredGap);
+    if (along - half >= 0) {
+        return along - half;
+    }
+    return along + half >= 0 ? 0 : Infinity;
 };
 
 /** Distance from `p` to segment [a, b], and where its projection falls on it (0 at a, 1 at b). */

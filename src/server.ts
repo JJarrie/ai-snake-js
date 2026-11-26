@@ -19,6 +19,8 @@ const simulation = new Simulation(
         // Display pace of the record replays, independent of the training speed.
         replayMovesPerSecond: envSetting('REPLAY_MOVES_PER_SECOND', 'replayMovesPerSecond', 15),
         game: process.env.GAME ?? 'snake',
+        // OBSTACLES=1 turns them on at start-up; any other value or none leaves them off.
+        obstacles: process.env.OBSTACLES === '1',
     }),
 );
 

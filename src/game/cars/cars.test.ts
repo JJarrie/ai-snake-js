@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import Matrix from '../../utils/Matrix';
 import NeuralNetwork from '../../ai/NeuralNetwork';
 import CarsEpisode, { createCarsGame, RAY_ANGLES, RAY_RANGE } from './CarsEpisode';
-import { createTrack, projectOnSegment, rayHit, TRACK_SEGMENTS } from './track';
+import { createTrack, projectOnSegment, rayCircleHit, rayHit, TRACK_SEGMENTS } from './track';
 
 /** A network whose outputs are always (steer, throttle) before tanh: zero weights, output biases only. */
 const constantBrain = (steer: number, throttle: number): NeuralNetwork => {
@@ -46,6 +46,51 @@ describe('track', () => {
         expect(rayHit({ x: 5, y: -4 }, 0, 1, a, b)).toBeCloseTo(4);
         expect(rayHit({ x: 5, y: -4 }, 0, -1, a, b)).toBe(Infinity);
         expect(rayHit({ x: 20, y: -4 }, 0, 1, a, b)).toBe(Infinity);
+    });
+});
+
+describe('cones', () => {
+    it('are part of the seeded track, on the track and spread out', () => {
+        const track = createTrack(7);
+        expect(track.cones).toHaveLength(8);
+        expect(track.cones).toEqual(createTrack(7).cones);
+
+        track.cones.forEach((cone) => {
+            const nearest = Math.min(...track.center.map((c) => Math.hypot(c.x - cone.x, c.y - cone.y)));
+            expect(nearest).toBeLessThanOrEqual(4.5 + 0.5);
+        });
+        for (let i = 1; i < track.cones.length; ++i) {
+            const [a, b] = [track.cones[i - 1], track.cones[i]];
+            expect(Math.hypot(a.x - b.x, a.y - b.y)).toBeGreaterThan(6);
+        }
+    });
+
+    it('stop sensor rays', () => {
+        expect(rayCircleHit({ x: 0, y: 0 }, 1, 0, { x: 10, y: 0 }, 1.5)).toBeCloseTo(8.5);
+        expect(rayCircleHit({ x: 0, y: 0 }, -1, 0, { x: 10, y: 0 }, 1.5)).toBe(Infinity);
+        expect(rayCircleHit({ x: 0, y: 0 }, 0, 1, { x: 10, y: 0 }, 1.5)).toBe(Infinity);
+        expect(rayCircleHit({ x: 10, y: 0 }, 0, 1, { x: 10, y: 0 }, 1.5)).toBe(0);
+    });
+
+    it('crash the car only when obstacles are on', () => {
+        const brain = constantBrain(0, 5);
+        const free = new CarsEpisode(brain, 1);
+        const blocked = new CarsEpisode(brain, 1, true);
+        expect(free.cones).toHaveLength(0);
+
+        // A cone right in front of the car.
+        blocked.cones = [
+            {
+                x: blocked.position.x + Math.cos(blocked.heading) * 1,
+                y: blocked.position.y + Math.sin(blocked.heading) * 1,
+            },
+        ];
+        blocked.step();
+        free.step();
+
+        expect(blocked.crashed).toBe(true);
+        expect(free.crashed).toBe(false);
+        expect(blocked.toState().view).toMatchObject({ kind: 'cars', obstacles: true });
     });
 });
 

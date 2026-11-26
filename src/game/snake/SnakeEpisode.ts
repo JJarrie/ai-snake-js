@@ -14,8 +14,8 @@ export interface SnakeView {
 class SnakeEpisode implements Episode {
     game: Game;
 
-    constructor(boardSize: BoardSize, brain: NeuralNetwork, seed: number) {
-        this.game = new Game(boardSize, new IntelligentSnake(boardSize, brain), seed);
+    constructor(boardSize: BoardSize, brain: NeuralNetwork, seed: number, withObstacles = false) {
+        this.game = new Game(boardSize, new IntelligentSnake(boardSize, brain), seed, withObstacles);
     }
 
     get brain(): NeuralNetwork {
@@ -38,7 +38,7 @@ class SnakeEpisode implements Episode {
         if (this.finished()) {
             return;
         }
-        this.game.snake.look(this.game.food);
+        this.game.snake.look(this.game.food, this.game.obstacleKeys);
         this.game.snake.makeDecision();
         this.game.nextMove();
     }
@@ -63,13 +63,13 @@ class SnakeEpisode implements Episode {
     }
 }
 
-/** 8 directions x (food, body, wall) in; continue, left, right out. */
-export const createSnakeGame = (boardSize: number): GameDefinition => ({
+/** 8 directions x (food, body, wall) in; continue, left, right out. Obstacles are seen as walls. */
+export const createSnakeGame = (boardSize: number, withObstacles = false): GameDefinition => ({
     id: 'snake',
     name: 'Snake',
     inputs: 24,
     outputs: 3,
-    createEpisode: (brain, seed) => new SnakeEpisode(new BoardSize(boardSize, boardSize), brain, seed),
+    createEpisode: (brain, seed) => new SnakeEpisode(new BoardSize(boardSize, boardSize), brain, seed, withObstacles),
 });
 
 export default SnakeEpisode;

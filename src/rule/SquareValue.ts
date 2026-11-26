@@ -3,6 +3,7 @@ enum SquareValue {
     SNAKE,
     FOOD,
     HEAD,
+    WALL,
 }
 
 export default SquareValue;

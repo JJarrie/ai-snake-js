@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { RAY_ANGLES, type CarsView as CarsViewState } from '../game/cars/CarsEpisode';
-import { createTrack, type Point } from '../game/cars/track';
+import { CONE_RADIUS, createTrack, type Point } from '../game/cars/track';
 
 interface CarsViewProps {
     view: CarsViewState;
@@ -43,6 +43,10 @@ const CarsView = ({ view, size, label }: CarsViewProps) => {
                 y2={track.right[0].y}
                 className="start-line"
             />
+            {view.obstacles &&
+                track.cones.map((cone, i) => (
+                    <circle key={`cone_${i}`} cx={cone.x} cy={cone.y} r={CONE_RADIUS} className="cone" />
+                ))}
             {rays.map((length, i) => (
                 <line
                     key={`ray_${i}`}
