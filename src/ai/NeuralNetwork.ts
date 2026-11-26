@@ -64,6 +64,23 @@ class NeuralNetwork {
         );
     }
 
+    /** All weights flattened, for strategies that work on a parameter vector. */
+    public toVector(): number[] {
+        return this.weights.flatMap((w) => w.matrix.flat());
+    }
+
+    /** Same shape as this network, with weights read from `vector` (as produced by toVector). */
+    public fromVector(vector: number[]): NeuralNetwork {
+        let offset = 0;
+        const weights = this.weights.map((w) => {
+            const m = new Matrix(w.rows, w.cols);
+            m.matrix = m.matrix.map((row) => row.map(() => vector[offset++]));
+            return m;
+        });
+
+        return new NeuralNetwork(this.inputsNodes, this.hiddenLayers, this.outputsNodes, weights);
+    }
+
     public clone(): NeuralNetwork {
         return new NeuralNetwork(
             this.inputsNodes,
