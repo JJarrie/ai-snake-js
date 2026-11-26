@@ -10,6 +10,7 @@ const settings: Settings = {
     boardSize: 12,
     hiddenNeurons: 6,
     replayMovesPerSecond: 10,
+    game: 'snake',
 };
 
 const snakeGame = (episode: Episode) => (episode as SnakeEpisode).game;
@@ -70,6 +71,19 @@ describe('Simulation', () => {
         simulation.configure({ ...settings, replayMovesPerSecond: 30, boardSize: 15 });
         expect(simulation.populations[0]).not.toBe(before);
         expect(snakeGame(simulation.populations[0].episodes[0]).boardSize.width).toBe(15);
+    });
+
+    it('switches every strategy to another game with the same algorithms', () => {
+        const simulation = new Simulation(settings);
+
+        simulation.configure({ ...settings, game: 'cars' });
+
+        simulation.populations.forEach((p) => {
+            expect(p.game.id).toBe('cars');
+            expect(p.episodes[0].brain.inputsNodes).toBe(8);
+        });
+        simulation.tick();
+        expect(simulation.toState().populations[0].replay.view.kind).toBe('cars');
     });
 
     it('keeps its settings when the new ones are invalid', () => {

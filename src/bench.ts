@@ -4,7 +4,9 @@ import { join } from 'node:path';
 import { Worker, isMainThread, parentPort, workerData } from 'node:worker_threads';
 import { createStrategies } from './ai/strategy/registry';
 import { records, runOnce, summarize } from './bench/benchmark';
-import { createSnakeGame } from './game/snake/SnakeEpisode';
+import type { GameId } from './game/Episode';
+import { createGame, GAME_IDS, isGameId } from './game/registry';
+import { SETTING_LIMITS } from './sim/settings';
 import { envNumber } from './utils/env';
 
 interface Options {
@@ -13,6 +15,8 @@ interface Options {
     populationSize: number;
     mutationRate: number;
     strategies: string[];
+    game: GameId;
+    boardSize: number;
 }
 
 interface Task {
@@ -35,8 +39,14 @@ const readOptions = (): Options => {
     if (unknown.length > 0) {
         throw new Error(`Unknown BENCH_STRATEGIES ${unknown.join(', ')}; known: ${names.join(', ')}`);
     }
+    const game = process.env.BENCH_GAME ?? 'snake';
+    if (!isGameId(game)) {
+        throw new Error(`Unknown BENCH_GAME ${game}; known: ${GAME_IDS.join(', ')}`);
+    }
 
     return {
+        game,
+        boardSize: envNumber('BOARD_SIZE', 20, SETTING_LIMITS.boardSize.min, SETTING_LIMITS.boardSize.max),
         runs: envNumber('BENCH_RUNS', 5, 1, 1000),
         generations: envNumber('BENCH_GENERATIONS', 50, 1, 100000),
         populationSize: envNumber('BENCH_POPULATION', 300, 2, 100000),
@@ -54,8 +64,9 @@ const work = (): void => {
     }
 
     const start = Date.now();
-    // Run i uses seed i + 1 for every strategy: runs are paired on the same food sequences.
-    const history = runOnce(strategy, createSnakeGame(20), options.populationSize, options.generations, task.run + 1);
+    // Run i uses seed i + 1 for every strategy: runs are paired on the same worlds (food, tracks).
+    const game = createGame(options.game, options.boardSize);
+    const history = runOnce(strategy, game, options.populationSize, options.generations, task.run + 1);
     parentPort?.postMessage({ ...task, history, ms: Date.now() - start } satisfies Result);
 };
 
@@ -112,8 +123,8 @@ const main = async (): Promise<void> => {
     );
     const workers = envNumber('BENCH_WORKERS', Math.max(1, availableParallelism() - 1), 1, 1024);
     console.log(
-        `${tasks.length} runs (${options.strategies.length} strategies x ${options.runs}), ` +
-            `${options.generations} generations of ${options.populationSize} snakes, ${workers} workers`,
+        `${options.game}: ${tasks.length} runs (${options.strategies.length} strategies x ${options.runs}), ` +
+            `${options.generations} generations of ${options.populationSize} individuals, ${workers} workers`,
     );
 
     const results: Result[] = [];

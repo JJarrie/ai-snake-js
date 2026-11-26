@@ -18,6 +18,7 @@ const simulation = new Simulation(
         hiddenNeurons: envSetting('HIDDEN_NEURONS', 'hiddenNeurons', 16),
         // Display pace of the record replays, independent of the training speed.
         replayMovesPerSecond: envSetting('REPLAY_MOVES_PER_SECOND', 'replayMovesPerSecond', 15),
+        game: process.env.GAME ?? 'snake',
     }),
 );
 

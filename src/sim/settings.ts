@@ -1,3 +1,6 @@
+import type { GameId } from '../game/Episode';
+import { GAME_IDS, isGameId } from '../game/registry';
+
 interface Limit {
     min: number;
     max: number;
@@ -6,7 +9,7 @@ interface Limit {
     live?: boolean;
 }
 
-/** Limits shared by the server (validation) and the client (form inputs). */
+/** Limits of the numeric settings, shared by the server (validation) and the client (form inputs). */
 export const SETTING_LIMITS = {
     populationSize: { min: 10, max: 5000, integer: true },
     mutationRate: { min: 0, max: 1, integer: false },
@@ -16,7 +19,8 @@ export const SETTING_LIMITS = {
 } satisfies Record<string, Limit>;
 
 export type SettingKey = keyof typeof SETTING_LIMITS;
-export type Settings = Record<SettingKey, number>;
+/** The game being trained, plus the numeric settings. Changing the game restarts the training. */
+export type Settings = Record<SettingKey, number> & { game: GameId };
 
 export const SETTING_KEYS = Object.keys(SETTING_LIMITS) as SettingKey[];
 
@@ -27,8 +31,11 @@ export const validateSettings = (input: unknown): Settings => {
     }
 
     const values = input as Record<string, unknown>;
+    if (!isGameId(values.game)) {
+        throw new Error(`game must be one of ${GAME_IDS.join(', ')}`);
+    }
 
-    return Object.fromEntries(
+    const numbers = Object.fromEntries(
         SETTING_KEYS.map((key) => {
             const value = values[key];
             const { min, max, integer } = SETTING_LIMITS[key] as Limit;
@@ -41,8 +48,11 @@ export const validateSettings = (input: unknown): Settings => {
 
             return [key, value];
         }),
-    ) as Settings;
+    ) as Record<SettingKey, number>;
+
+    return { ...numbers, game: values.game };
 };
 
 export const requiresReset = (current: Settings, next: Settings): boolean =>
+    current.game !== next.game ||
     SETTING_KEYS.some((key) => !(SETTING_LIMITS[key] as Limit).live && current[key] !== next[key]);
