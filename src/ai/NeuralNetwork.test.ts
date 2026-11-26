@@ -21,6 +21,17 @@ describe('recurrent NeuralNetwork', () => {
         expect(network.toVector()).toHaveLength(6 * 11 + 2 * 7);
     });
 
+    it('keeps its memory bounded over long episodes', () => {
+        for (let n = 0; n < 10; ++n) {
+            const network = new NeuralNetwork(24, [16], 3, undefined, true);
+            const input = [...Array(24)].map(() => Math.random());
+            for (let t = 0; t < 200; ++t) {
+                network.output(input);
+            }
+            network.state.forEach((s) => expect(Math.abs(s)).toBeLessThanOrEqual(1));
+        }
+    });
+
     it('remembers past inputs until its state is reset', () => {
         // Retry a few random networks: one whose hidden layer stays at zero has no memory to show.
         const network = [...Array(20)]

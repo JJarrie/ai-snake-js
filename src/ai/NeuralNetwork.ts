@@ -67,8 +67,11 @@ class NeuralNetwork {
 
         for (let i = 0; i < this.hiddenLayers.length; ++i) {
             const hiddenInput = this.weights[i].dot(currentBias);
-            const hiddenOutput = hiddenInput.activate((x) => Activation.relu(x));
-            if (i === 0 && this.recurrent) {
+            const memoryLayer = i === 0 && this.recurrent;
+            // The looped-back layer needs a bounded activation: with ReLU its state grows without limit
+            // (measured: 1e6 to 1e14 after 40 steps with random weights) and saturates every decision.
+            const hiddenOutput = hiddenInput.activate((x) => (memoryLayer ? Math.tanh(x) : Activation.relu(x)));
+            if (memoryLayer) {
                 this.state = hiddenOutput.toArray();
             }
             currentBias = hiddenOutput.addBias();
