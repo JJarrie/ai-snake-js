@@ -1,5 +1,6 @@
 import * as SocketIo from 'socket.io';
 import { createServer } from 'http';
+import { stepInLockstep } from './ai/lockstep';
 import Population from './ai/Population';
 import ClassicGa from './ai/strategy/ClassicGa';
 import DeepGa from './ai/strategy/DeepGa';
@@ -62,18 +63,7 @@ const EMIT_INTERVAL_MS = 33;
 let lastEmit = 0;
 
 setInterval(() => {
-    for (const population of populations) {
-        if (paused.has(population.strategy.name)) {
-            continue;
-        }
-
-        if (population.done()) {
-            population.calculateFitness();
-            population.naturalSelection();
-        }
-        // Always step before emitting: a fresh game has no vision or decision yet.
-        population.update();
-    }
+    stepInLockstep(populations.filter((p) => !paused.has(p.strategy.name)));
 
     const now = Date.now();
     // Throttled, and volatile so a slow client drops frames instead of buffering them.
