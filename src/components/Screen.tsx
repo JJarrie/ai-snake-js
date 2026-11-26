@@ -7,7 +7,7 @@ import Board from './Board';
 import PopulationDetail from './PopulationDetail';
 import ScoreChart from './ScoreChart';
 
-const COLORS = ['#e6194b', '#3cb44b', '#4363d8', '#f58231', '#911eb4'];
+const COLORS = ['#e6194b', '#3cb44b', '#4363d8', '#f58231', '#911eb4', '#008080'];
 
 interface ScreenProps {
     populations?: StrategyState[];

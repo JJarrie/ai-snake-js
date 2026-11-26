@@ -3,7 +3,7 @@ import NeuralNetwork from '../NeuralNetwork';
 import ClassicGa from './ClassicGa';
 import DeepGa from './DeepGa';
 import type EvolutionStrategy from './EvolutionStrategy';
-import MapElites from './MapElites';
+import MapElites, { noveltyScores, type Selection } from './MapElites';
 import OpenAiEs, { centeredRanks } from './OpenAiEs';
 import SepCmaEs from './SepCmaEs';
 
@@ -29,6 +29,7 @@ describe.each<[string, () => EvolutionStrategy]>([
     ['OpenAiEs', () => new OpenAiEs()],
     ['SepCmaEs', () => new SepCmaEs()],
     ['MapElites', () => new MapElites()],
+    ['MapElites novelty', () => new MapElites('novelty')],
 ])('%s', (_, create) => {
     it('returns a generation of the same size, two generations in a row', () => {
         const strategy = create();
@@ -107,7 +108,7 @@ describe('SepCmaEs', () => {
 
 describe('MapElites', () => {
     it('keeps the fittest individual of each behaviour cell, edges included', () => {
-        const mapElites = new MapElites(2);
+        const mapElites = new MapElites('uniform', 2);
         const strong = brain();
 
         mapElites.nextGeneration(
@@ -124,5 +125,42 @@ describe('MapElites', () => {
             [null, 3],
         ]);
         expect(mapElites.cells[0][0]?.brain).toBe(strong);
+    });
+
+    it('scores an isolated behaviour as the most novel', () => {
+        const scores = noveltyScores(
+            [
+                [0, 0],
+                [0.1, 0],
+                [0, 0.1],
+                [1, 1],
+            ],
+            2,
+        );
+
+        expect(Math.max(...scores)).toBe(scores[3]);
+        expect(noveltyScores([[0.5, 0.5]], 2)).toEqual([0]);
+    });
+
+    it('picks the isolated elite more often with novelty selection', () => {
+        const isolated = brain();
+        const weaker = brain();
+        const evaluated = [
+            { brain: brain(), fitness: 1, behavior: [0, 0] },
+            { brain: brain(), fitness: 1, behavior: [0.15, 0] },
+            { brain: isolated, fitness: 1, behavior: [0.95, 0.95] },
+            // Padding for a large generation: less fit than the elite of their cell, so not archived.
+            ...[...Array(2000)].map(() => ({ brain: weaker, fitness: 0.5, behavior: [0, 0] })),
+        ];
+        const shareOfIsolated = (selection: Selection) => {
+            // sigma 0: children are exact copies, so each child shows its parent.
+            const next = new MapElites(selection, 10, 0).nextGeneration(evaluated, brain()).slice(1);
+            const target = isolated.toVector();
+
+            return next.filter((b) => b.toVector().every((w, j) => w === target[j])).length / next.length;
+        };
+        // Uniform: 1/3 of the children. Binary tournament: it wins whenever drawn, 1 - (2/3)^2 = 5/9.
+        expect(shareOfIsolated('uniform')).toBeLessThan(0.45);
+        expect(shareOfIsolated('novelty')).toBeGreaterThan(0.45);
     });
 });
