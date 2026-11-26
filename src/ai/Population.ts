@@ -1,5 +1,10 @@
 import BoardSize from '../rule/BoardSize';
 import IntelligentSnake from './IntelligentSnake';
+import NeuralNetwork from './NeuralNetwork';
+
+/** 8 directions x (food, body, wall) in; continue, left, right out. */
+const INPUTS = 24;
+const OUTPUTS = 3;
 import Game, { type GameState } from '../rule/Game';
 import type EvolutionStrategy from './strategy/EvolutionStrategy';
 import { deriveSeed, randomSeed } from '../utils/SeededRandom';
@@ -32,14 +37,22 @@ class Population {
     bestFitness = 0;
     fitnessSum = 0;
 
-    constructor(size: number, boardSize: BoardSize, strategy: EvolutionStrategy, baseSeed = randomSeed()) {
+    constructor(
+        size: number,
+        boardSize: BoardSize,
+        strategy: EvolutionStrategy,
+        baseSeed = randomSeed(),
+        hiddenNeurons = 16,
+    ) {
         this.strategy = strategy;
         this.boardSize = boardSize;
         this.baseSeed = baseSeed;
         this.games = new Array<Game>(size);
 
         for (let i = 0; i < this.games.length; ++i) {
-            this.games[i] = new Game(boardSize, undefined, this.generationSeed());
+            // Later generations inherit this network shape from the strategy's brains.
+            const brain = new NeuralNetwork(INPUTS, [hiddenNeurons], OUTPUTS);
+            this.games[i] = new Game(boardSize, new IntelligentSnake(boardSize, brain), this.generationSeed());
         }
 
         this.bestGame = this.games[0].cloneBrain();

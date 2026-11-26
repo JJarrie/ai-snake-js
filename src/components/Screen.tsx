@@ -1,63 +1,66 @@
 import * as React from 'react';
 import { connect } from 'react-redux';
+import type { SimulationState } from '../sim/Simulation';
 import type State from '../store/State';
-import type { StrategyState } from '../store/State';
-import ArchiveMap from './ArchiveMap';
 import Board from './Board';
-import GameDisplayer from './GameDisplayer';
+import { colorOf, type Commands } from './commands';
+import ControlBar from './ControlBar';
 import ScoreChart from './ScoreChart';
-
-const COLORS = ['#e6194b', '#3cb44b', '#4363d8', '#f58231', '#911eb4', '#008080'];
+import SettingsPanel from './SettingsPanel';
+import StrategyCard from './StrategyCard';
 
 interface ScreenProps {
-    populations?: StrategyState[];
-    onToggle: (name: string) => void;
+    simulation?: SimulationState;
+    commands: Commands;
 }
 
-const Screen = ({ populations, onToggle }: ScreenProps) => {
-    if (populations === undefined || populations.length === 0) {
-        return null;
+const Screen = ({ simulation, commands }: ScreenProps) => {
+    if (simulation === undefined || simulation.populations.length === 0) {
+        return <p className="waiting">Connecting to the simulation…</p>;
     }
 
+    const { populations, running, settings } = simulation;
     // The big board replays the record game of the strategy holding the best score so far.
     const leader = populations.reduce((best, p, k) => (p.bestScore > populations[best].bestScore ? k : best), 0);
+    const champion = populations[leader];
+    const generation = Math.min(...populations.filter((p) => !p.paused).map((p) => p.generation), Infinity);
 
     return (
-        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-start' }}>
-            <div style={{ margin: '10px' }}>
-                <h2 style={{ color: COLORS[leader % COLORS.length], margin: 0 }}>{populations[leader].name}</h2>
-                <GameDisplayer game={populations[leader].bestGame} />
-            </div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-start', flex: 1 }}>
-                <ScoreChart populations={populations} colors={COLORS} />
+        <div className="app">
+            <ControlBar
+                running={running}
+                generation={Number.isFinite(generation) ? generation : champion.generation}
+                commands={commands}
+            />
+            <SettingsPanel settings={settings} commands={commands} />
+            <section className="overview">
+                <figure className="panel champion" style={{ borderTopColor: colorOf(leader) }}>
+                    <figcaption>
+                        <span style={{ color: colorOf(leader) }}>{champion.name}</span> leads with a record of{' '}
+                        <strong>{champion.bestScore}</strong>
+                        <span className="replay-score">replay score {champion.bestGame.score}</span>
+                    </figcaption>
+                    <Board grid={champion.bestGame.grid} size={440} label={`Record replay of ${champion.name}`} />
+                </figure>
+                <ScoreChart populations={populations} />
+            </section>
+            <section className="cards">
                 {populations.map((p, k) => (
-                    <div key={p.name} className={`strategy${k === leader ? ' leader' : ''}`}>
-                        <h3 style={{ color: COLORS[k % COLORS.length] }}>{p.name}</h3>
-                        <label>
-                            <input
-                                type="checkbox"
-                                aria-label={`Run ${p.name}`}
-                                checked={!p.paused}
-                                onChange={() => onToggle(p.name)}
-                            />{' '}
-                            Running
-                        </label>
-                        <div>
-                            Generation {p.generation} · Best score {p.bestScore}
-                        </div>
-                        <div className="mini">
-                            <Board grid={p.bestGame.grid} />
-                        </div>
-                        {p.archive && <ArchiveMap archive={p.archive} color={COLORS[k % COLORS.length]} />}
-                    </div>
+                    <StrategyCard
+                        key={p.name}
+                        population={p}
+                        index={k}
+                        leader={k === leader}
+                        onToggle={commands.toggle}
+                    />
                 ))}
-            </div>
+            </section>
         </div>
     );
 };
 
 const mapStateToProps = (state: State) => ({
-    populations: state.populations,
+    simulation: state.simulation,
 });
 
 export default connect(mapStateToProps)(Screen);
