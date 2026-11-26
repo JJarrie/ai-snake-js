@@ -13,7 +13,13 @@ export interface SeenInDirection {
 class EyedSnake extends Snake {
     vision: SeenInDirection[] = [];
 
-    public lookInDirection(directionVector: Vector2D, food: Position, bodyKeys: Set<number>): SeenInDirection {
+    /** An obstacle stops the gaze like the board edge: it is seen as a wall. */
+    public lookInDirection(
+        directionVector: Vector2D,
+        food: Position,
+        bodyKeys: Set<number>,
+        obstacleKeys: Set<number> = new Set(),
+    ): SeenInDirection {
         let position = this.head.clone();
         let distance = 1;
         let foodSeen = false;
@@ -23,6 +29,10 @@ class EyedSnake extends Snake {
         position = position.addVector(directionVector);
 
         while (!this.positionIsOutbound(position)) {
+            if (obstacleKeys.has(position.y * this.boardSize.width + position.x)) {
+                break;
+            }
+
             if (!foodSeen && position.isEqual(food)) {
                 foodSeen = true;
                 seenInDirection.food = 1 / distance;
@@ -42,48 +52,57 @@ class EyedSnake extends Snake {
         return seenInDirection;
     }
 
-    public look(food: Position): void {
+    /** `obstacleKeys`: cells as y * width + x. */
+    public look(food: Position, obstacleKeys: Set<number> = new Set()): void {
         this.vision = [];
         const bodyKeys = new Set(this.body.map((p) => p.y * this.boardSize.width + p.x));
         this.vision[Direction.FRONT] = this.lookInDirection(
             EyedSnake.mapVectorToDirection(mapCardinalToCurrentDirection(this.direction, Direction.FRONT)),
             food,
             bodyKeys,
+            obstacleKeys,
         );
         this.vision[Direction.BACK] = this.lookInDirection(
             EyedSnake.mapVectorToDirection(mapCardinalToCurrentDirection(this.direction, Direction.BACK)),
             food,
             bodyKeys,
+            obstacleKeys,
         );
         this.vision[Direction.LEFT] = this.lookInDirection(
             EyedSnake.mapVectorToDirection(mapCardinalToCurrentDirection(this.direction, Direction.LEFT)),
             food,
             bodyKeys,
+            obstacleKeys,
         );
         this.vision[Direction.RIGHT] = this.lookInDirection(
             EyedSnake.mapVectorToDirection(mapCardinalToCurrentDirection(this.direction, Direction.RIGHT)),
             food,
             bodyKeys,
+            obstacleKeys,
         );
         this.vision[Direction.FRONT_LEFT] = this.lookInDirection(
             EyedSnake.mapVectorToDirection(mapCardinalToCurrentDirection(this.direction, Direction.FRONT_LEFT)),
             food,
             bodyKeys,
+            obstacleKeys,
         );
         this.vision[Direction.FRONT_RIGHT] = this.lookInDirection(
             EyedSnake.mapVectorToDirection(mapCardinalToCurrentDirection(this.direction, Direction.FRONT_RIGHT)),
             food,
             bodyKeys,
+            obstacleKeys,
         );
         this.vision[Direction.BACK_LEFT] = this.lookInDirection(
             EyedSnake.mapVectorToDirection(mapCardinalToCurrentDirection(this.direction, Direction.BACK_LEFT)),
             food,
             bodyKeys,
+            obstacleKeys,
         );
         this.vision[Direction.BACK_RIGHT] = this.lookInDirection(
             EyedSnake.mapVectorToDirection(mapCardinalToCurrentDirection(this.direction, Direction.BACK_RIGHT)),
             food,
             bodyKeys,
+            obstacleKeys,
         );
     }
 

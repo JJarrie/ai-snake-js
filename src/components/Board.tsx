@@ -17,6 +17,8 @@ const className = (value: SquareValue): string => {
             return 'snake';
         case SquareValue.HEAD:
             return 'head';
+        case SquareValue.WALL:
+            return 'wall';
         case SquareValue.EMPTY:
         default:
             return 'empty';

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import IntelligentSnake from '../ai/IntelligentSnake';
 import BoardSize from './BoardSize';
 import Game from './Game';
+import Direction from './Direction';
 import Position from './Position';
 
 describe('Game', () => {
@@ -17,6 +18,48 @@ describe('Game', () => {
 
         expect(game.score).toBe(1);
         expect(game.snake.body).toHaveLength(2);
+    });
+});
+
+describe('Game obstacles', () => {
+    const board = new BoardSize(20, 20);
+
+    it('builds none unless asked, and the same walls for the same seed', () => {
+        expect(new Game(board, undefined, 3).obstacleKeys.size).toBe(0);
+
+        const a = new Game(board, undefined, 3, true);
+        expect(a.obstacleKeys.size).toBeGreaterThan(8);
+        expect([...a.obstacleKeys]).toEqual([...new Game(board, undefined, 3, true).obstacleKeys]);
+        expect([...a.obstacleKeys]).not.toEqual([...new Game(board, undefined, 4, true).obstacleKeys]);
+    });
+
+    it('keeps the start area and the food off the walls', () => {
+        for (let seed = 0; seed < 200; ++seed) {
+            const game = new Game(board, undefined, seed, true);
+            const { head } = game.snake;
+            [...game.obstacleKeys].forEach((key) => {
+                const x = key % 20;
+                const y = Math.floor(key / 20);
+                expect(Math.max(Math.abs(x - head.x), Math.abs(y - head.y))).toBeGreaterThan(3);
+            });
+            expect(game.obstacleKeys.has(game.keyOf(game.food))).toBe(false);
+        }
+    });
+
+    it('kills the snake that runs into a wall, which its vision reports as a wall', () => {
+        const game = new Game(board, undefined, 1, true);
+        // A wall 2 cells ahead of the head (the snake starts heading north).
+        const wall = game.snake.head.clone().addVector({ x: 0, y: -2 });
+        game.obstacleKeys.add(game.keyOf(wall));
+        game.food = new Position(0, 0);
+
+        game.snake.look(game.food, game.obstacleKeys);
+        expect(game.snake.vision[Direction.FRONT].wall).toBe(1 / 2);
+
+        game.nextMove();
+        expect(game.finish()).toBe(false);
+        game.nextMove();
+        expect(game.finish()).toBe(true);
     });
 });
 
