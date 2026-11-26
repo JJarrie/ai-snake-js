@@ -11,6 +11,7 @@ const settings: Settings = {
     hiddenNeurons: 6,
     replayMovesPerSecond: 10,
     game: 'snake',
+    obstacles: false,
 };
 
 const snakeGame = (episode: Episode) => (episode as SnakeEpisode).game;
@@ -84,6 +85,17 @@ describe('Simulation', () => {
         });
         simulation.tick();
         expect(simulation.toState().populations[0].replay.view.kind).toBe('cars');
+    });
+
+    it('turns obstacles on for every strategy after a reset', () => {
+        const simulation = new Simulation(settings);
+        expect(snakeGame(simulation.populations[0].episodes[0]).obstacleKeys.size).toBe(0);
+
+        simulation.configure({ ...settings, obstacles: true });
+
+        simulation.populations.forEach((p) => {
+            expect(snakeGame(p.episodes[0]).obstacleKeys.size).toBeGreaterThan(0);
+        });
     });
 
     it('keeps its settings when the new ones are invalid', () => {

@@ -19,8 +19,11 @@ export const SETTING_LIMITS = {
 } satisfies Record<string, Limit>;
 
 export type SettingKey = keyof typeof SETTING_LIMITS;
-/** The game being trained, plus the numeric settings. Changing the game restarts the training. */
-export type Settings = Record<SettingKey, number> & { game: GameId };
+/**
+ * The game being trained, whether its random obstacles are on, plus the numeric settings.
+ * Changing the game or the obstacles restarts the training.
+ */
+export type Settings = Record<SettingKey, number> & { game: GameId; obstacles: boolean };
 
 export const SETTING_KEYS = Object.keys(SETTING_LIMITS) as SettingKey[];
 
@@ -33,6 +36,9 @@ export const validateSettings = (input: unknown): Settings => {
     const values = input as Record<string, unknown>;
     if (!isGameId(values.game)) {
         throw new Error(`game must be one of ${GAME_IDS.join(', ')}`);
+    }
+    if (typeof values.obstacles !== 'boolean') {
+        throw new Error('obstacles must be true or false');
     }
 
     const numbers = Object.fromEntries(
@@ -50,9 +56,10 @@ export const validateSettings = (input: unknown): Settings => {
         }),
     ) as Record<SettingKey, number>;
 
-    return { ...numbers, game: values.game };
+    return { ...numbers, game: values.game, obstacles: values.obstacles };
 };
 
 export const requiresReset = (current: Settings, next: Settings): boolean =>
     current.game !== next.game ||
+    current.obstacles !== next.obstacles ||
     SETTING_KEYS.some((key) => !(SETTING_LIMITS[key] as Limit).live && current[key] !== next[key]);

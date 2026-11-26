@@ -8,6 +8,7 @@ const valid: Settings = {
     hiddenNeurons: 16,
     replayMovesPerSecond: 15,
     game: 'snake',
+    obstacles: false,
 };
 
 describe('validateSettings', () => {
@@ -26,6 +27,8 @@ describe('validateSettings', () => {
         ['a fraction for an integer setting', { ...valid, boardSize: 20.5 }],
         ['an unknown game', { ...valid, game: 'chess' }],
         ['a missing game', { ...valid, game: undefined }],
+        ['obstacles that are not a boolean', { ...valid, obstacles: 'yes' }],
+        ['missing obstacles', { ...valid, obstacles: undefined }],
     ])('rejects %s', (_, input) => {
         expect(() => validateSettings(input)).toThrow();
     });
@@ -36,5 +39,6 @@ describe('requiresReset', () => {
         expect(requiresReset(valid, { ...valid, replayMovesPerSecond: 30 })).toBe(false);
         expect(requiresReset(valid, { ...valid, hiddenNeurons: 8 })).toBe(true);
         expect(requiresReset(valid, { ...valid, game: 'cars' })).toBe(true);
+        expect(requiresReset(valid, { ...valid, obstacles: true })).toBe(true);
     });
 });

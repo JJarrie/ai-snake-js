@@ -27,6 +27,7 @@ const SettingsPanel = ({ settings, commands }: SettingsPanelProps) => {
     // Only the fields being edited; the others show the server's current values.
     const [edits, setEdits] = React.useState<Partial<Record<SettingKey, string>>>({});
     const [game, setGame] = React.useState<GameId>();
+    const [obstacles, setObstacles] = React.useState<boolean>();
     const [message, setMessage] = React.useState<{ error: boolean; text: string }>();
 
     const draft: Settings = {
@@ -35,6 +36,7 @@ const SettingsPanel = ({ settings, commands }: SettingsPanelProps) => {
             number
         >),
         game: game ?? settings.game,
+        obstacles: obstacles ?? settings.obstacles,
     };
     const willReset = requiresReset(settings, draft);
 
@@ -47,6 +49,7 @@ const SettingsPanel = ({ settings, commands }: SettingsPanelProps) => {
         if (error === undefined) {
             setEdits({});
             setGame(undefined);
+            setObstacles(undefined);
         }
         setMessage(error === undefined ? { error: false, text: 'Applied' } : { error: true, text: error });
     };
@@ -65,6 +68,18 @@ const SettingsPanel = ({ settings, commands }: SettingsPanelProps) => {
                         ))}
                     </select>
                     <small>restarts training</small>
+                </label>
+                <label>
+                    <span>Random obstacles</span>
+                    <span className="checkbox-row">
+                        <input
+                            type="checkbox"
+                            checked={draft.obstacles}
+                            onChange={(event) => setObstacles(event.target.checked)}
+                        />
+                        {draft.game === 'snake' ? 'Walls on the board' : 'Cones on the track'}
+                    </span>
+                    <small>new layout every generation, restarts training</small>
                 </label>
                 {SETTING_KEYS.map((key) => {
                     const { min, max, integer } = SETTING_LIMITS[key];

@@ -11,12 +11,12 @@ export const GAME_IDS = Object.keys(GAME_NAMES) as GameId[];
 
 export const isGameId = (value: unknown): value is GameId => GAME_IDS.includes(value as GameId);
 
-/** `boardSize` only applies to the snake. */
-export const createGame = (id: GameId, boardSize: number): GameDefinition => {
+/** `boardSize` only applies to the snake; obstacles are walls for the snake, cones for the cars. */
+export const createGame = (id: GameId, boardSize: number, obstacles = false): GameDefinition => {
     switch (id) {
         case 'snake':
-            return createSnakeGame(boardSize);
+            return createSnakeGame(boardSize, obstacles);
         case 'cars':
-            return createCarsGame();
+            return createCarsGame(obstacles);
     }
 };
