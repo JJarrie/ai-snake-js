@@ -1,6 +1,15 @@
 import type NeuralNetwork from '../../ai/NeuralNetwork';
 import type { Episode, EpisodeState, GameDefinition } from '../Episode';
-import { createTrack, projectOnSegment, rayHit, TRACK_SEGMENTS, type Point, type Track } from './track';
+import {
+    CONE_RADIUS,
+    createTrack,
+    projectOnSegment,
+    rayCircleHit,
+    rayHit,
+    TRACK_SEGMENTS,
+    type Point,
+    type Track,
+} from './track';
 
 export interface CarsView {
     kind: 'cars';
@@ -10,6 +19,8 @@ export interface CarsView {
     /** Length of each sensor ray, in track units. */
     rays: number[];
     crashed: boolean;
+    /** Whether the track's cones are in play (and drawn). */
+    obstacles: boolean;
 }
 
 /** Sensor directions relative to the heading. */
@@ -28,6 +39,8 @@ const STALL_STEPS = 100;
 const SEGMENTS_PER_CHECKPOINT = 3;
 /** Wall segments around the car checked by the sensors, on each side; covers RAY_RANGE. */
 const WALL_WINDOW = 15;
+/** Radius of the car for cone collisions. */
+const CAR_RADIUS = 2;
 
 const tracks = new Map<number, Track>();
 /** Every episode of a generation shares a seed, so the track is built once per generation. */
@@ -65,11 +78,14 @@ class CarsEpisode implements Episode {
     rays: number[] = [];
     steerSum = 0;
     speedSum = 0;
+    /** Cones in play: the track's cones with obstacles on, none otherwise. */
+    cones: Point[];
 
-    constructor(brain: NeuralNetwork, seed: number) {
+    constructor(brain: NeuralNetwork, seed: number, withObstacles = false) {
         this.brain = brain;
         this.seed = seed;
         this.track = trackFor(seed);
+        this.cones = withObstacles ? this.track.cones : [];
         this.reset();
     }
 
@@ -142,6 +158,7 @@ class CarsEpisode implements Episode {
                 car: { x: this.position.x, y: this.position.y, heading: this.heading },
                 rays: this.rays,
                 crashed: this.crashed,
+                obstacles: this.cones.length > 0,
             },
         };
     }
@@ -168,7 +185,11 @@ class CarsEpisode implements Episode {
         this.segment = best.index;
         this.driven = this.driven + delta;
         this.progress = this.driven + best.t;
-        this.crashed = best.distance > halfWidth;
+        this.crashed =
+            best.distance > halfWidth ||
+            this.cones.some(
+                (cone) => Math.hypot(cone.x - this.position.x, cone.y - this.position.y) < CONE_RADIUS + CAR_RADIUS,
+            );
 
         if (this.progress > this.bestProgress) {
             this.bestProgress = this.progress;
@@ -178,14 +199,17 @@ class CarsEpisode implements Episode {
         }
     }
 
-    /** Distance to the nearest wall along each sensor ray, capped at RAY_RANGE. */
+    /** Distance to the nearest wall or cone along each sensor ray, capped at RAY_RANGE. */
     private sense(): number[] {
         const { left, right } = this.track;
 
         return RAY_ANGLES.map((angle) => {
             const dx = Math.cos(this.heading + angle);
             const dy = Math.sin(this.heading + angle);
-            let nearest = RAY_RANGE;
+            let nearest = this.cones.reduce(
+                (min, cone) => Math.min(min, rayCircleHit(this.position, dx, dy, cone, CONE_RADIUS)),
+                RAY_RANGE,
+            );
             for (let offset = -WALL_WINDOW; offset <= WALL_WINDOW; ++offset) {
                 const a = wrap(this.segment + offset);
                 const b = wrap(a + 1);
@@ -200,13 +224,13 @@ class CarsEpisode implements Episode {
     }
 }
 
-/** 7 wall-distance rays + speed in; steering and throttle out. */
-export const createCarsGame = (): GameDefinition => ({
+/** 7 wall-distance rays + speed in; steering and throttle out. The rays also see the cones. */
+export const createCarsGame = (withObstacles = false): GameDefinition => ({
     id: 'cars',
     name: 'Car racing',
     inputs: RAY_ANGLES.length + 1,
     outputs: 2,
-    createEpisode: (brain, seed) => new CarsEpisode(brain, seed),
+    createEpisode: (brain, seed) => new CarsEpisode(brain, seed, withObstacles),
 });
 
 export default CarsEpisode;
