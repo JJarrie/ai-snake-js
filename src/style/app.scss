@@ -25,6 +25,28 @@ td {
     width: 25px;
 }
 
+.strategy {
+    margin: 10px;
+    padding: 5px;
+    border: 2px solid transparent;
+}
+
+.strategy.selected {
+    border-color: gray;
+}
+
+.mini {
+    padding: 0;
+    border: none;
+    cursor: pointer;
+}
+
+.mini td {
+    height: 8px;
+    width: 8px;
+    border: none;
+}
+
 .empty {
     background-color: $emptyColor;
     border: 1px solid black;

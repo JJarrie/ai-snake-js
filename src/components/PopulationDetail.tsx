@@ -1,18 +1,16 @@
 import * as React from 'react';
 import Direction from '../rule/Direction';
-import type State from '../store/State';
-import { connect } from 'react-redux';
 import GameDisplayer from './GameDisplayer';
 import type { PopulationState } from '../ai/Population';
 import DirectionCardinal from '../rule/DirectionCardinal';
 import type { IntelligentSnakeState } from '../ai/IntelligentSnake';
 import type { SeenInDirection } from '../ai/EyedSnake';
 
-interface ScreenProps {
-    population?: PopulationState;
+interface PopulationDetailProps {
+    population: PopulationState;
 }
 
-class Screen extends React.Component<ScreenProps> {
+class PopulationDetail extends React.Component<PopulationDetailProps> {
     public render() {
         const showVision = (label: string, visionPart: SeenInDirection) => {
             const food = Math.round(visionPart.food * 100) / 100;
@@ -46,6 +44,7 @@ class Screen extends React.Component<ScreenProps> {
                 <div style={{ display: 'flex' }}>
                     <GameDisplayer game={this.props.population.bestGame} />
                     <ul style={{ margin: '10px' }}>
+                        <li>Strategy: {this.props.population.name}</li>
                         <li>Generation: {this.props.population.generation}</li>
                         <li>Best Generation: {this.props.population.bestGeneration}</li>
                         <li>Best score: {this.props.population.bestScore}</li>
@@ -112,8 +111,4 @@ class Screen extends React.Component<ScreenProps> {
     }
 }
 
-const mapStateToProps = (state: State) => ({
-    population: state.population,
-});
-
-export default connect(mapStateToProps)(Screen);
+export default PopulationDetail;
