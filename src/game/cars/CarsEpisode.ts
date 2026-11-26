@@ -94,6 +94,7 @@ class CarsEpisode implements Episode {
     }
 
     public reset(): void {
+        this.brain.resetState();
         const [start, next] = this.track.center;
         this.position = { ...start };
         this.heading = Math.atan2(next.y - start.y, next.x - start.x);

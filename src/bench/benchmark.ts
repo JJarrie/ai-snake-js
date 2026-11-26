@@ -9,8 +9,9 @@ export const runOnce = (
     populationSize: number,
     generations: number,
     seed: number,
+    recurrent = false,
 ): number[] => {
-    const population = new Population(populationSize, game, strategy, seed);
+    const population = new Population(populationSize, game, strategy, seed, 16, recurrent);
 
     while (population.history.length < generations) {
         while (!population.done()) {

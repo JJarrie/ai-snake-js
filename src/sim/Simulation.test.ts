@@ -12,6 +12,7 @@ const settings: Settings = {
     replayMovesPerSecond: 10,
     game: 'snake',
     obstacles: false,
+    recurrent: false,
 };
 
 const snakeGame = (episode: Episode) => (episode as SnakeEpisode).game;
@@ -85,6 +86,14 @@ describe('Simulation', () => {
         });
         simulation.tick();
         expect(simulation.toState().populations[0].replay.view.kind).toBe('cars');
+    });
+
+    it('gives every strategy memory after a reset', () => {
+        const simulation = new Simulation(settings);
+
+        simulation.configure({ ...settings, recurrent: true });
+
+        simulation.populations.forEach((p) => expect(p.episodes[0].brain.recurrent).toBe(true));
     });
 
     it('turns obstacles on for every strategy after a reset', () => {

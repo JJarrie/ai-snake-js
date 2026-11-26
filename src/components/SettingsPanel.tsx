@@ -28,6 +28,7 @@ const SettingsPanel = ({ settings, commands }: SettingsPanelProps) => {
     const [edits, setEdits] = React.useState<Partial<Record<SettingKey, string>>>({});
     const [game, setGame] = React.useState<GameId>();
     const [obstacles, setObstacles] = React.useState<boolean>();
+    const [recurrent, setRecurrent] = React.useState<boolean>();
     const [message, setMessage] = React.useState<{ error: boolean; text: string }>();
 
     const draft: Settings = {
@@ -37,6 +38,7 @@ const SettingsPanel = ({ settings, commands }: SettingsPanelProps) => {
         >),
         game: game ?? settings.game,
         obstacles: obstacles ?? settings.obstacles,
+        recurrent: recurrent ?? settings.recurrent,
     };
     const willReset = requiresReset(settings, draft);
 
@@ -50,6 +52,7 @@ const SettingsPanel = ({ settings, commands }: SettingsPanelProps) => {
             setEdits({});
             setGame(undefined);
             setObstacles(undefined);
+            setRecurrent(undefined);
         }
         setMessage(error === undefined ? { error: false, text: 'Applied' } : { error: true, text: error });
     };
@@ -80,6 +83,18 @@ const SettingsPanel = ({ settings, commands }: SettingsPanelProps) => {
                         {draft.game === 'snake' ? 'Walls on the board' : 'Cones on the track'}
                     </span>
                     <small>new layout every generation, restarts training</small>
+                </label>
+                <label>
+                    <span>Memory</span>
+                    <span className="checkbox-row">
+                        <input
+                            type="checkbox"
+                            checked={draft.recurrent}
+                            onChange={(event) => setRecurrent(event.target.checked)}
+                        />
+                        Recurrent network
+                    </span>
+                    <small>remembers what its sensors saw, restarts training</small>
                 </label>
                 {SETTING_KEYS.map((key) => {
                     const { min, max, integer } = SETTING_LIMITS[key];

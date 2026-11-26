@@ -21,6 +21,8 @@ const simulation = new Simulation(
         game: process.env.GAME ?? 'snake',
         // OBSTACLES=1 turns them on at start-up; any other value or none leaves them off.
         obstacles: process.env.OBSTACLES === '1',
+        // RECURRENT=1 gives the agents memory at start-up.
+        recurrent: process.env.RECURRENT === '1',
     }),
 );
 

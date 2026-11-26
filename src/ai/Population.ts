@@ -41,15 +41,19 @@ class Population {
         strategy: EvolutionStrategy,
         baseSeed = randomSeed(),
         hiddenNeurons = 16,
+        recurrent = false,
     ) {
         this.strategy = strategy;
         this.game = game;
         this.baseSeed = baseSeed;
 
         const seed = this.generationSeed();
-        // Later generations inherit this network shape from the strategy's brains.
+        // Later generations inherit this network shape (and memory setting) from the strategy's brains.
         this.episodes = [...Array(size)].map(() =>
-            game.createEpisode(new NeuralNetwork(game.inputs, [hiddenNeurons], game.outputs), seed),
+            game.createEpisode(
+                new NeuralNetwork(game.inputs, [hiddenNeurons], game.outputs, undefined, recurrent),
+                seed,
+            ),
         );
         this.replay = game.createEpisode(this.episodes[0].brain.clone(), seed);
     }
