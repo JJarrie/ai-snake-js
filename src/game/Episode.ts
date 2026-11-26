@@ -1,10 +1,11 @@
 import type NeuralNetwork from '../ai/NeuralNetwork';
+import type { CarsView } from './cars/CarsEpisode';
 import type { SnakeView } from './snake/SnakeEpisode';
 
-export type GameId = 'snake';
+export type GameId = 'snake' | 'cars';
 
 /** What the UI needs to draw one episode; `kind` tells which game renderer to use. */
-export type EpisodeView = SnakeView;
+export type EpisodeView = SnakeView | CarsView;
 
 export interface EpisodeState {
     score: number;
