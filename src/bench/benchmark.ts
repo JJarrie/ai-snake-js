@@ -1,16 +1,16 @@
 import Population from '../ai/Population';
 import type EvolutionStrategy from '../ai/strategy/EvolutionStrategy';
-import BoardSize from '../rule/BoardSize';
+import type { GameDefinition } from '../game/Episode';
 
 /** Trains one population headless and returns the best score of each generation. */
 export const runOnce = (
     strategy: EvolutionStrategy,
+    game: GameDefinition,
     populationSize: number,
     generations: number,
     seed: number,
-    boardSize = new BoardSize(20, 20),
 ): number[] => {
-    const population = new Population(populationSize, boardSize, strategy, seed);
+    const population = new Population(populationSize, game, strategy, seed);
 
     while (population.history.length < generations) {
         while (!population.done()) {

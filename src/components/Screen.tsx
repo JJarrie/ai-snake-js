@@ -2,7 +2,7 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 import type { SimulationState } from '../sim/Simulation';
 import type State from '../store/State';
-import Board from './Board';
+import EpisodeView from './EpisodeView';
 import { colorOf, type Commands } from './commands';
 import ControlBar from './ControlBar';
 import ScoreChart from './ScoreChart';
@@ -38,9 +38,9 @@ const Screen = ({ simulation, commands }: ScreenProps) => {
                     <figcaption>
                         <span style={{ color: colorOf(leader) }}>{champion.name}</span> leads with a record of{' '}
                         <strong>{champion.bestScore}</strong>
-                        <span className="replay-score">replay score {champion.bestGame.score}</span>
+                        <span className="replay-score">replay score {champion.replay.score}</span>
                     </figcaption>
-                    <Board grid={champion.bestGame.grid} size={440} label={`Record replay of ${champion.name}`} />
+                    <EpisodeView episode={champion.replay} size={440} label={`Record replay of ${champion.name}`} />
                 </figure>
                 <ScoreChart populations={populations} />
             </section>

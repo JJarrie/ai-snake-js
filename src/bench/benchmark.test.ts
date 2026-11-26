@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import ClassicGa from '../ai/strategy/ClassicGa';
+import { createSnakeGame } from '../game/snake/SnakeEpisode';
 import { records, runOnce, summarize } from './benchmark';
 
 describe('runOnce', () => {
     it('returns the best score of each of the requested generations', () => {
-        const history = runOnce(new ClassicGa(0.1), 4, 3, 1);
+        const history = runOnce(new ClassicGa(0.1), createSnakeGame(20), 4, 3, 1);
 
         expect(history).toHaveLength(3);
         history.forEach((score) => expect(score).toBeGreaterThanOrEqual(0));

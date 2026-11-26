@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import { Worker, isMainThread, parentPort, workerData } from 'node:worker_threads';
 import { createStrategies } from './ai/strategy/registry';
 import { records, runOnce, summarize } from './bench/benchmark';
+import { createSnakeGame } from './game/snake/SnakeEpisode';
 import { envNumber } from './utils/env';
 
 interface Options {
@@ -54,7 +55,7 @@ const work = (): void => {
 
     const start = Date.now();
     // Run i uses seed i + 1 for every strategy: runs are paired on the same food sequences.
-    const history = runOnce(strategy, options.populationSize, options.generations, task.run + 1);
+    const history = runOnce(strategy, createSnakeGame(20), options.populationSize, options.generations, task.run + 1);
     parentPort?.postMessage({ ...task, history, ms: Date.now() - start } satisfies Result);
 };
 
