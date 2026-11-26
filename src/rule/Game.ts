@@ -4,6 +4,7 @@ import BoardSize from './BoardSize';
 import IntelligentSnake from '../ai/IntelligentSnake';
 import Position from './Position';
 import SquareValue from './SquareValue';
+import { deriveSeed, randomSeed, seededRandom } from '../utils/SeededRandom';
 
 export interface GameState {
     grid: GridState;
@@ -18,12 +19,16 @@ class Game {
     snake: IntelligentSnake;
     score: number;
     food: Position;
+    /** Same seed, same food sequence: games sharing a seed are compared on equal terms. */
+    seed: number;
+    foodCount = 0;
 
-    constructor(boardSize: BoardSize, snake?: IntelligentSnake) {
+    constructor(boardSize: BoardSize, snake?: IntelligentSnake, seed = randomSeed()) {
         this.boardSize = boardSize;
         this.grid = new Grid(boardSize);
         this.score = 0;
         this.snake = snake ?? new IntelligentSnake(boardSize);
+        this.seed = seed;
 
         this.generateFood();
     }
@@ -66,18 +71,22 @@ class Game {
     }
 
     private generateFood(): void {
+        // One stream per food index, so a redraw (food on the body) does not shift the following foods.
+        const random = seededRandom(deriveSeed(this.seed, this.foodCount));
+        this.foodCount = this.foodCount + 1;
         do {
-            this.food = Position.createRandom(this.boardSize);
+            this.food = Position.createRandom(this.boardSize, random);
         } while (this.food.isEqual(this.snake.head) || this.snake.body.some((p) => p.isEqual(this.food)));
     }
 
-    /** New game with a copy of this snake's brain; score, food and grid start from scratch. */
-    public cloneBrain(): Game {
-        return new Game(this.boardSize, this.snake.clone());
+    /** New game with a copy of this snake's brain; same seed by default, so it replays this game exactly. */
+    public cloneBrain(seed = this.seed): Game {
+        return new Game(this.boardSize, this.snake.clone(), seed);
     }
 
     public reset(): void {
         this.score = 0;
+        this.foodCount = 0;
         this.snake.reset();
         this.snake.resetLife();
         this.generateFood();

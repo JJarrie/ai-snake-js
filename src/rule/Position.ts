@@ -22,8 +22,8 @@ class Position {
         return new Position(this.x + vector.x, this.y + vector.y);
     }
 
-    static createRandom(boardSize: BoardSize): Position {
-        return new Position(Math.floor(Math.random() * boardSize.width), Math.floor(Math.random() * boardSize.height));
+    static createRandom(boardSize: BoardSize, random: () => number = Math.random): Position {
+        return new Position(Math.floor(random() * boardSize.width), Math.floor(random() * boardSize.height));
     }
 }
 
