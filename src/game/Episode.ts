@@ -27,7 +27,7 @@ export interface Episode {
     fitness(): number;
     /** Behaviour descriptor in [0, 1]^2, for quality-diversity strategies. */
     behavior(): number[];
-    /** Back to the start of the same game (same seed): replays it exactly. */
+    /** Back to the start of the same game (same seed), brain memory cleared: replays it exactly. */
     reset(): void;
     toState(): EpisodeState;
 }

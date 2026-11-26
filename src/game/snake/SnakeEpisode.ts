@@ -16,6 +16,7 @@ class SnakeEpisode implements Episode {
 
     constructor(boardSize: BoardSize, brain: NeuralNetwork, seed: number, withObstacles = false) {
         this.game = new Game(boardSize, new IntelligentSnake(boardSize, brain), seed, withObstacles);
+        brain.resetState();
     }
 
     get brain(): NeuralNetwork {
@@ -54,6 +55,7 @@ class SnakeEpisode implements Episode {
 
     public reset(): void {
         this.game.reset();
+        this.brain.resetState();
     }
 
     public toState(): EpisodeState {

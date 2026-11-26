@@ -71,6 +71,35 @@ describe('Population network size', () => {
     });
 });
 
+describe('Population memory', () => {
+    it('builds recurrent networks on demand, kept by every strategy generation', () => {
+        const population = new Population(4, snakeGame, new ClassicGa(0.1), 1, 8, true);
+        expect(population.episodes[0].brain.recurrent).toBe(true);
+
+        population.calculateFitness();
+        population.naturalSelection();
+
+        population.episodes.forEach((e) => expect(e.brain.recurrent).toBe(true));
+    });
+
+    it('replays a recurrent record exactly: memory is cleared on reset', () => {
+        const population = new Population(3, snakeGame, new ClassicGa(0.1), 5, 8, true);
+        const replay = population.replay;
+        while (!replay.finished()) {
+            replay.step();
+        }
+        const { score } = replay;
+        const lifetime = snakeOf(replay).lifetime;
+
+        replay.reset();
+        while (!replay.finished()) {
+            replay.step();
+        }
+
+        expect([replay.score, snakeOf(replay).lifetime]).toEqual([score, lifetime]);
+    });
+});
+
 describe('Population replay', () => {
     it('is not stepped by training and does not hold a generation back', () => {
         const population = new Population(3, snakeGame, new ClassicGa(0.1));
