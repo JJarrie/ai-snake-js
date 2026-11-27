@@ -12,18 +12,6 @@ class Array2D<T> {
     public set(row: number, col: number, value: T): void {
         this.matrix[row][col] = value;
     }
-
-    public clone(): Array2D<T> {
-        const clone = new Array2D<T>(this.rows, this.cols);
-
-        for (let i = 0; i < this.rows; ++i) {
-            for (let j = 0; j < this.cols; ++j) {
-                clone.matrix[i][j] = this.matrix[i][j];
-            }
-        }
-
-        return clone;
-    }
 }
 
 export default Array2D;

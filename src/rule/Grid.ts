@@ -41,13 +41,6 @@ class Grid {
             boardSize: this.boardSize,
         };
     }
-
-    public clone(): Grid {
-        const clone = new Grid(this.boardSize);
-        clone.innerGrid = this.innerGrid.clone();
-
-        return clone;
-    }
 }
 
 export default Grid;
