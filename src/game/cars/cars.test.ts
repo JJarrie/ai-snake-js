@@ -3,6 +3,7 @@ import Matrix from '../../utils/Matrix';
 import NeuralNetwork from '../../ai/NeuralNetwork';
 import CarsEpisode, {
     createCarsGame,
+    MAX_REVERSE_SPEED,
     trackFor,
     RAY_ANGLES,
     RAY_RANGE,
@@ -155,14 +156,14 @@ describe('CarsEpisode', () => {
     });
 
     it('ends with no progress when the car never accelerates', () => {
-        const episode = play(new CarsEpisode(constantBrain(0, 'brake'), 1));
+        const episode = play(new CarsEpisode(constantBrain(0, 'hold'), 1));
 
         expect(episode.crashed).toBe(false);
         expect(episode.score).toBe(0);
         expect(episode.steps).toBe(100);
     });
 
-    it('accelerates, holds its speed or brakes, never below zero', () => {
+    it('accelerates, holds its speed or brakes, and keeps braking into reverse down to the reverse limit', () => {
         const speedAfterOneStep = (action: ThrottleAction, speed: number) => {
             const episode = new CarsEpisode(constantBrain(0, action), 1);
             episode.speed = speed;
@@ -173,7 +174,38 @@ describe('CarsEpisode', () => {
         expect(speedAfterOneStep('accelerate', 2)).toBeGreaterThan(2);
         expect(speedAfterOneStep('hold', 2)).toBe(2);
         expect(speedAfterOneStep('brake', 2)).toBeLessThan(2);
-        expect(speedAfterOneStep('brake', 0.1)).toBe(0);
+        expect(speedAfterOneStep('brake', 0.1)).toBeCloseTo(-0.3);
+        expect(speedAfterOneStep('brake', -MAX_REVERSE_SPEED)).toBe(-MAX_REVERSE_SPEED);
+        expect(speedAfterOneStep('accelerate', -1)).toBeGreaterThan(-1);
+    });
+
+    it('drives backwards at a negative speed and senses it', () => {
+        const episode = new CarsEpisode(constantBrain(0, 'hold'), 1);
+        const start = { ...episode.position };
+        episode.speed = -1;
+        episode.step();
+
+        const moved =
+            (episode.position.x - start.x) * Math.cos(episode.heading) +
+            (episode.position.y - start.y) * Math.sin(episode.heading);
+        expect(moved).toBeCloseTo(-1);
+    });
+
+    it('steers like a car: not at all when stopped, the other way round when reversing', () => {
+        const turn = (speed: number) => {
+            const episode = new CarsEpisode(constantBrain(1, 'hold'), 1);
+            const heading = episode.heading;
+            episode.speed = speed;
+            episode.step();
+            return episode.heading - heading;
+        };
+
+        expect(turn(0)).toBe(0);
+        expect(turn(1)).toBeGreaterThan(0);
+        expect(turn(-1)).toBeCloseTo(-turn(1));
+        // Turning grows with speed up to the grip speed, then fades: brake before tight bends.
+        expect(turn(2)).toBeGreaterThan(turn(1));
+        expect(turn(5)).toBeLessThan(turn(2));
     });
 
     it('drives forward then crashes when it never steers', () => {
@@ -196,12 +228,14 @@ describe('CarsEpisode', () => {
         expect([a.steps, a.bestProgress]).toEqual([steps, bestProgress]);
     });
 
-    it('describes its behaviour in [0, 1]^2', () => {
-        const episode = play(new CarsEpisode(constantBrain(0.5, 'accelerate'), 2));
+    it('describes its behaviour in [0, 1]^2, reversing included', () => {
+        [constantBrain(0.5, 'accelerate'), constantBrain(0.5, 'brake')].forEach((brain) => {
+            const episode = play(new CarsEpisode(brain, 2));
 
-        episode.behavior().forEach((b) => {
-            expect(b).toBeGreaterThanOrEqual(0);
-            expect(b).toBeLessThanOrEqual(1);
+            episode.behavior().forEach((b) => {
+                expect(b).toBeGreaterThanOrEqual(0);
+                expect(b).toBeLessThanOrEqual(1);
+            });
         });
     });
 });

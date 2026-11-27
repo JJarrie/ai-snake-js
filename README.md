@@ -5,7 +5,7 @@ Small neural networks learn to play a game by **neuroevolution**: no gradient de
 Two games:
 
 - **Snake** on a grid, optionally with random walls.
-- **Car racing** on generated tracks, optionally with cones. The car steers and chooses to accelerate, brake or hold, and is rewarded for distance and lap time.
+- **Car racing** on generated tracks, optionally with cones. The car steers and chooses to accelerate, brake or hold. Braking when stopped backs it up, and like a real car it only turns while moving, the other way round in reverse. It is rewarded for distance and lap time.
 
 ## Design rule: sensors only
 

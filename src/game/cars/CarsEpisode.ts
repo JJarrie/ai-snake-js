@@ -26,6 +26,8 @@ export const RAY_RANGE = 50;
 /** Each sensor sees cones within this angle of its ray: half the spacing, so the sectors tile -105° to 105°. */
 const SECTOR_HALF_ANGLE = (15 * Math.PI) / 180;
 const MAX_SPEED = 5;
+/** Braking while stopped backs the car up, down to this speed (a negative speed is driving backwards). */
+export const MAX_REVERSE_SPEED = 1.5;
 const ACCELERATION = 0.2;
 /** Air drag while accelerating; holding keeps the speed as it is. */
 const DRAG = 0.02;
@@ -36,8 +38,15 @@ const BRAKING = 0.4;
  */
 const LAP_BONUS = 15000;
 const TURN_RATE = 0.12;
-/** Above this speed the car turns less and less: it must brake before tight bends. */
+/**
+ * Like a car, it turns only while moving: more and more up to this speed, then less and less (it must
+ * brake before tight bends). Backwards, the same wheel turns the other way.
+ */
 const GRIP_SPEED = 2;
+
+/** Heading change per step for full steering at `speed`: TURN_RATE at the grip speed, 0 when stopped. */
+const turnFactor = (speed: number): number =>
+    Math.abs(speed) <= GRIP_SPEED ? speed / GRIP_SPEED : (Math.sign(speed) * GRIP_SPEED) / Math.abs(speed);
 export const MAX_STEPS = 1000;
 /** Steps allowed without reaching further along the track before the episode ends. */
 const STALL_STEPS = 100;
@@ -71,7 +80,7 @@ const wrap = (i: number) => ((i % TRACK_SEGMENTS) + TRACK_SEGMENTS) % TRACK_SEGM
 
 /**
  * A car driving laps on a seeded track. From wall-distance rays and its own speed, the network steers
- * and picks a pedal action (accelerate, brake or hold) that changes the speed.
+ * and picks a pedal action (accelerate, brake or hold) that changes the speed; braking past zero reverses.
  */
 class CarsEpisode implements Episode {
     readonly brain: NeuralNetwork;
@@ -159,8 +168,8 @@ class CarsEpisode implements Episode {
         const steer = Math.tanh(steerOut);
         const action = THROTTLE_ACTIONS[actionOuts.indexOf(Math.max(...actionOuts))];
 
-        this.speed = Math.min(MAX_SPEED, Math.max(0, this.nextSpeed(action)));
-        this.heading = this.heading + (steer * TURN_RATE * GRIP_SPEED) / Math.max(GRIP_SPEED, this.speed);
+        this.speed = Math.min(MAX_SPEED, Math.max(-MAX_REVERSE_SPEED, this.nextSpeed(action)));
+        this.heading = this.heading + steer * TURN_RATE * turnFactor(this.speed);
         this.position = {
             x: this.position.x + Math.cos(this.heading) * this.speed,
             y: this.position.y + Math.sin(this.heading) * this.speed,
@@ -168,7 +177,8 @@ class CarsEpisode implements Episode {
 
         this.steps = this.steps + 1;
         this.steerSum = this.steerSum + Math.abs(steer);
-        this.speedSum = this.speedSum + this.speed / MAX_SPEED;
+        // Forward speed only: the behaviour descriptor must stay in [0, 1] for MAP-Elites' grid.
+        this.speedSum = this.speedSum + Math.max(0, this.speed) / MAX_SPEED;
         this.followTrack();
         this.rays = this.sense();
     }
@@ -202,7 +212,7 @@ class CarsEpisode implements Episode {
         }
     }
 
-    /** Mean steering strength and mean speed, both in [0, 1]. */
+    /** Mean steering strength and mean forward speed, both in [0, 1]. */
     public behavior(): number[] {
         return this.steps > 0 ? [this.steerSum / this.steps, this.speedSum / this.steps] : [0, 0];
     }
@@ -304,7 +314,7 @@ class CarsEpisode implements Episode {
 }
 
 /**
- * In: 7 wall-distance rays (they also see the cones) + current speed. Out: steering, then one output per
+ * In: 7 wall-distance rays (they also see the cones) + current speed (negative backwards). Out: steering, then one output per
  * pedal action, the highest one wins.
  */
 export const createCarsGame = (withObstacles = false): GameDefinition => ({
