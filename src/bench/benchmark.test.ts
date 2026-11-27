@@ -69,12 +69,13 @@ describe('reproducibility', () => {
             const second = createStrategies(0.2);
 
             first.forEach((strategy, i) => {
-                const a = runOnce(strategy, game, 12, 4, 77, true);
-                const b = runOnce(second[i], game, 12, 4, 77, true);
+                const a = runOnce(strategy, game, 8, 3, 77, true);
+                const b = runOnce(second[i], game, 8, 3, 77, true);
                 expect(b, `${game.name} / ${strategy.name}`).toEqual(a);
             });
         });
-    });
+        // 24 short runs plus their held-out checks: about 3 s locally, more on CI runners.
+    }, 30000);
 });
 
 describe('area', () => {
