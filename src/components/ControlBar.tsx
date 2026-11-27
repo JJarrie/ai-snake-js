@@ -23,8 +23,11 @@ const ControlBar = ({ gameName, running, generation, commands }: ControlBarProps
     return (
         <header className="control-bar">
             <h1>Neuroevolution · {gameName}</h1>
+            <span className="generation">
+                Generation <strong>{generation}</strong>
+            </span>
             <span className={`status ${running ? 'running' : 'paused'}`} role="status">
-                {running ? 'Running' : 'Paused'} · generation {generation}
+                {running ? 'Running' : 'Paused'}
             </span>
             <div className="buttons">
                 <button type="button" className="primary" onClick={() => void run(running ? 'pause' : 'start')}>

@@ -33,13 +33,18 @@ const StrategyCard = ({ population: p, index, leader, onToggle }: StrategyCardPr
                     <span>{p.paused ? 'Paused' : 'On'}</span>
                 </label>
             </header>
+            {p.paused && <p className="card-note">Paused at generation {p.generation}</p>}
             <dl className="stats">
                 <div>
                     <dt>Record</dt>
                     <dd>{p.bestScore}</dd>
                 </div>
                 <div>
-                    <dt>Last generation</dt>
+                    <dt>Best generation</dt>
+                    <dd>{p.bestGeneration > 0 ? p.bestGeneration : '—'}</dd>
+                </div>
+                <div>
+                    <dt>Last gen. best</dt>
                     <dd>{lastBest}</dd>
                 </div>
             </dl>
