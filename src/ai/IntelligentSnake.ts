@@ -52,8 +52,8 @@ class IntelligentSnake extends EyedSnake {
         }
     }
 
-    public makeDecision(): void {
-        const inputs = this.getVisionAsArray();
+    /** Decides from the given sensor inputs, by default the 8 rays of the last look(). */
+    public makeDecision(inputs: number[] = this.getVisionAsArray()): void {
         this.lastDecision = this.neuralNetwork.output(inputs);
 
         let maxIndex = 0;

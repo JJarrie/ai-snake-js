@@ -98,12 +98,13 @@ describe('Simulation', () => {
 
     it('turns obstacles on for every strategy after a reset', () => {
         const simulation = new Simulation(settings);
-        expect(snakeGame(simulation.populations[0].episodes[0]).obstacleKeys.size).toBe(0);
+        expect(snakeGame(simulation.populations[0].episodes[0]).withObstacles).toBe(false);
 
         simulation.configure({ ...settings, obstacles: true });
 
         simulation.populations.forEach((p) => {
-            expect(snakeGame(p.episodes[0]).obstacleKeys.size).toBeGreaterThan(0);
+            // The flag, not the wall count: on a small board a seed can put every wall in the start area.
+            expect(snakeGame(p.episodes[0]).withObstacles).toBe(true);
         });
     });
 
