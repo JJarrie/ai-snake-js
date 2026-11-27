@@ -1,3 +1,4 @@
+import type { Random } from '../../utils/SeededRandom';
 import type NeuralNetwork from '../NeuralNetwork';
 import type EvolutionStrategy from './EvolutionStrategy';
 import type { Evaluated } from './EvolutionStrategy';
@@ -11,23 +12,23 @@ class ClassicGa implements EvolutionStrategy {
         this.mutationRate = mutationRate;
     }
 
-    public nextGeneration(evaluated: Evaluated[], best: NeuralNetwork): NeuralNetwork[] {
+    public nextGeneration(evaluated: Evaluated[], best: NeuralNetwork, random: Random): NeuralNetwork[] {
         const fitnessSum = evaluated.reduce((sum, e) => sum + e.fitness, 0);
         const next = [best.clone()];
 
         while (next.length < evaluated.length) {
-            const child = ClassicGa.pickParent(evaluated, fitnessSum).crossover(
-                ClassicGa.pickParent(evaluated, fitnessSum),
-            );
-            child.mutate(this.mutationRate);
+            const mother = ClassicGa.pickParent(evaluated, fitnessSum, random);
+            const father = ClassicGa.pickParent(evaluated, fitnessSum, random);
+            const child = mother.crossover(father, random);
+            child.mutate(this.mutationRate, random);
             next.push(child);
         }
 
         return next;
     }
 
-    private static pickParent(evaluated: Evaluated[], fitnessSum: number): NeuralNetwork {
-        const rand = Math.floor(Math.random() * fitnessSum);
+    private static pickParent(evaluated: Evaluated[], fitnessSum: number, random: Random): NeuralNetwork {
+        const rand = Math.floor(random() * fitnessSum);
         let summation = 0;
 
         for (const e of evaluated) {

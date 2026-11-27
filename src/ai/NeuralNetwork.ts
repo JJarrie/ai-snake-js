@@ -1,4 +1,5 @@
 import Matrix from '../utils/Matrix';
+import type { Random } from '../utils/SeededRandom';
 
 /** Initial scale of the memory (state to first layer) weights, relative to the others. */
 const RECURRENT_INIT_SCALE = 0.1;
@@ -28,6 +29,8 @@ class NeuralNetwork {
         outputsNodes: number,
         weights?: Matrix[],
         recurrent = false,
+        // shortcut: Math.random for networks built outside a population (tests, defaults); populations pass a seeded one.
+        random: Random = Math.random,
     ) {
         this.inputsNodes = inputsNodes;
         this.outputsNodes = outputsNodes;
@@ -51,7 +54,7 @@ class NeuralNetwork {
         this.weights.push(new Matrix(this.outputsNodes, this.hiddenLayers[this.hiddenLayers.length - 1] + 1));
 
         for (const matrix of this.weights) {
-            matrix.randomize();
+            matrix.randomize(random);
         }
 
         if (recurrent) {
@@ -70,8 +73,8 @@ class NeuralNetwork {
         this.state = this.recurrent ? new Array<number>(this.hiddenLayers[0]).fill(0) : [];
     }
 
-    public mutate(mutationRate: number): void {
-        this.weights.forEach((w) => w.mutate(mutationRate));
+    public mutate(mutationRate: number, random: Random): void {
+        this.weights.forEach((w) => w.mutate(mutationRate, random));
     }
 
     /** Plain loops over the weight rows: called every step by every agent, so it allocates one array per layer. */
@@ -105,8 +108,8 @@ class NeuralNetwork {
         return values;
     }
 
-    public crossover(partner: NeuralNetwork): NeuralNetwork {
-        return this.withWeights(this.weights.map((w, i) => w.crossover(partner.weights[i])));
+    public crossover(partner: NeuralNetwork, random: Random): NeuralNetwork {
+        return this.withWeights(this.weights.map((w, i) => w.crossover(partner.weights[i], random)));
     }
 
     /** All weights flattened, for strategies that work on a parameter vector. */

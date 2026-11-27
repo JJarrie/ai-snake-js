@@ -97,7 +97,11 @@ describe('recurrent NeuralNetwork', () => {
         const network = new NeuralNetwork(4, [6], 2, undefined, true);
         network.output(inputs);
 
-        const copies = [network.clone(), network.fromVector(network.toVector()), network.crossover(network.clone())];
+        const copies = [
+            network.clone(),
+            network.fromVector(network.toVector()),
+            network.crossover(network.clone(), Math.random),
+        ];
         network.resetState();
         const expected = network.output(inputs);
 

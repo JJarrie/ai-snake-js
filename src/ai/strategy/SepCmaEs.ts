@@ -1,5 +1,6 @@
 import type NeuralNetwork from '../NeuralNetwork';
 import Gaussian from '../../utils/Gaussian';
+import type { Random } from '../../utils/SeededRandom';
 import type EvolutionStrategy from './EvolutionStrategy';
 import type { Evaluated } from './EvolutionStrategy';
 
@@ -24,7 +25,7 @@ class SepCmaEs implements EvolutionStrategy {
         this.sigma = sigma;
     }
 
-    public nextGeneration(evaluated: Evaluated[], best: NeuralNetwork): NeuralNetwork[] {
+    public nextGeneration(evaluated: Evaluated[], best: NeuralNetwork, random: Random): NeuralNetwork[] {
         // First generation is random networks, not samples: start from the best of them.
         if (this.mean === undefined || this.samples.length !== evaluated.length) {
             this.mean = best.toVector();
@@ -37,7 +38,7 @@ class SepCmaEs implements EvolutionStrategy {
 
         const mean = this.mean;
         const deviation = this.variance.map(Math.sqrt);
-        this.samples = evaluated.map(() => mean.map(() => Gaussian.random()));
+        this.samples = evaluated.map(() => mean.map(() => Gaussian.random(random)));
 
         return this.samples.map((z) => best.fromVector(mean.map((m, j) => m + this.sigma * deviation[j] * z[j])));
     }
