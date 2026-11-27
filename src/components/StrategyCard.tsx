@@ -44,7 +44,7 @@ const StrategyCard = ({ population: p, index, leader, onToggle }: StrategyCardPr
                 </div>
             </dl>
             <div className="card-boards">
-                <EpisodeView episode={p.replay} size={150} label={`Record replay of ${p.name}`} />
+                <EpisodeView episode={p.replay} size={150} label={`Record replay of ${p.name}`} showSensors={false} />
                 {p.archive && <ArchiveMap archive={p.archive} color={color} />}
             </div>
         </article>
