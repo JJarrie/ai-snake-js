@@ -89,6 +89,7 @@ class Simulation {
         }
         const running = this.populations.filter((p) => !this.paused.has(p.strategy.name));
         stepInLockstep(running);
+        running.forEach((p) => p.measurePolicy());
 
         if (this.settings.game === 'cars') {
             this.race(running);

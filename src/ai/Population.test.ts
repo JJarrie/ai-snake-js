@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { Episode } from '../game/Episode';
 import type SnakeEpisode from '../game/snake/SnakeEpisode';
 import { createSnakeGame } from '../game/snake/SnakeEpisode';
+import { heldOutScore, heldOutSeeds } from './heldOut';
 import Population from './Population';
 import ClassicGa from './strategy/ClassicGa';
 import type EvolutionStrategy from './strategy/EvolutionStrategy';
@@ -192,5 +193,21 @@ describe('Population policy', () => {
 
         expect(ga.policy()?.toVector()).toEqual(ga.generationBest?.toVector());
         expect(es.policy()?.toVector()).toEqual((es.strategy as OpenAiEs).mean);
+    });
+});
+
+describe('Population policy score', () => {
+    it('measures the policy on the held-out worlds once per finished generation, and sends it', () => {
+        const population = new Population(4, snakeGame, new ClassicGa(0.1), 9);
+        population.measurePolicy();
+        expect(population.toState().policyScore).toBeNull();
+
+        population.calculateFitness();
+        population.naturalSelection();
+        population.measurePolicy();
+
+        const expected = heldOutScore(snakeGame, population.policy() as NeuralNetwork, heldOutSeeds(9));
+        expect(population.toState().policyScore).toBe(expected);
+        expect(population.policyGeneration).toBe(1);
     });
 });

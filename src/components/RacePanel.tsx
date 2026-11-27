@@ -24,11 +24,11 @@ const RacePanel = ({ race, colorFor, size }: RacePanelProps) => {
     return (
         <figure className="panel champion race">
             <figcaption>
-                Race {race.replayRace} of {race.races}
-                {replay && ` · ${replay.laps} ${replay.laps > 1 ? 'laps' : 'lap'} on a track never seen in training`}
+                Showing race {race.replayRace} ({race.races} run so far)
+                {replay && ` · ${replay.laps} ${replay.laps > 1 ? 'laps' : 'lap'} on a new track`}
                 <span className="replay-score">
-                    One race per generation, between the best car of all time of each strategy (the one that scored best
-                    on 5 unseen qualifying tracks); no collisions.
+                    One race per generation on a track no car has seen. Each strategy races its champion: the car with
+                    the best mean on 5 fixed selection tracks so far. No collisions. The standings lead.
                 </span>
             </figcaption>
             {replay && (
@@ -51,7 +51,9 @@ const RacePanel = ({ race, colorFor, size }: RacePanelProps) => {
                         <th scope="col">Strategy</th>
                         <th scope="col">Points</th>
                         <th scope="col">Wins</th>
-                        <th scope="col">Car from gen.</th>
+                        <th scope="col" title="Generation the strategy's champion car comes from">
+                            Champion from gen.
+                        </th>
                         <th scope="col">Last race</th>
                     </tr>
                 </thead>

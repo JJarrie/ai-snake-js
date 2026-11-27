@@ -1,4 +1,5 @@
 import type { Episode, EpisodeState, GameDefinition } from '../game/Episode';
+import { heldOutScore, heldOutSeeds } from './heldOut';
 import NeuralNetwork from './NeuralNetwork';
 import type EvolutionStrategy from './strategy/EvolutionStrategy';
 import { downsampleMax } from '../utils/downsample';
@@ -19,6 +20,8 @@ export interface PopulationState {
     historyStep: number;
     /** Best score of the last finished generation (0 before the first). */
     lastBest: number;
+    /** Mean score of the strategy's policy on held-out worlds after its last measured generation; null before. */
+    policyScore: number | null;
     archive?: (number | null)[][];
 }
 
@@ -43,6 +46,10 @@ class Population {
     generationBest: NeuralNetwork | null = null;
     /** Every draw of the evolution (first weights, selection, mutation): seeded, so a run is reproducible. */
     readonly random: Random;
+    /** Score of the policy on held-out worlds, see measurePolicy. */
+    policyScore: number | null = null;
+    /** Finished generation the policy score belongs to (0 before any). */
+    policyGeneration = 0;
 
     bestScore = 0;
     generation = 1;
@@ -151,6 +158,20 @@ class Population {
         return this.strategy.policy?.(this.generationBest) ?? this.generationBest;
     }
 
+    /**
+     * Plays the policy on this run's held-out worlds once per finished generation (no-op otherwise): the
+     * honest level of the strategy, where the record is the best of many noisy episodes.
+     */
+    public measurePolicy(): void {
+        const finished = this.generation - 1;
+        const policy = this.policy();
+        if (policy === null || finished <= this.policyGeneration) {
+            return;
+        }
+        this.policyScore = heldOutScore(this.game, policy, heldOutSeeds(this.baseSeed));
+        this.policyGeneration = finished;
+    }
+
     public toState(): PopulationState {
         const history = downsampleMax(this.history, HISTORY_POINTS);
 
@@ -163,6 +184,7 @@ class Population {
             history: history.values,
             historyStep: history.step,
             lastBest: this.history.length > 0 ? this.history[this.history.length - 1] : 0,
+            policyScore: this.policyScore,
             archive: this.strategy.archive?.(),
         };
     }

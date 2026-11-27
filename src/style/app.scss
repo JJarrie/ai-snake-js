@@ -210,7 +210,7 @@ button {
 }
 
 /* As wide as its track view: the long caption and the table must not squeeze the chart. */
-.champion.race {
+.champion {
     max-width: 480px;
 }
 
@@ -244,6 +244,13 @@ button {
     figcaption {
         font-weight: 600;
         margin-bottom: 8px;
+    }
+
+    .chart-note {
+        display: block;
+        color: $muted;
+        font-size: 12px;
+        font-weight: 400;
     }
 
     svg {

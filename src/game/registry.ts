@@ -9,6 +9,12 @@ export const GAME_NAMES: Record<GameId, string> = {
 
 export const GAME_IDS = Object.keys(GAME_NAMES) as GameId[];
 
+/** What an episode score counts, shown next to every score. */
+export const SCORE_UNITS: Record<GameId, string> = {
+    snake: 'apples',
+    cars: 'checkpoints',
+};
+
 export const isGameId = (value: unknown): value is GameId => GAME_IDS.includes(value as GameId);
 
 /**
