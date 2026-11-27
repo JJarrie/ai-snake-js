@@ -24,10 +24,11 @@ const RacePanel = ({ race, colorFor, size }: RacePanelProps) => {
     return (
         <figure className="panel champion race">
             <figcaption>
-                Race {race.races}
+                Race {race.replayRace} of {race.races}
                 {replay && ` · ${replay.laps} ${replay.laps > 1 ? 'laps' : 'lap'} on a track never seen in training`}
                 <span className="replay-score">
-                    The best car of each strategy's last generation, every few generations; no collisions.
+                    One race per generation, between the best car of all time of each strategy (the one that scored best
+                    on 5 unseen qualifying tracks); no collisions.
                 </span>
             </figcaption>
             {replay && (
@@ -35,7 +36,7 @@ const RacePanel = ({ race, colorFor, size }: RacePanelProps) => {
                     seed={replay.seed}
                     obstacles={replay.obstacles}
                     size={size}
-                    label={`Replay of race ${race.races}`}
+                    label={`Replay of race ${race.replayRace}`}
                 >
                     {replay.cars.map((car) => (
                         <CarShape key={car.name} {...car} color={colorFor(car.name)} />
@@ -50,6 +51,7 @@ const RacePanel = ({ race, colorFor, size }: RacePanelProps) => {
                         <th scope="col">Strategy</th>
                         <th scope="col">Points</th>
                         <th scope="col">Wins</th>
+                        <th scope="col">Car from gen.</th>
                         <th scope="col">Last race</th>
                     </tr>
                 </thead>
@@ -62,6 +64,7 @@ const RacePanel = ({ race, colorFor, size }: RacePanelProps) => {
                             </th>
                             <td>{s.points}</td>
                             <td>{s.wins}</td>
+                            <td>{s.version}</td>
                             <td>{lastRace(last.find((r) => r.name === s.name))}</td>
                         </tr>
                     ))}

@@ -55,8 +55,8 @@ const WALL_WINDOW = 15;
 /** Radius of the car for cone collisions. */
 const CAR_RADIUS = 2;
 
-/** Tracks kept: the current generation of each population, plus the record replays. */
-const CACHED_TRACKS = 8;
+/** Tracks kept: the generation's track, the record replays, the races and their qualifying tracks. */
+const CACHED_TRACKS = 16;
 const tracks = new Map<number, Track>();
 /**
  * Every episode of a generation shares a seed, so the track is built once per generation. A new seed

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { Episode } from '../game/Episode';
 import type SnakeEpisode from '../game/snake/SnakeEpisode';
 import type { Settings } from './settings';
-import Simulation, { RACE_EVERY } from './Simulation';
+import Simulation from './Simulation';
 
 const settings: Settings = {
     populationSize: 10,
@@ -93,21 +93,21 @@ describe('Simulation', () => {
         expect(simulation.toState().populations[0].replay.view.kind).toBe('cars');
     });
 
-    it('races the strategies every RACE_EVERY generations in the car game, never in snake', () => {
+    it('races the strategy champions once per generation in the car game, never in snake', () => {
         const snake = new Simulation(settings);
         expect(snake.toState().race).toBeNull();
 
         const simulation = new Simulation({ ...settings, game: 'cars' });
-        while (simulation.populations[0].generation <= RACE_EVERY) {
+        while (simulation.populations[0].generation <= 3) {
             simulation.tick();
         }
         const { race } = simulation.toState();
 
-        expect(race?.races).toBe(1);
+        expect(race?.races).toBe(3);
         expect(race?.standings.map((s) => s.name).sort()).toEqual(
             simulation.populations.map((p) => p.strategy.name).sort(),
         );
-        expect(race?.replay?.cars).toHaveLength(6);
+        expect(race?.last).toHaveLength(6);
 
         simulation.control('reset');
         expect(simulation.toState().race?.races).toBe(0);

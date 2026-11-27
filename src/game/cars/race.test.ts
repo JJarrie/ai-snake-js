@@ -68,27 +68,58 @@ describe('Race', () => {
 });
 
 describe('RaceLeague', () => {
-    it('adds up points and wins over races on new tracks, and replays the last race', () => {
+    const league2 = () => {
         const league = new RaceLeague();
-        const racers = [
-            { name: 'still', brain: pedalBrain('hold') },
-            { name: 'driver', brain: pedalBrain('accelerate') },
-        ];
+        league.qualify('still', pedalBrain('hold'), 1, false);
+        league.qualify('driver', pedalBrain('accelerate'), 1, false);
+        return league;
+    };
 
-        league.run(racers, 1, false);
+    it('keeps a new car as champion only if it scores better on the qualifying tracks', () => {
+        const league = new RaceLeague();
+        const still = pedalBrain('hold');
+        const driver = pedalBrain('accelerate');
+        expect(league.qualifyingScore(driver, false)).toBeGreaterThan(league.qualifyingScore(still, false));
+
+        league.qualify('a', still, 1, false);
+        league.qualify('a', driver, 2, false);
+        league.qualify('a', still, 3, false);
+        league.run(1, false);
+
+        expect(league.toState().standings[0].version).toBe(2);
+    });
+
+    it('races every champion on a new track each time and adds up points and wins', () => {
+        const league = league2();
+
+        league.run(1, false);
+        league.stepReplay();
         const firstTrack = league.toState().replay?.seed;
-        league.run(racers, 1, false);
+        league.run(1, false);
         const state = league.toState();
 
         expect(state.races).toBe(2);
-        expect(state.replay?.seed).not.toBe(firstTrack);
+        expect(state.last.map((r) => r.name)).toEqual(['driver', 'still']);
         expect(state.standings).toEqual([
-            { name: 'driver', points: 2 * RACE_POINTS[0], wins: 2, races: 2 },
-            { name: 'still', points: 2 * RACE_POINTS[1], wins: 0, races: 2 },
+            { name: 'driver', points: 2 * RACE_POINTS[0], wins: 2, races: 2, version: 1 },
+            { name: 'still', points: 2 * RACE_POINTS[1], wins: 0, races: 2, version: 1 },
         ]);
+        // Race 1 is still on screen: it is played to the end before race 2 is shown.
+        expect(state.replayRace).toBe(1);
+        expect(state.replay?.seed).toBe(firstTrack);
+    });
 
-        const start = state.replay?.cars[1];
+    it('moves the replay to the newest race once the current one is over', () => {
+        const league = league2();
+        league.run(1, false);
         league.stepReplay();
-        expect(league.toState().replay?.cars[1].x).not.toBe(start?.x);
+        league.run(1, false);
+        league.run(1, false);
+
+        for (let i = 0; i < 5000 && league.toState().replayRace === 1; ++i) {
+            league.stepReplay();
+        }
+
+        expect(league.toState().replayRace).toBe(3);
     });
 });

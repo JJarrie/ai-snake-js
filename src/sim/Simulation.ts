@@ -6,9 +6,6 @@ import { createGame } from '../game/registry';
 import { randomSeed } from '../utils/SeededRandom';
 import { requiresReset, snakeVisionOf, validateSettings, type Settings } from './settings';
 
-/** Finished generations between two races of the car game. */
-export const RACE_EVERY = 10;
-
 export interface StrategyState extends PopulationState {
     paused: boolean;
 }
@@ -36,8 +33,10 @@ class Simulation {
     paused = new Set<string>();
     populations: Population[];
     league: RaceLeague;
-    /** Finished generations at which the next race is run. */
-    private nextRace = RACE_EVERY;
+    /** Last generation of each strategy whose best car tried to qualify. */
+    private qualified = new Map<string, number>();
+    /** Finished generations at the last race: one race per generation. */
+    private lastRace = 0;
     private lastReplay = -Infinity;
 
     constructor(settings: Settings) {
@@ -91,20 +90,28 @@ class Simulation {
         const running = this.populations.filter((p) => !this.paused.has(p.strategy.name));
         stepInLockstep(running);
 
-        const finished = Math.min(...running.map((p) => p.generation)) - 1;
-        if (this.settings.game === 'cars' && finished >= this.nextRace) {
-            this.nextRace = finished + RACE_EVERY;
-            this.race();
+        if (this.settings.game === 'cars') {
+            this.race(running);
         }
     }
 
-    /** The best car of each strategy's last generation, on a new track. */
-    public race(): void {
-        const racers = this.populations.flatMap((p) =>
-            p.generationBest ? [{ name: p.strategy.name, brain: p.generationBest }] : [],
-        );
-        if (racers.length > 0) {
-            this.league.run(racers, this.settings.raceLaps, this.settings.obstacles);
+    /**
+     * Once per finished generation: each new generation best tries to qualify as its strategy's champion,
+     * then the champions race on a new track.
+     */
+    private race(running: Population[]): void {
+        running.forEach((p) => {
+            const generation = p.generation - 1;
+            if (p.generationBest && generation > (this.qualified.get(p.strategy.name) ?? 0)) {
+                this.qualified.set(p.strategy.name, generation);
+                this.league.qualify(p.strategy.name, p.generationBest, generation, this.settings.obstacles);
+            }
+        });
+
+        const finished = Math.min(...running.map((p) => p.generation)) - 1;
+        if (finished > this.lastRace) {
+            this.lastRace = finished;
+            this.league.run(this.settings.raceLaps, this.settings.obstacles);
         }
     }
 
@@ -131,7 +138,8 @@ class Simulation {
     private restart(): void {
         this.populations = this.createPopulations();
         this.league = new RaceLeague();
-        this.nextRace = RACE_EVERY;
+        this.qualified = new Map();
+        this.lastRace = 0;
     }
 
     private createPopulations(): Population[] {
