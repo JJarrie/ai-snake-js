@@ -7,6 +7,7 @@ interface CarsViewProps {
     /** Width and height in pixels. */
     size: number;
     label: string;
+    showRays: boolean;
 }
 
 const MARGIN = 6;
@@ -14,7 +15,7 @@ const MARGIN = 6;
 const toPoints = (points: Point[]): string => points.map((p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
 
 /** Top view of the track (rebuilt from its seed), the car and its sensor rays. */
-const CarsView = ({ view, size, label }: CarsViewProps) => {
+const CarsView = ({ view, size, label, showRays }: CarsViewProps) => {
     const track = React.useMemo(() => createTrack(view.seed), [view.seed]);
     const bounds = React.useMemo(() => {
         const xs = track.right.map((p) => p.x);
@@ -47,7 +48,7 @@ const CarsView = ({ view, size, label }: CarsViewProps) => {
                 track.cones.map((cone, i) => (
                     <circle key={`cone_${i}`} cx={cone.x} cy={cone.y} r={CONE_RADIUS} className="cone" />
                 ))}
-            {rays.map((length, i) => (
+            {(showRays ? rays : []).map((length, i) => (
                 <line
                     key={`ray_${i}`}
                     x1={car.x}

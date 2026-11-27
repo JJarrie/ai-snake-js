@@ -325,6 +325,84 @@ button {
     }
 }
 
+.board-wrap {
+    position: relative;
+    display: inline-block;
+}
+
+/* Over the table, inside its 1px border; lets clicks through. */
+.snake-vision {
+    position: absolute;
+    top: 1px;
+    left: 1px;
+    pointer-events: none;
+
+    .sight {
+        stroke: rgba(#e6e8ee, 0.35);
+        stroke-width: 1.5;
+    }
+
+    .sight-food {
+        stroke: rgba($foodColor, 0.8);
+        stroke-width: 2;
+    }
+
+    .seen-food {
+        fill: none;
+        stroke: #fde68a;
+        stroke-width: 2;
+    }
+
+    .seen-body {
+        fill: none;
+        stroke: #fb923c;
+        stroke-width: 2;
+    }
+}
+
+.sensor-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 20px;
+    margin-top: 10px;
+}
+
+.switch-inline {
+    color: $muted;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.sensor-legend {
+    margin: 0;
+    display: flex;
+    gap: 16px;
+    color: $muted;
+    font-size: 12px;
+
+    span::before {
+        content: '';
+        display: inline-block;
+        width: 14px;
+        height: 3px;
+        margin-right: 6px;
+        vertical-align: middle;
+    }
+
+    .legend-sight::before {
+        background: rgba(#e6e8ee, 0.5);
+    }
+
+    .legend-food::before {
+        background: #fde68a;
+    }
+
+    .legend-body::before {
+        background: #fb923c;
+    }
+}
+
 .empty {
     background-color: $emptyColor;
 }

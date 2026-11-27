@@ -10,8 +10,49 @@ export interface SeenInDirection {
     wall: number;
 }
 
+/** One line of sight for display: board direction, and distances in cells (null when not seen). */
+export interface VisionRay {
+    dx: number;
+    dy: number;
+    wall: number;
+    food: number | null;
+    body: number | null;
+}
+
+/** The 8 directions, clockwise from the front. */
+const RAY_ORDER = [
+    Direction.FRONT,
+    Direction.FRONT_RIGHT,
+    Direction.RIGHT,
+    Direction.BACK_RIGHT,
+    Direction.BACK,
+    Direction.BACK_LEFT,
+    Direction.LEFT,
+    Direction.FRONT_LEFT,
+];
+
 class EyedSnake extends Snake {
     vision: SeenInDirection[] = [];
+
+    /** What the last look() saw, as rays on the board; empty before the first look. */
+    public visionRays(): VisionRay[] {
+        if (this.vision.length === 0) {
+            return [];
+        }
+
+        return RAY_ORDER.map((relative) => {
+            const vector = EyedSnake.mapVectorToDirection(mapCardinalToCurrentDirection(this.direction, relative));
+            const seen = this.vision[relative];
+
+            return {
+                dx: vector.x,
+                dy: vector.y,
+                wall: Math.round(1 / seen.wall),
+                food: seen.food > 0 ? Math.round(1 / seen.food) : null,
+                body: seen.body > 0 ? Math.round(1 / seen.body) : null,
+            };
+        });
+    }
 
     /** An obstacle stops the gaze like the board edge: it is seen as a wall. */
     public lookInDirection(

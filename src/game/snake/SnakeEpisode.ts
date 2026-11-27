@@ -1,3 +1,4 @@
+import type { VisionRay } from '../../ai/EyedSnake';
 import IntelligentSnake from '../../ai/IntelligentSnake';
 import type NeuralNetwork from '../../ai/NeuralNetwork';
 import BoardSize from '../../rule/BoardSize';
@@ -8,6 +9,10 @@ import type { Episode, EpisodeState, GameDefinition } from '../Episode';
 export interface SnakeView {
     kind: 'snake';
     grid: GridState;
+    /** Head cell the rays start from; null once the snake is dead. */
+    head: { x: number; y: number } | null;
+    /** What the snake sees from its current cell: its 8 lines of sight. */
+    vision: VisionRay[];
 }
 
 /** The snake rules of src/rule and src/ai, behind the generic Episode interface. */
@@ -60,8 +65,24 @@ class SnakeEpisode implements Episode {
 
     public toState(): EpisodeState {
         const state = this.game.toState();
+        const { snake } = this.game;
+        const alive = !state.finish;
+        if (alive) {
+            // Look from the current cell: the last look() was taken before the move. step() looks
+            // again before deciding, so this does not change the game.
+            snake.look(this.game.food, this.game.obstacleKeys);
+        }
 
-        return { score: state.score, finished: state.finish, view: { kind: 'snake', grid: state.grid } };
+        return {
+            score: state.score,
+            finished: state.finish,
+            view: {
+                kind: 'snake',
+                grid: state.grid,
+                head: alive ? { x: snake.head.x, y: snake.head.y } : null,
+                vision: alive ? snake.visionRays() : [],
+            },
+        };
     }
 }
 

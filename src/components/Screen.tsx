@@ -16,6 +16,9 @@ interface ScreenProps {
 }
 
 const Screen = ({ simulation, commands }: ScreenProps) => {
+    // Display only: the agents sense the same either way.
+    const [showSensors, setShowSensors] = React.useState(true);
+
     if (simulation === undefined || simulation.populations.length === 0) {
         return <p className="waiting">Connecting to the simulation…</p>;
     }
@@ -42,7 +45,29 @@ const Screen = ({ simulation, commands }: ScreenProps) => {
                         <strong>{champion.bestScore}</strong>
                         <span className="replay-score">replay score {champion.replay.score}</span>
                     </figcaption>
-                    <EpisodeView episode={champion.replay} size={440} label={`Record replay of ${champion.name}`} />
+                    <EpisodeView
+                        episode={champion.replay}
+                        size={440}
+                        label={`Record replay of ${champion.name}`}
+                        showSensors={showSensors}
+                    />
+                    <div className="sensor-bar">
+                        <label className="switch-inline">
+                            <input
+                                type="checkbox"
+                                checked={showSensors}
+                                onChange={(event) => setShowSensors(event.target.checked)}
+                            />{' '}
+                            Show sensors
+                        </label>
+                        {showSensors && settings.game === 'snake' && (
+                            <p className="sensor-legend">
+                                <span className="legend-sight">line of sight</span>
+                                <span className="legend-food">food seen</span>
+                                <span className="legend-body">own body seen</span>
+                            </p>
+                        )}
+                    </div>
                 </figure>
                 <ScoreChart populations={populations} />
             </section>
