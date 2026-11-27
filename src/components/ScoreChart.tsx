@@ -18,10 +18,12 @@ const ticks = (max: number, count: number): number[] => {
 
 interface ScoreChartProps {
     populations: StrategyState[];
+    /** What a score counts: apples, checkpoints. */
+    unit: string;
 }
 
 /** Best score per generation, one line per strategy, on shared axes. */
-const ScoreChart = ({ populations }: ScoreChartProps) => {
+const ScoreChart = ({ populations, unit }: ScoreChartProps) => {
     // Finished generations: the history is reduced, so its length is not the generation count.
     const generations = populations.reduce((max, p) => Math.max(max, p.generation - 1), 1);
     // A loop, not Math.max(...values): spreading a long series exceeds the browser's argument limit.
@@ -32,7 +34,10 @@ const ScoreChart = ({ populations }: ScoreChartProps) => {
 
     return (
         <figure className="panel chart">
-            <figcaption>Best score per generation</figcaption>
+            <figcaption>
+                Best single game per generation ({unit})
+                <span className="chart-note">the luckiest of hundreds of games, not the level of a network</span>
+            </figcaption>
             <svg viewBox={`0 0 ${WIDTH} ${HEIGHT}`} role="img" aria-label="Best score per generation for each strategy">
                 {ticks(maxScore, 5).map((score) => (
                     <g key={`y_${score}`}>

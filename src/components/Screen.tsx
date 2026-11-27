@@ -2,7 +2,8 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 import type { SimulationState } from '../sim/Simulation';
 import type State from '../store/State';
-import { GAME_NAMES } from '../game/registry';
+import { HELD_OUT_SEEDS } from '../ai/heldOut';
+import { GAME_NAMES, SCORE_UNITS } from '../game/registry';
 import EpisodeView from './EpisodeView';
 import { colorOf, type Commands } from './commands';
 import ControlBar from './ControlBar';
@@ -26,12 +27,14 @@ const Screen = ({ simulation, commands }: ScreenProps) => {
 
     const { populations, running, settings, race } = simulation;
     const indexOf = (name: string) => populations.findIndex((p) => p.name === name);
-    // Car game with races run: the race standings lead (a record can come from one easy track).
-    // Otherwise the big board replays the record game of the strategy holding the best score so far.
+    const unit = SCORE_UNITS[settings.game];
+    // Car game with races run: the race standings lead. Otherwise the best policy score on held-out
+    // worlds leads; never the record, the best of many noisy games that luck can win.
     const raced = race !== null && race.standings.length > 0;
+    const policyOf = (k: number) => populations[k].policyScore ?? -1;
     const leader = raced
         ? Math.max(0, indexOf(race.standings[0].name))
-        : populations.reduce((best, p, k) => (p.bestScore > populations[best].bestScore ? k : best), 0);
+        : populations.reduce((best, _, k) => (policyOf(k) > policyOf(best) ? k : best), 0);
     const champion = populations[leader];
     const generation = Math.min(...populations.filter((p) => !p.paused).map((p) => p.generation), Infinity);
 
@@ -49,12 +52,22 @@ const Screen = ({ simulation, commands }: ScreenProps) => {
                 {!raced && (
                     <figure className="panel champion" style={{ borderTopColor: colorOf(leader) }}>
                         <figcaption>
-                            <span style={{ color: colorOf(leader) }}>{champion.name}</span> leads with a record of{' '}
-                            <strong>{champion.bestScore}</strong>
+                            {champion.policyScore === null ? (
+                                <>
+                                    <span style={{ color: colorOf(leader) }}>{champion.name}</span>: first generation
+                                    still running
+                                </>
+                            ) : (
+                                <>
+                                    <span style={{ color: colorOf(leader) }}>{champion.name}</span> leads: its policy
+                                    scores <strong>{champion.policyScore.toFixed(1)}</strong> {unit} on average on{' '}
+                                    {HELD_OUT_SEEDS} worlds it never trained on
+                                </>
+                            )}
                             <span className="replay-score">
                                 {champion.bestGeneration > 0
-                                    ? `replay of generation ${champion.bestGeneration} · score ${champion.replay.score}`
-                                    : `replay score ${champion.replay.score}`}
+                                    ? `Replay of its record, its best single game: ${champion.bestScore} ${unit} (generation ${champion.bestGeneration}) · now ${champion.replay.score}`
+                                    : `Replay: ${champion.replay.score} ${unit}`}
                                 {champion.replay.view.kind === 'cars' &&
                                     champion.replay.view.bestLap !== null &&
                                     ` · best lap ${champion.replay.view.bestLap} steps`}
@@ -87,7 +100,7 @@ const Screen = ({ simulation, commands }: ScreenProps) => {
                         </div>
                     </figure>
                 )}
-                <ScoreChart populations={populations} />
+                <ScoreChart populations={populations} unit={unit} />
             </section>
             <section className="cards">
                 {populations.map((p, k) => (
@@ -96,6 +109,7 @@ const Screen = ({ simulation, commands }: ScreenProps) => {
                         population={p}
                         index={k}
                         leader={k === leader}
+                        unit={unit}
                         onToggle={commands.toggle}
                     />
                 ))}
