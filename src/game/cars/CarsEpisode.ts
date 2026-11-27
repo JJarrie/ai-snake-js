@@ -1,15 +1,6 @@
 import type NeuralNetwork from '../../ai/NeuralNetwork';
 import type { Episode, EpisodeState, GameDefinition } from '../Episode';
-import {
-    CONE_RADIUS,
-    createTrack,
-    projectOnSegment,
-    rayCircleHit,
-    rayHit,
-    TRACK_SEGMENTS,
-    type Point,
-    type Track,
-} from './track';
+import { CONE_RADIUS, createTrack, projectOnSegment, rayHit, TRACK_SEGMENTS, type Point, type Track } from './track';
 
 export interface CarsView {
     kind: 'cars';
@@ -32,6 +23,8 @@ export type ThrottleAction = (typeof THROTTLE_ACTIONS)[number];
 /** Sensor directions relative to the heading. */
 export const RAY_ANGLES = [-90, -60, -30, 0, 30, 60, 90].map((deg) => (deg * Math.PI) / 180);
 export const RAY_RANGE = 50;
+/** Each sensor sees cones within this angle of its ray: half the spacing, so the sectors tile -105° to 105°. */
+const SECTOR_HALF_ANGLE = (15 * Math.PI) / 180;
 const MAX_SPEED = 5;
 const ACCELERATION = 0.2;
 /** Air drag while accelerating; holding keeps the speed as it is. */
@@ -267,28 +260,46 @@ class CarsEpisode implements Episode {
         }
     }
 
-    /** Distance to the nearest wall or cone along each sensor ray, capped at RAY_RANGE. */
+    /**
+     * Per sensor, distance to the nearest wall along its ray, or to the nearest cone in its sector when
+     * closer, capped at RAY_RANGE. Walls are continuous, so a thin ray always meets them; a cone is small
+     * and would slip between two rays 30° apart until about 5 units away, one step at full speed.
+     */
     private sense(): number[] {
         const { left, right } = this.track;
 
         return RAY_ANGLES.map((angle) => {
             const dx = Math.cos(this.heading + angle);
             const dy = Math.sin(this.heading + angle);
-            let nearest = this.cones.reduce(
-                (min, cone) => Math.min(min, rayCircleHit(this.position, dx, dy, cone, CONE_RADIUS)),
-                RAY_RANGE,
-            );
+            let wall = RAY_RANGE;
             for (let offset = -WALL_WINDOW; offset <= WALL_WINDOW; ++offset) {
                 const a = wrap(this.segment + offset);
                 const b = wrap(a + 1);
-                nearest = Math.min(
-                    nearest,
+                wall = Math.min(
+                    wall,
                     rayHit(this.position, dx, dy, left[a], left[b]),
                     rayHit(this.position, dx, dy, right[a], right[b]),
                 );
             }
-            return nearest;
+            // shortcut: a cone behind the wall this ray meets counts as hidden, even when the wall is
+            // nearer only along the ray; exact per-direction occlusion if cones show through bends.
+            return this.cones.reduce((nearest, cone) => Math.min(nearest, this.coneInSector(cone, angle)), wall);
         });
+    }
+
+    /** Distance to the edge of `cone` if any part of it lies in the sector of the ray at `angle`, else Infinity. */
+    private coneInSector(cone: Point, angle: number): number {
+        const ox = cone.x - this.position.x;
+        const oy = cone.y - this.position.y;
+        const distance = Math.hypot(ox, oy);
+        if (distance <= CONE_RADIUS) {
+            return 0;
+        }
+        const off = Math.atan2(oy, ox) - (this.heading + angle);
+        const gap = Math.abs(Math.atan2(Math.sin(off), Math.cos(off)));
+        const halfWidth = Math.asin(CONE_RADIUS / distance);
+
+        return gap - halfWidth <= SECTOR_HALF_ANGLE ? distance - CONE_RADIUS : Infinity;
     }
 }
 

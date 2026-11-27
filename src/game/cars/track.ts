@@ -82,22 +82,6 @@ export const createTrack = (seed: number): Track => {
     return { center, left, right: offset(-1), halfWidth: HALF_WIDTH, cones };
 };
 
-/** Distance along the ray (origin, unit direction) to the circle, 0 from inside, or Infinity if it misses. */
-export const rayCircleHit = (origin: Point, dx: number, dy: number, center: Point, radius: number): number => {
-    const ox = center.x - origin.x;
-    const oy = center.y - origin.y;
-    const along = ox * dx + oy * dy;
-    const squaredGap = ox * ox + oy * oy - along * along;
-    if (squaredGap > radius * radius) {
-        return Infinity;
-    }
-    const half = Math.sqrt(radius * radius - squaredGap);
-    if (along - half >= 0) {
-        return along - half;
-    }
-    return along + half >= 0 ? 0 : Infinity;
-};
-
 /** Distance from `p` to segment [a, b], and where its projection falls on it (0 at a, 1 at b). */
 export const projectOnSegment = (p: Point, a: Point, b: Point): { distance: number; t: number } => {
     const ex = b.x - a.x;

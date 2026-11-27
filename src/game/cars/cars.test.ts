@@ -9,7 +9,7 @@ import CarsEpisode, {
     THROTTLE_ACTIONS,
     type ThrottleAction,
 } from './CarsEpisode';
-import { createTrack, projectOnSegment, rayCircleHit, rayHit, TRACK_SEGMENTS } from './track';
+import { CONE_RADIUS, createTrack, projectOnSegment, rayHit, TRACK_SEGMENTS } from './track';
 
 /** A network that always steers `steer` (before tanh) and picks `action`: zero weights, output biases only. */
 const constantBrain = (steer: number, action: ThrottleAction): NeuralNetwork => {
@@ -72,13 +72,6 @@ describe('cones', () => {
         }
     });
 
-    it('stop sensor rays', () => {
-        expect(rayCircleHit({ x: 0, y: 0 }, 1, 0, { x: 10, y: 0 }, 1.5)).toBeCloseTo(8.5);
-        expect(rayCircleHit({ x: 0, y: 0 }, -1, 0, { x: 10, y: 0 }, 1.5)).toBe(Infinity);
-        expect(rayCircleHit({ x: 0, y: 0 }, 0, 1, { x: 10, y: 0 }, 1.5)).toBe(Infinity);
-        expect(rayCircleHit({ x: 10, y: 0 }, 0, 1, { x: 10, y: 0 }, 1.5)).toBe(0);
-    });
-
     it('crash the car only when obstacles are on', () => {
         const brain = constantBrain(0, 'accelerate');
         const free = new CarsEpisode(brain, 1);
@@ -98,6 +91,53 @@ describe('cones', () => {
         expect(blocked.crashed).toBe(true);
         expect(free.crashed).toBe(false);
         expect(blocked.toState().view).toMatchObject({ kind: 'cars', obstacles: true });
+    });
+
+    it('are seen between two rays: each ray covers its sector, up to the next one', () => {
+        const episode = new CarsEpisode(constantBrain(0, 'hold'), 1, true);
+        const at = (distance: number, degrees: number) => {
+            const angle = episode.heading + (degrees * Math.PI) / 180;
+            return {
+                x: episode.position.x + Math.cos(angle) * distance,
+                y: episode.position.y + Math.sin(angle) * distance,
+            };
+        };
+        episode.cones = [];
+        episode.reset();
+        const walls = [...episode.rays];
+
+        // Halfway between the 0° and 30° rays, 12 units ahead: a thin ray passes 3 units beside it.
+        episode.cones = [at(12, 15)];
+        episode.reset();
+
+        const front = RAY_ANGLES.findIndex((a) => a === 0);
+        [front, front + 1].forEach((i) => expect(walls[i]).toBeGreaterThan(12));
+        [front, front + 1].forEach((i) => expect(episode.rays[i]).toBeCloseTo(12 - CONE_RADIUS, 5));
+        // The other rays still measure the walls.
+        episode.rays.forEach((r, i) => {
+            if (i !== front && i !== front + 1) {
+                expect(r).toBe(walls[i]);
+            }
+        });
+    });
+
+    it('are not seen behind a nearer wall', () => {
+        const episode = new CarsEpisode(constantBrain(0, 'hold'), 1, true);
+        episode.cones = [];
+        episode.reset();
+        const left = RAY_ANGLES.findIndex((a) => a === -Math.PI / 2);
+        const wall = episode.rays[left];
+
+        const angle = episode.heading - Math.PI / 2;
+        episode.cones = [
+            {
+                x: episode.position.x + Math.cos(angle) * (wall + 5),
+                y: episode.position.y + Math.sin(angle) * (wall + 5),
+            },
+        ];
+        episode.reset();
+
+        expect(episode.rays[left]).toBe(wall);
     });
 });
 
