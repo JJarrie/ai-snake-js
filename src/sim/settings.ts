@@ -21,6 +21,8 @@ export const SETTING_LIMITS = {
     visionRange: { min: 2, max: 40, integer: true },
     visionFov: { min: 60, max: 360, integer: true },
     visionSectors: { min: 3, max: 15, integer: true },
+    /** Laps of the races between strategies (car game). */
+    raceLaps: { min: 1, max: 3, integer: true, live: true },
 } satisfies Record<string, Limit>;
 
 export type SettingKey = keyof typeof SETTING_LIMITS;

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { Episode } from '../game/Episode';
 import type SnakeEpisode from '../game/snake/SnakeEpisode';
 import type { Settings } from './settings';
-import Simulation from './Simulation';
+import Simulation, { RACE_EVERY } from './Simulation';
 
 const settings: Settings = {
     populationSize: 10,
@@ -17,6 +17,7 @@ const settings: Settings = {
     visionRange: 10,
     visionFov: 180,
     visionSectors: 7,
+    raceLaps: 1,
 };
 
 const snakeGame = (episode: Episode) => (episode as SnakeEpisode).game;
@@ -90,6 +91,26 @@ describe('Simulation', () => {
         });
         simulation.tick();
         expect(simulation.toState().populations[0].replay.view.kind).toBe('cars');
+    });
+
+    it('races the strategies every RACE_EVERY generations in the car game, never in snake', () => {
+        const snake = new Simulation(settings);
+        expect(snake.toState().race).toBeNull();
+
+        const simulation = new Simulation({ ...settings, game: 'cars' });
+        while (simulation.populations[0].generation <= RACE_EVERY) {
+            simulation.tick();
+        }
+        const { race } = simulation.toState();
+
+        expect(race?.races).toBe(1);
+        expect(race?.standings.map((s) => s.name).sort()).toEqual(
+            simulation.populations.map((p) => p.strategy.name).sort(),
+        );
+        expect(race?.replay?.cars).toHaveLength(6);
+
+        simulation.control('reset');
+        expect(simulation.toState().race?.races).toBe(0);
     });
 
     it('gives every snake a field of view after a reset, with matching network inputs', () => {

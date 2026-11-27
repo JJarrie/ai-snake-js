@@ -28,6 +28,8 @@ const simulation = new Simulation(
         visionRange: envSetting('VISION_RANGE', 'visionRange', 10),
         visionFov: envSetting('VISION_FOV', 'visionFov', 180),
         visionSectors: envSetting('VISION_SECTORS', 'visionSectors', 7),
+        // Laps of the races between strategies in the car game.
+        raceLaps: envSetting('RACE_LAPS', 'raceLaps', 1),
     }),
 );
 

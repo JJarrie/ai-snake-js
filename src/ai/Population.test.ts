@@ -136,3 +136,18 @@ describe('Population replay', () => {
         expect(population.replay.seed).not.toBe(population.episodes[0].seed);
     });
 });
+
+describe('Population generation best', () => {
+    it('keeps a copy of the fittest network of the last finished generation', () => {
+        const population = new Population(4, snakeGame, new ClassicGa(0.1));
+        expect(population.generationBest).toBeNull();
+
+        population.calculateFitness();
+        population.fitness = [1, 5, 2, 3];
+        const fittest = population.episodes[1].brain;
+        population.naturalSelection();
+
+        expect(population.generationBest).not.toBe(fittest);
+        expect(population.generationBest?.toVector()).toEqual(fittest.toVector());
+    });
+});

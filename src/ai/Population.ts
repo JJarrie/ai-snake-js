@@ -36,6 +36,8 @@ class Population {
     fitness: number[] = [];
     replay: Episode;
     history: number[] = [];
+    /** Copy of the best network of the last finished generation; null before the first one. */
+    generationBest: NeuralNetwork | null = null;
 
     bestScore = 0;
     generation = 1;
@@ -105,6 +107,9 @@ class Population {
     public naturalSelection(): void {
         this.electBest();
         this.history.push(this.episodes.reduce((max, episode) => Math.max(max, episode.score), 0));
+        // A copy: strategies may reuse or mutate this generation's networks.
+        const bestIndex = this.fitness.reduce((best, f, i) => (f > this.fitness[best] ? i : best), 0);
+        this.generationBest = this.episodes[bestIndex].brain.clone();
 
         const brains = this.strategy.nextGeneration(
             this.episodes.map((episode, i) => ({
