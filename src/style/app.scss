@@ -209,6 +209,32 @@ button {
     }
 }
 
+.standings {
+    width: 100%;
+    margin-top: 10px;
+    border-collapse: collapse;
+    font-size: 13px;
+
+    caption {
+        text-align: left;
+        font-weight: 600;
+        margin-bottom: 4px;
+    }
+
+    th,
+    td {
+        padding: 3px 6px;
+        text-align: left;
+        border-bottom: 1px solid $border;
+    }
+
+    thead th {
+        color: $muted;
+        font-weight: 400;
+        font-size: 12px;
+    }
+}
+
 .chart {
     figcaption {
         font-weight: 600;
