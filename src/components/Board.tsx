@@ -40,7 +40,7 @@ const Board = ({ grid, size, label, sight }: BoardProps) => {
                     {grid.innerGrid.map((row, y) => (
                         <tr key={`row_${y}`}>
                             {row.map((square, x) => (
-                                <td key={`square_${x}`} className={className(square.value)} />
+                                <td key={`square_${x}`} className={className(square)} />
                             ))}
                         </tr>
                     ))}
