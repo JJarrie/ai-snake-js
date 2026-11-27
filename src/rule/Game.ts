@@ -1,5 +1,4 @@
 import Grid, { type GridState } from './Grid';
-import type { SnakeState } from './Snake';
 import BoardSize from './BoardSize';
 import IntelligentSnake from '../ai/IntelligentSnake';
 import Position from './Position';
@@ -14,7 +13,6 @@ const SAFE_RADIUS = 3;
 export interface GameState {
     grid: GridState;
     score: number;
-    snake: SnakeState;
     finish: boolean;
 }
 
@@ -54,14 +52,15 @@ class Game {
     }
 
     public nextMove(): void {
-        if (this.snake.isEating(this.food)) {
+        const eating = this.snake.isEating(this.food);
+        if (eating) {
             this.snake.addLife();
-            this.snake.body.unshift(this.food);
             this.score = this.score + 1;
             this.generateFood();
         }
 
-        this.snake.nextPosition();
+        // Eating keeps the tail in place for this move: the snake is one cell longer at once.
+        this.snake.nextPosition(eating);
         this.snake.updateAlive();
         if (this.obstacleKeys.has(this.keyOf(this.snake.head))) {
             this.snake.alive = false;
@@ -69,7 +68,6 @@ class Game {
     }
 
     public toState(): GameState {
-        this.snake.calculateFitness(this.score);
         // Grid is built only for displayed games; a dead snake keeps its last drawn frame.
         if (!this.finish()) {
             this.updateGrid();
@@ -77,7 +75,6 @@ class Game {
         return {
             grid: this.grid.toState(),
             score: this.score,
-            snake: this.snake.toState(),
             finish: this.finish(),
         };
     }
@@ -96,6 +93,14 @@ class Game {
     }
 
     private generateFood(): void {
+        // No free cell left: the snake has filled the board, the game is over (drawing would never end).
+        const taken = new Set([this.snake.head, ...this.snake.body].map((p) => this.keyOf(p)));
+        this.obstacleKeys.forEach((key) => taken.add(key));
+        if (taken.size >= this.boardSize.width * this.boardSize.height) {
+            this.snake.alive = false;
+            return;
+        }
+
         // One stream per food index, so a redraw (food on the body) does not shift the following foods.
         const random = seededRandom(deriveSeed(this.seed, this.foodCount));
         this.foodCount = this.foodCount + 1;

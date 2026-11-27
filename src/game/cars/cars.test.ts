@@ -3,6 +3,7 @@ import Matrix from '../../utils/Matrix';
 import NeuralNetwork from '../../ai/NeuralNetwork';
 import CarsEpisode, {
     createCarsGame,
+    trackFor,
     RAY_ANGLES,
     RAY_RANGE,
     THROTTLE_ACTIONS,
@@ -191,5 +192,19 @@ describe('CarsEpisode laps', () => {
 
         expect(withLap([150])).toBeGreaterThan(withLap([300]));
         expect(withLap([300])).toBeGreaterThan(withLap([]));
+    });
+});
+
+describe('track cache', () => {
+    it('reuses the track of a recent seed and forgets old ones', () => {
+        const first = trackFor(1000);
+        expect(trackFor(1000)).toBe(first);
+
+        for (let seed = 1001; seed < 1020; ++seed) {
+            trackFor(seed);
+        }
+
+        expect(trackFor(1000)).not.toBe(first);
+        expect(trackFor(1000)).toEqual(first);
     });
 });

@@ -13,7 +13,7 @@ interface StrategyCardProps {
 
 const StrategyCard = ({ population: p, index, leader, onToggle }: StrategyCardProps) => {
     const color = colorOf(index);
-    const lastBest = p.history.length > 0 ? p.history[p.history.length - 1] : 0;
+    const { lastBest } = p;
 
     return (
         <article

@@ -1,7 +1,42 @@
 import { describe, expect, it } from 'vitest';
+import Matrix from '../utils/Matrix';
 import NeuralNetwork from './NeuralNetwork';
 
 const inputs = [1, 0, 0.5, 0.2];
+
+const matrixOf = (rows: number[][]): Matrix => {
+    const m = new Matrix(rows.length, rows[0].length);
+    m.matrix = rows;
+    return m;
+};
+
+describe('NeuralNetwork output', () => {
+    it('computes ReLU hidden layers and a linear output, bias last', () => {
+        const network = new NeuralNetwork(2, [2], 1, [
+            matrixOf([
+                [1, -1, 0.5],
+                [2, 0, -1],
+            ]),
+            matrixOf([[3, -2, 0.25]]),
+        ]);
+
+        // Hidden: relu(1 - 2 + 0.5) = 0, relu(2 - 1) = 1. Output: -2 + 0.25.
+        expect(network.output([1, 2])).toEqual([-1.75]);
+    });
+
+    it('feeds the tanh memory layer back with the next input', () => {
+        const network = new NeuralNetwork(1, [1], 1, [matrixOf([[1, 0.5, 0]]), matrixOf([[2, 1]])], true);
+
+        const first = Math.tanh(1);
+        expect(network.output([1])[0]).toBeCloseTo(2 * first + 1);
+        expect(network.output([1])[0]).toBeCloseTo(2 * Math.tanh(1 + 0.5 * first) + 1);
+        expect(network.state).toEqual([Math.tanh(1 + 0.5 * first)]);
+    });
+
+    it('throws when the input size does not match the first layer', () => {
+        expect(() => new NeuralNetwork(3, [2], 1).output([1, 2])).toThrow();
+    });
+});
 
 describe('NeuralNetwork', () => {
     it('without memory, answers the same input the same way', () => {

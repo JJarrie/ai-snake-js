@@ -55,14 +55,21 @@ const WALL_WINDOW = 15;
 /** Radius of the car for cone collisions. */
 const CAR_RADIUS = 2;
 
+/** Tracks kept: the current generation of each population, plus the record replays. */
+const CACHED_TRACKS = 8;
 const tracks = new Map<number, Track>();
-/** Every episode of a generation shares a seed, so the track is built once per generation. */
-const trackFor = (seed: number): Track => {
+/**
+ * Every episode of a generation shares a seed, so the track is built once per generation. A new seed
+ * comes every generation: the oldest is dropped (episodes keep their own reference to their track).
+ */
+export const trackFor = (seed: number): Track => {
     let track = tracks.get(seed);
     if (track === undefined) {
-        // shortcut: unbounded cache, one entry per seed seen; fine for a demo run, clear it if memory grows.
         track = createTrack(seed);
         tracks.set(seed, track);
+        if (tracks.size > CACHED_TRACKS) {
+            tracks.delete(tracks.keys().next().value as number);
+        }
     }
     return track;
 };

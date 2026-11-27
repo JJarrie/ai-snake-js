@@ -22,8 +22,11 @@ interface ScoreChartProps {
 
 /** Best score per generation, one line per strategy, on shared axes. */
 const ScoreChart = ({ populations }: ScoreChartProps) => {
-    const generations = Math.max(1, ...populations.map((p) => p.history.length));
-    const maxScore = Math.max(5, ...populations.flatMap((p) => p.history));
+    // Finished generations: the history is reduced, so its length is not the generation count.
+    const generations = populations.reduce((max, p) => Math.max(max, p.generation - 1), 1);
+    // A loop, not Math.max(...values): spreading a long series exceeds the browser's argument limit.
+    const maxScore = populations.reduce((max, p) => p.history.reduce((m, s) => Math.max(m, s), max), 5);
+    /** x of generation index `i` (0-based). */
     const x = (i: number) => LEFT + (generations > 1 ? (i / (generations - 1)) * (WIDTH - LEFT - RIGHT) : 0);
     const y = (score: number) => HEIGHT - BOTTOM - (score / maxScore) * (HEIGHT - TOP - BOTTOM);
 
@@ -56,7 +59,7 @@ const ScoreChart = ({ populations }: ScoreChartProps) => {
                         stroke={colorOf(k)}
                         strokeWidth={2}
                         strokeOpacity={p.paused ? 0.35 : 1}
-                        points={p.history.map((score, i) => `${x(i)},${y(score)}`).join(' ')}
+                        points={p.history.map((score, i) => `${x(i * p.historyStep)},${y(score)}`).join(' ')}
                     />
                 ))}
             </svg>

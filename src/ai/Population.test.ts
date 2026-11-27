@@ -8,6 +8,21 @@ import ClassicGa from './strategy/ClassicGa';
 const snakeGame = createSnakeGame(20);
 const snakeOf = (episode: Episode) => (episode as SnakeEpisode).game.snake;
 
+describe('Population state', () => {
+    it('sends a bounded history after a long run, plus the last generation best', () => {
+        const population = new Population(3, snakeGame, new ClassicGa(0.1));
+        population.history = [...Array(20000)].map((_, i) => i % 50);
+
+        const state = population.toState();
+
+        expect(state.history.length).toBeLessThanOrEqual(500);
+        expect(state.historyStep).toBe(40);
+        expect(state.lastBest).toBe(19999 % 50);
+        // The full history stays on the server for the benchmark.
+        expect(population.history).toHaveLength(20000);
+    });
+});
+
 describe('Population', () => {
     it('mutates children with the strategy mutation rate', () => {
         const population = new Population(10, snakeGame, new ClassicGa(1));
@@ -19,18 +34,6 @@ describe('Population', () => {
 
         // episodes[0] is the untouched best clone; every other child is mutated at rate 1.
         expect(parentWeights).not.toContain(population.episodes[1].brain.weights[0].matrix[0][0]);
-    });
-
-    it('sums fitness over every episode of the generation', () => {
-        const population = new Population(5, snakeGame, new ClassicGa(0));
-        population.calculateFitness();
-        population.naturalSelection();
-        population.calculateFitness();
-        const expected = population.episodes.reduce((sum, e) => sum + e.fitness(), 0);
-
-        population.naturalSelection();
-
-        expect(population.fitnessSum).toBeCloseTo(expected);
     });
 
     it('records the best score of each generation and keeps its size', () => {

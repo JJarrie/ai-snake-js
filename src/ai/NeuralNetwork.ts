@@ -74,25 +74,35 @@ class NeuralNetwork {
         this.weights.forEach((w) => w.mutate(mutationRate));
     }
 
+    /** Plain loops over the weight rows: called every step by every agent, so it allocates one array per layer. */
     public output(inputArr: number[]): number[] {
-        const inputs = this.weights[0].singleColumnMatrixFromArray([...inputArr, ...this.state]);
-        let currentBias = inputs.addBias();
+        let values = this.recurrent ? [...inputArr, ...this.state] : inputArr;
 
-        for (let i = 0; i < this.hiddenLayers.length; ++i) {
-            const hiddenInput = this.weights[i].dot(currentBias);
+        for (let i = 0; i < this.weights.length; ++i) {
             const memoryLayer = i === 0 && this.recurrent;
-            // The looped-back layer needs a bounded activation: with ReLU its state grows without limit
-            // (measured: 1e6 to 1e14 after 40 steps with random weights) and saturates every decision.
-            const hiddenOutput = hiddenInput.activate((x) => (memoryLayer ? Math.tanh(x) : Activation.relu(x)));
-            if (memoryLayer) {
-                this.state = hiddenOutput.toArray();
+            const hidden = i < this.hiddenLayers.length;
+            if (values.length !== this.weights[i].cols - 1) {
+                throw new Error(`Layer ${i} expects ${this.weights[i].cols - 1} inputs, got ${values.length}`);
             }
-            currentBias = hiddenOutput.addBias();
+            values = this.weights[i].matrix.map((row) => {
+                // The last column is the bias weight.
+                let sum = row[row.length - 1];
+                for (let k = 0; k < values.length; ++k) {
+                    sum = sum + row[k] * values[k];
+                }
+                // The looped-back layer needs a bounded activation: with ReLU its state grows without limit
+                // (measured: 1e6 to 1e14 after 40 steps with random weights) and saturates every decision.
+                if (memoryLayer) {
+                    return Math.tanh(sum);
+                }
+                return hidden ? Activation.relu(sum) : sum;
+            });
+            if (memoryLayer) {
+                this.state = values;
+            }
         }
 
-        const outputInput = this.weights[this.weights.length - 1].dot(currentBias);
-
-        return outputInput.toArray();
+        return values;
     }
 
     public crossover(partner: NeuralNetwork): NeuralNetwork {

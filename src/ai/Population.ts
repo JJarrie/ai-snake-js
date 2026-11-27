@@ -1,21 +1,29 @@
 import type { Episode, EpisodeState, GameDefinition } from '../game/Episode';
 import NeuralNetwork from './NeuralNetwork';
 import type EvolutionStrategy from './strategy/EvolutionStrategy';
+import { downsampleMax } from '../utils/downsample';
 import { deriveSeed, randomSeed } from '../utils/SeededRandom';
 
 export interface PopulationState {
     name: string;
     bestScore: number;
     generation: number;
-    bestFitness: number;
-    fitnessSum: number;
     bestGeneration: number;
     /** Replay of the record episode. */
     replay: EpisodeState;
-    /** Best score of each finished generation. */
+    /**
+     * Best score per finished generation, reduced to at most HISTORY_POINTS values: each value is the best
+     * of `historyStep` consecutive generations. The full history stays on the server.
+     */
     history: number[];
+    historyStep: number;
+    /** Best score of the last finished generation (0 before the first). */
+    lastBest: number;
     archive?: (number | null)[][];
 }
+
+/** The history grows by one value per generation: it is sent reduced, or a long run would flood the socket. */
+const HISTORY_POINTS = 500;
 
 /** One strategy training networks on one game; knows nothing of the game's rules. */
 class Population {
@@ -33,7 +41,6 @@ class Population {
     generation = 1;
     bestGeneration = 0;
     bestFitness = 0;
-    fitnessSum = 0;
 
     constructor(
         size: number,
@@ -97,7 +104,6 @@ class Population {
 
     public naturalSelection(): void {
         this.electBest();
-        this.fitnessSum = this.fitness.reduce((sum, f) => sum + f, 0);
         this.history.push(this.episodes.reduce((max, episode) => Math.max(max, episode.score), 0));
 
         const brains = this.strategy.nextGeneration(
@@ -120,15 +126,17 @@ class Population {
     }
 
     public toState(): PopulationState {
+        const history = downsampleMax(this.history, HISTORY_POINTS);
+
         return {
             name: this.strategy.name,
-            bestFitness: this.bestFitness,
             replay: this.replay.toState(),
             bestScore: this.bestScore,
-            fitnessSum: this.fitnessSum,
             generation: this.generation,
             bestGeneration: this.bestGeneration,
-            history: this.history,
+            history: history.values,
+            historyStep: history.step,
+            lastBest: this.history.length > 0 ? this.history[this.history.length - 1] : 0,
             archive: this.strategy.archive?.(),
         };
     }
