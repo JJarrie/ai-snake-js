@@ -43,7 +43,11 @@ const Screen = ({ simulation, commands }: ScreenProps) => {
                     <figcaption>
                         <span style={{ color: colorOf(leader) }}>{champion.name}</span> leads with a record of{' '}
                         <strong>{champion.bestScore}</strong>
-                        <span className="replay-score">replay score {champion.replay.score}</span>
+                        <span className="replay-score">
+                            {champion.bestGeneration > 0
+                                ? `replay of generation ${champion.bestGeneration} · score ${champion.replay.score}`
+                                : `replay score ${champion.replay.score}`}
+                        </span>
                     </figcaption>
                     <EpisodeView
                         episode={champion.replay}

@@ -98,6 +98,23 @@ button {
     }
 }
 
+.generation {
+    font-size: 18px;
+    color: $muted;
+
+    strong {
+        color: $text;
+        font-size: 22px;
+        font-variant-numeric: tabular-nums;
+    }
+}
+
+.card-note {
+    margin: 0;
+    font-size: 12px;
+    color: $muted;
+}
+
 .status {
     padding: 3px 10px;
     border-radius: 999px;
