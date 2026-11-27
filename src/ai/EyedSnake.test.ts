@@ -19,3 +19,23 @@ describe('EyedSnake.lookInDirection', () => {
         });
     });
 });
+
+describe('EyedSnake.visionRays', () => {
+    it('is empty before the snake has looked', () => {
+        expect(new EyedSnake(new BoardSize(20, 20)).visionRays()).toEqual([]);
+    });
+
+    it('turns the last look into 8 board-space rays with distances in cells', () => {
+        // Head at (10, 10) heading north; food straight ahead, a body cell to the right.
+        const snake = new EyedSnake(new BoardSize(20, 20));
+        snake.body = [new Position(13, 10)];
+        snake.look(new Position(10, 4));
+
+        const rays = snake.visionRays();
+
+        expect(rays).toHaveLength(8);
+        expect(rays[0]).toEqual({ dx: 0, dy: -1, wall: 11, food: 6, body: null });
+        const right = rays.find((r) => r.dx === 1 && r.dy === 0);
+        expect(right).toEqual({ dx: 1, dy: 0, wall: 10, food: null, body: 3 });
+    });
+});
