@@ -16,7 +16,7 @@ interface EvolutionStrategy {
 
     /**
      * Brains of the next generation, as many as `evaluated`. `evaluated` is in the same order as the
-     * brains this strategy returned for the current generation; `best` is the best brain seen so far.
+     * brains this strategy returned for the current generation; `best` is the fittest brain of it.
      */
     nextGeneration(evaluated: Evaluated[], best: NeuralNetwork): NeuralNetwork[];
 }
