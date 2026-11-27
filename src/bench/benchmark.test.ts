@@ -1,16 +1,46 @@
 import { describe, expect, it } from 'vitest';
+import { heldOutScore, heldOutSeeds } from '../ai/heldOut';
+import type NeuralNetwork from '../ai/NeuralNetwork';
+import Population from '../ai/Population';
 import ClassicGa from '../ai/strategy/ClassicGa';
+import OpenAiEs from '../ai/strategy/OpenAiEs';
 import { createStrategies } from '../ai/strategy/registry';
 import { createCarsGame } from '../game/cars/CarsEpisode';
 import { createSnakeGame } from '../game/snake/SnakeEpisode';
-import { records, runOnce, summarize } from './benchmark';
+import { checkpoints, records, runOnce, summarize } from './benchmark';
 
 describe('runOnce', () => {
-    it('returns the best score of each of the requested generations', () => {
-        const history = runOnce(new ClassicGa(0.1), createSnakeGame(20), 4, 3, 1);
+    it('returns the best score of each generation and a held-out score per checkpoint', () => {
+        const { history, heldOut } = runOnce(new ClassicGa(0.1), createSnakeGame(20), 4, 12, 1);
 
-        expect(history).toHaveLength(3);
+        expect(history).toHaveLength(12);
         history.forEach((score) => expect(score).toBeGreaterThanOrEqual(0));
+        expect(checkpoints(12)).toEqual([10, 12]);
+        expect(heldOut).toHaveLength(2);
+        heldOut.forEach((score) => expect(score).toBeGreaterThanOrEqual(0));
+    });
+
+    it('measures the strategy policy on the held-out worlds, not on the training ones', () => {
+        const game = createSnakeGame(12);
+        const strategy = new OpenAiEs();
+        const population = new Population(6, game, new OpenAiEs(), 5);
+        for (let g = 0; g < 10; ++g) {
+            while (!population.done()) {
+                population.update();
+            }
+            population.calculateFitness();
+            population.naturalSelection();
+        }
+        const expected = heldOutScore(game, population.policy() as NeuralNetwork, heldOutSeeds(5));
+
+        expect(runOnce(strategy, game, 6, 10, 5).heldOut).toEqual([expected]);
+    });
+});
+
+describe('checkpoints', () => {
+    it('are round generations up to the last one, which is always measured', () => {
+        expect(checkpoints(60)).toEqual([10, 25, 50, 60]);
+        expect(checkpoints(5)).toEqual([5]);
     });
 });
 
@@ -39,10 +69,11 @@ describe('reproducibility', () => {
             const second = createStrategies(0.2);
 
             first.forEach((strategy, i) => {
-                const a = runOnce(strategy, game, 12, 4, 77, true);
-                const b = runOnce(second[i], game, 12, 4, 77, true);
+                const a = runOnce(strategy, game, 8, 3, 77, true);
+                const b = runOnce(second[i], game, 8, 3, 77, true);
                 expect(b, `${game.name} / ${strategy.name}`).toEqual(a);
             });
         });
-    });
+        // 24 short runs plus their held-out checks: about 3 s locally, more on CI runners.
+    }, 30000);
 });

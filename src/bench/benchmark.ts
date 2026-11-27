@@ -1,8 +1,20 @@
+import { heldOutScore, heldOutSeeds } from '../ai/heldOut';
 import Population from '../ai/Population';
 import type EvolutionStrategy from '../ai/strategy/EvolutionStrategy';
 import type { GameDefinition } from '../game/Episode';
 
-/** Trains one population headless and returns the best score of each generation. */
+/** Generations at which a run is measured: round numbers up to `generations`, which is always included. */
+export const checkpoints = (generations: number): number[] =>
+    [...new Set([10, 25, 50, 100, 200, 500, 1000, generations])].filter((g) => g <= generations).sort((a, b) => a - b);
+
+export interface RunResult {
+    /** Best score of each generation: one noisy episode on one world, the best of the population. */
+    history: number[];
+    /** Held-out score of the strategy's policy at each checkpoint, in checkpoint order. */
+    heldOut: number[];
+}
+
+/** Trains one population headless; at each checkpoint, measures its policy on the run's held-out worlds. */
 export const runOnce = (
     strategy: EvolutionStrategy,
     game: GameDefinition,
@@ -10,8 +22,12 @@ export const runOnce = (
     generations: number,
     seed: number,
     recurrent = false,
-): number[] => {
+): RunResult => {
     const population = new Population(populationSize, game, strategy, seed, 16, recurrent);
+    // Same seed for every strategy of a run: their policies face the same unseen worlds.
+    const seeds = heldOutSeeds(seed);
+    const measured = new Set(checkpoints(generations));
+    const heldOut: number[] = [];
 
     while (population.history.length < generations) {
         while (!population.done()) {
@@ -19,9 +35,14 @@ export const runOnce = (
         }
         population.calculateFitness();
         population.naturalSelection();
+
+        const policy = population.policy();
+        if (measured.has(population.history.length) && policy !== null) {
+            heldOut.push(heldOutScore(game, policy, seeds));
+        }
     }
 
-    return population.history;
+    return { history: population.history, heldOut };
 };
 
 /** Best score reached so far at each generation: smoother than the per-generation best. */

@@ -3,7 +3,8 @@ import { availableParallelism } from 'node:os';
 import { join } from 'node:path';
 import { Worker, isMainThread, parentPort, workerData } from 'node:worker_threads';
 import { createStrategies } from './ai/strategy/registry';
-import { records, runOnce, summarize } from './bench/benchmark';
+import { HELD_OUT_SEEDS } from './ai/heldOut';
+import { checkpoints, records, runOnce, summarize, type RunResult } from './bench/benchmark';
 import type { GameId } from './game/Episode';
 import { createGame, GAME_IDS, isGameId } from './game/registry';
 import { RAYS, type SnakeVisionConfig } from './game/snake/SnakeEpisode';
@@ -28,8 +29,7 @@ interface Task {
     run: number;
 }
 
-interface Result extends Task {
-    history: number[];
+interface Result extends Task, RunResult {
     ms: number;
 }
 
@@ -92,15 +92,8 @@ const work = (): void => {
     const start = Date.now();
     // Run i uses seed i + 1 for every strategy: runs are paired on the same worlds (food, tracks, obstacles).
     const game = createGame(options.game, options.boardSize, options.obstacles, options.snakeVision);
-    const history = runOnce(
-        strategy,
-        game,
-        options.populationSize,
-        options.generations,
-        task.run + 1,
-        options.recurrent,
-    );
-    parentPort?.postMessage({ ...task, history, ms: Date.now() - start } satisfies Result);
+    const run = runOnce(strategy, game, options.populationSize, options.generations, task.run + 1, options.recurrent);
+    parentPort?.postMessage({ ...task, ...run, ms: Date.now() - start } satisfies Result);
 };
 
 const runInWorker = (task: Task, options: Options): Promise<Result> =>
@@ -123,28 +116,37 @@ const format = (values: number[]): string => {
 };
 
 const report = (options: Options, results: Result[]): void => {
-    const checkpoints = [...new Set([10, 25, 50, 100, 200, 500, options.generations])]
-        .filter((g) => g <= options.generations)
-        .sort((a, b) => a - b);
+    const measured = checkpoints(options.generations);
+    const header = (last: string) =>
+        'Strategy'.padEnd(22) + measured.map((g) => `gen ${g}`.padStart(14)).join('') + last;
 
-    console.log(`\nRecord (best score so far), mean ± std over ${options.runs} runs`);
     console.log(
-        'Strategy'.padEnd(22) +
-            checkpoints.map((g) => `gen ${g}`.padStart(14)).join('') +
-            'last gen best'.padStart(16) +
-            'time/run'.padStart(10),
+        `\nHeld-out score: each strategy's policy (GA: generation best, ES: mean, MAP-Elites: best elite), ` +
+            `mean score over ${HELD_OUT_SEEDS} worlds never used in training; mean ± std over ${options.runs} runs`,
     );
+    console.log(header('time/run'.padStart(10)));
+    for (const name of options.strategies) {
+        const own = results.filter((r) => r.strategy === name);
+        const seconds = own.reduce((s, r) => s + r.ms, 0) / own.length / 1000;
+        console.log(
+            name.padEnd(22) +
+                measured.map((_, k) => format(own.map((r) => r.heldOut[k]))).join('') +
+                `${seconds.toFixed(0)} s`.padStart(10),
+        );
+    }
 
+    console.log(
+        `\nBest single episode so far (record): the best of many noisy episodes, optimistic, ` +
+            `not a policy score; mean ± std over ${options.runs} runs`,
+    );
+    console.log(header('last gen best'.padStart(16)));
     for (const name of options.strategies) {
         const own = results.filter((r) => r.strategy === name);
         const curves = own.map((r) => records(r.history));
-        const seconds = own.reduce((s, r) => s + r.ms, 0) / own.length / 1000;
-
         console.log(
             name.padEnd(22) +
-                checkpoints.map((g) => format(curves.map((c) => c[g - 1]))).join('') +
-                format(own.map((r) => r.history[r.history.length - 1])).padStart(16) +
-                `${seconds.toFixed(0)} s`.padStart(10),
+                measured.map((g) => format(curves.map((c) => c[g - 1]))).join('') +
+                format(own.map((r) => r.history[r.history.length - 1])).padStart(16),
         );
     }
 };

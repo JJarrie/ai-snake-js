@@ -43,6 +43,11 @@ class SepCmaEs implements EvolutionStrategy {
         return this.samples.map((z) => best.fromVector(mean.map((m, j) => m + this.sigma * deviation[j] * z[j])));
     }
 
+    /** The mean: what CMA-ES optimizes, never played in training (only its samples are). */
+    public policy(template: NeuralNetwork): NeuralNetwork | null {
+        return this.mean ? template.fromVector(this.mean) : null;
+    }
+
     private update(evaluated: Evaluated[]): void {
         const mean = this.mean as number[];
         const n = mean.length;
