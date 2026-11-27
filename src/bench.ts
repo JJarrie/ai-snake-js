@@ -2,9 +2,9 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { availableParallelism } from 'node:os';
 import { join } from 'node:path';
 import { Worker, isMainThread, parentPort, workerData } from 'node:worker_threads';
-import { createStrategies } from './ai/strategy/registry';
+import { createBenchStrategies } from './ai/strategy/registry';
 import { HELD_OUT_SEEDS } from './ai/heldOut';
-import { checkpoints, records, runOnce, summarize, type RunResult } from './bench/benchmark';
+import { area, checkpoints, paired, records, runOnce, summarize, type RunResult } from './bench/benchmark';
 import type { GameId } from './game/Episode';
 import { createGame, GAME_IDS, isGameId } from './game/registry';
 import { RAYS, type SnakeVisionConfig } from './game/snake/SnakeEpisode';
@@ -34,7 +34,7 @@ interface Result extends Task, RunResult {
 }
 
 const readOptions = (): Options => {
-    const names = createStrategies(0).map((s) => s.name);
+    const names = createBenchStrategies(0).map((s) => s.name);
     const wanted = (process.env.BENCH_STRATEGIES ?? '')
         .split(',')
         .map((s) => s.trim())
@@ -84,7 +84,7 @@ const readOptions = (): Options => {
 /** Worker side: train one (strategy, run) pair and send its history back. */
 const work = (): void => {
     const { task, options } = workerData as { task: Task; options: Options };
-    const strategy = createStrategies(options.mutationRate).find((s) => s.name === task.strategy);
+    const strategy = createBenchStrategies(options.mutationRate).find((s) => s.name === task.strategy);
     if (strategy === undefined) {
         throw new Error(`Unknown strategy ${task.strategy}`);
     }
@@ -124,14 +124,38 @@ const report = (options: Options, results: Result[]): void => {
         `\nHeld-out score: each strategy's policy (GA: generation best, ES: mean, MAP-Elites: best elite), ` +
             `mean score over ${HELD_OUT_SEEDS} worlds never used in training; mean ± std over ${options.runs} runs`,
     );
-    console.log(header('time/run'.padStart(10)));
+    console.log(header('area'.padStart(14) + 'time/run'.padStart(10)));
+    // Runs in run order, so run i of two strategies can be paired.
+    const runsOf = (name: string) => results.filter((r) => r.strategy === name).sort((a, b) => a.run - b.run);
     for (const name of options.strategies) {
-        const own = results.filter((r) => r.strategy === name);
+        const own = runsOf(name);
         const seconds = own.reduce((s, r) => s + r.ms, 0) / own.length / 1000;
         console.log(
             name.padEnd(22) +
                 measured.map((_, k) => format(own.map((r) => r.heldOut[k]))).join('') +
+                format(own.map((r) => area(measured, r.heldOut))) +
                 `${seconds.toFixed(0)} s`.padStart(10),
+        );
+    }
+    console.log('area: mean of the held-out curve over the run, rewards learning early.');
+
+    // Paired against the best final held-out score: same worlds run by run, so only the strategy differs.
+    const last = measured.length - 1;
+    const finalOf = (name: string) => runsOf(name).map((r) => r.heldOut[last]);
+    const leader = options.strategies.reduce((best, name) =>
+        summarize(finalOf(name)).mean > summarize(finalOf(best)).mean ? name : best,
+    );
+    console.log(
+        `\nPaired difference with ${leader} at gen ${measured[last]}, held-out score: ` +
+            `mean ± 95% interval over runs, and runs won; an interval that contains 0 is no proof of a difference`,
+    );
+    for (const name of options.strategies.filter((s) => s !== leader)) {
+        const { mean, halfWidth, wins, runs } = paired(finalOf(name), finalOf(leader));
+        console.log(
+            name.padEnd(22) +
+                `${mean.toFixed(1)} ± ${halfWidth.toFixed(1)}`.padStart(16) +
+                `${wins}/${runs} won`.padStart(12) +
+                (mean + halfWidth < 0 ? '   worse' : '   not separated'),
         );
     }
 

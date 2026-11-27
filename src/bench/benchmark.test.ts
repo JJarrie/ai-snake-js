@@ -7,7 +7,7 @@ import OpenAiEs from '../ai/strategy/OpenAiEs';
 import { createStrategies } from '../ai/strategy/registry';
 import { createCarsGame } from '../game/cars/CarsEpisode';
 import { createSnakeGame } from '../game/snake/SnakeEpisode';
-import { checkpoints, records, runOnce, summarize } from './benchmark';
+import { area, checkpoints, paired, records, runOnce, summarize } from './benchmark';
 
 describe('runOnce', () => {
     it('returns the best score of each generation and a held-out score per checkpoint', () => {
@@ -76,4 +76,27 @@ describe('reproducibility', () => {
         });
         // 24 short runs plus their held-out checks: about 3 s locally, more on CI runners.
     }, 30000);
+});
+
+describe('area', () => {
+    it('is the mean of the held-out curve between the first and last checkpoints (trapezoids)', () => {
+        expect(area([10, 20, 40], [0, 10, 10])).toBeCloseTo((5 * 10 + 10 * 20) / 30);
+        expect(area([5], [3])).toBe(3);
+    });
+});
+
+describe('paired', () => {
+    it('compares two strategies run by run: mean difference, 95% interval, wins', () => {
+        const result = paired([10, 12, 9, 15], [8, 12, 5, 11]);
+
+        expect(result.mean).toBeCloseTo(2.5);
+        expect(result.wins).toBe(3);
+        expect(result.runs).toBe(4);
+        // t(3) = 3.182, std of [2, 0, 4, 4] = sqrt(11/3).
+        expect(result.halfWidth).toBeCloseTo((3.182 * Math.sqrt(11 / 3)) / 2);
+    });
+
+    it('has no interval with a single run', () => {
+        expect(paired([3], [1]).halfWidth).toBe(Infinity);
+    });
 });

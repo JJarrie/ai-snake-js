@@ -6,6 +6,7 @@ import DeepGa from './DeepGa';
 import type EvolutionStrategy from './EvolutionStrategy';
 import MapElites, { noveltyScores, type Selection } from './MapElites';
 import OpenAiEs, { centeredRanks } from './OpenAiEs';
+import RandomSearch from './RandomSearch';
 import SepCmaEs from './SepCmaEs';
 
 const random = seededRandom(1);
@@ -192,5 +193,19 @@ describe('policy', () => {
             random,
         );
         expect(mapElites.policy()?.toVector()).toEqual(strong.toVector());
+    });
+});
+
+describe('RandomSearch', () => {
+    it('draws a whole new generation of random networks of the same shape, learning nothing', () => {
+        const evaluated = generation(5);
+        const next = new RandomSearch().nextGeneration(evaluated, evaluated[4].brain, random);
+
+        expect(next).toHaveLength(5);
+        next.forEach((b, i) => {
+            expect(b.toVector()).toHaveLength(evaluated[0].brain.toVector().length);
+            expect(b.toVector()).not.toEqual(evaluated[i].brain.toVector());
+            b.toVector().forEach((w) => expect(Math.abs(w)).toBeLessThanOrEqual(1));
+        });
     });
 });
