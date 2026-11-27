@@ -1,5 +1,4 @@
 import Grid, { type GridState } from './Grid';
-import type { SnakeState } from './Snake';
 import BoardSize from './BoardSize';
 import IntelligentSnake from '../ai/IntelligentSnake';
 import Position from './Position';
@@ -14,7 +13,6 @@ const SAFE_RADIUS = 3;
 export interface GameState {
     grid: GridState;
     score: number;
-    snake: SnakeState;
     finish: boolean;
 }
 
@@ -70,7 +68,6 @@ class Game {
     }
 
     public toState(): GameState {
-        this.snake.calculateFitness(this.score);
         // Grid is built only for displayed games; a dead snake keeps its last drawn frame.
         if (!this.finish()) {
             this.updateGrid();
@@ -78,7 +75,6 @@ class Game {
         return {
             grid: this.grid.toState(),
             score: this.score,
-            snake: this.snake.toState(),
             finish: this.finish(),
         };
     }

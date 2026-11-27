@@ -2,13 +2,6 @@ import Position from './Position';
 import DirectionCardinal from './DirectionCardinal';
 import BoardSize from './BoardSize';
 
-export interface SnakeState {
-    head: Position;
-    body: Position[];
-    direction: DirectionCardinal;
-    alive: boolean;
-}
-
 class Snake {
     head: Position;
     body: Position[];
@@ -53,15 +46,6 @@ class Snake {
 
     public isEating(food: Position): boolean {
         return this.head.isEqual(food);
-    }
-
-    public toState(): SnakeState {
-        return {
-            direction: this.direction,
-            head: this.head,
-            body: this.body,
-            alive: this.alive,
-        };
     }
 
     private nextBodyPosition(grow: boolean): void {

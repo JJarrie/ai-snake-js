@@ -1,20 +1,10 @@
 import BoardSize from '../rule/BoardSize';
 import { turnLeft90, turnRight90 } from '../rule/Direction';
-import type { SnakeState } from '../rule/Snake';
-import EyedSnake, { type SeenInDirection } from './EyedSnake';
+import EyedSnake from './EyedSnake';
 import NeuralNetwork from './NeuralNetwork';
-
-export interface IntelligentSnakeState extends SnakeState {
-    fitness: number;
-    lifetime: number;
-    lifeleft: number;
-    vision: SeenInDirection[];
-    lastDecision: number[];
-}
 
 class IntelligentSnake extends EyedSnake {
     neuralNetwork: NeuralNetwork;
-    lastDecision: number[];
     lifetime: number;
     lifeleft: number;
     fitness = 0;
@@ -54,14 +44,14 @@ class IntelligentSnake extends EyedSnake {
 
     /** Decides from the given sensor inputs, by default the 8 rays of the last look(). */
     public makeDecision(inputs: number[] = this.getVisionAsArray()): void {
-        this.lastDecision = this.neuralNetwork.output(inputs);
+        const decision = this.neuralNetwork.output(inputs);
 
         let maxIndex = 0;
         let maxValue = -Infinity;
 
-        for (let i = 0; i < this.lastDecision.length; ++i) {
-            if (this.lastDecision[i] > maxValue) {
-                maxValue = this.lastDecision[i];
+        for (let i = 0; i < decision.length; ++i) {
+            if (decision[i] > maxValue) {
+                maxValue = decision[i];
                 maxIndex = i;
             }
         }
@@ -97,19 +87,6 @@ class IntelligentSnake extends EyedSnake {
 
     public clone(): IntelligentSnake {
         return new IntelligentSnake(this.boardSize, this.neuralNetwork.clone());
-    }
-
-    public toState(): IntelligentSnakeState {
-        const state = super.toState();
-
-        return {
-            ...state,
-            fitness: this.fitness,
-            lifeleft: this.lifeleft,
-            lifetime: this.lifetime,
-            vision: this.vision,
-            lastDecision: this.lastDecision,
-        };
     }
 
     public updateAlive(): void {
