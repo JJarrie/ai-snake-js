@@ -97,6 +97,14 @@ class Game {
     }
 
     private generateFood(): void {
+        // No free cell left: the snake has filled the board, the game is over (drawing would never end).
+        const taken = new Set([this.snake.head, ...this.snake.body].map((p) => this.keyOf(p)));
+        this.obstacleKeys.forEach((key) => taken.add(key));
+        if (taken.size >= this.boardSize.width * this.boardSize.height) {
+            this.snake.alive = false;
+            return;
+        }
+
         // One stream per food index, so a redraw (food on the body) does not shift the following foods.
         const random = seededRandom(deriveSeed(this.seed, this.foodCount));
         this.foodCount = this.foodCount + 1;

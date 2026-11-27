@@ -35,6 +35,17 @@ describe('Game', () => {
         game.nextMove();
         expect(cells()).toBe(7);
     });
+
+    it('ends the game when no cell is left for the food, instead of looking forever', () => {
+        // 3 x 3 board, head in the middle, body on the 8 other cells.
+        const board = new BoardSize(3, 3);
+        const snake = new IntelligentSnake(board);
+        snake.body = [0, 1, 2, 3, 5, 6, 7, 8].map((k) => new Position(k % 3, Math.floor(k / 3)));
+
+        const game = new Game(board, snake, 1);
+
+        expect(game.finish()).toBe(true);
+    });
 });
 
 describe('Game obstacles', () => {
