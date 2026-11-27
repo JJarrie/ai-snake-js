@@ -19,13 +19,11 @@ class DeepGa implements EvolutionStrategy {
         this.sigma = sigma;
     }
 
-    public nextGeneration(evaluated: Evaluated[], best: NeuralNetwork): NeuralNetwork[] {
+    /** The elites are this generation's top brains, so `best` (the first of them) is not needed. */
+    public nextGeneration(evaluated: Evaluated[]): NeuralNetwork[] {
         const ranked = [...evaluated].sort((a, b) => b.fitness - a.fitness).map((e) => e.brain);
         const parents = ranked.slice(0, Math.max(1, Math.round(ranked.length * this.truncation)));
-        const next = [best.clone(), ...ranked.slice(0, this.elites - 1).map((b) => b.clone())].slice(
-            0,
-            evaluated.length,
-        );
+        const next = ranked.slice(0, this.elites).map((b) => b.clone());
 
         while (next.length < evaluated.length) {
             const parent = parents[Math.floor(Math.random() * parents.length)];

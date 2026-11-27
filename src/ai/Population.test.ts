@@ -4,6 +4,8 @@ import type SnakeEpisode from '../game/snake/SnakeEpisode';
 import { createSnakeGame } from '../game/snake/SnakeEpisode';
 import Population from './Population';
 import ClassicGa from './strategy/ClassicGa';
+import type EvolutionStrategy from './strategy/EvolutionStrategy';
+import type NeuralNetwork from './NeuralNetwork';
 
 const snakeGame = createSnakeGame(20);
 const snakeOf = (episode: Episode) => (episode as SnakeEpisode).game.snake;
@@ -149,5 +151,29 @@ describe('Population generation best', () => {
 
         expect(population.generationBest).not.toBe(fittest);
         expect(population.generationBest?.toVector()).toEqual(fittest.toVector());
+    });
+});
+
+describe('Population elite', () => {
+    it("hands the strategy this generation's fittest brain, not the all-time record", () => {
+        const received: NeuralNetwork[] = [];
+        const recorder: EvolutionStrategy = {
+            name: 'recorder',
+            nextGeneration: (evaluated, best) => {
+                received.push(best);
+                return evaluated.map((e) => e.brain);
+            },
+        };
+        const population = new Population(3, snakeGame, recorder);
+
+        population.fitness = [1, 5, 2];
+        population.naturalSelection();
+        // Below the record (5): a lucky record must not stay the elite for ever.
+        population.fitness = [3, 1, 1];
+        const fittest = population.episodes[0].brain;
+        population.naturalSelection();
+
+        expect(received[1].toVector()).toEqual(fittest.toVector());
+        expect(received[1].toVector()).not.toEqual(population.replay.brain.toVector());
     });
 });

@@ -47,15 +47,15 @@ describe.each<[string, () => EvolutionStrategy]>([
 });
 
 describe('DeepGa', () => {
-    it('keeps the best brain and the top elites unchanged', () => {
+    it("keeps this generation's top elites unchanged, once each", () => {
         const evaluated = generation(10);
-        const best = brain();
 
-        const next = new DeepGa(0.2, 3, 0.1).nextGeneration(evaluated, best);
+        const next = new DeepGa(0.2, 3, 0.1).nextGeneration(evaluated);
 
-        expect(next[0].toVector()).toEqual(best.toVector());
-        expect(next[1].toVector()).toEqual(evaluated[9].brain.toVector());
-        expect(next[2].toVector()).toEqual(evaluated[8].brain.toVector());
+        expect(next).toHaveLength(10);
+        expect(next[0].toVector()).toEqual(evaluated[9].brain.toVector());
+        expect(next[1].toVector()).toEqual(evaluated[8].brain.toVector());
+        expect(next[2].toVector()).toEqual(evaluated[7].brain.toVector());
         expect(next[3].toVector()).not.toEqual(evaluated[9].brain.toVector());
     });
 });

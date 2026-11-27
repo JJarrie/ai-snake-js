@@ -109,7 +109,8 @@ class Population {
         this.history.push(this.episodes.reduce((max, episode) => Math.max(max, episode.score), 0));
         // A copy: strategies may reuse or mutate this generation's networks.
         const bestIndex = this.fitness.reduce((best, f, i) => (f > this.fitness[best] ? i : best), 0);
-        this.generationBest = this.episodes[bestIndex].brain.clone();
+        const generationBest = this.episodes[bestIndex].brain.clone();
+        this.generationBest = generationBest;
 
         const brains = this.strategy.nextGeneration(
             this.episodes.map((episode, i) => ({
@@ -117,7 +118,8 @@ class Population {
                 fitness: this.fitness[i],
                 behavior: episode.behavior(),
             })),
-            this.replay.brain,
+            // Not the record: picked from one episode on one seed, it would stay the elite for ever.
+            generationBest,
         );
 
         this.generation = this.generation + 1;
