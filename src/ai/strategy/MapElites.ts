@@ -1,5 +1,6 @@
 import type NeuralNetwork from '../NeuralNetwork';
 import Gaussian from '../../utils/Gaussian';
+import type { Random } from '../../utils/SeededRandom';
 import type EvolutionStrategy from './EvolutionStrategy';
 import type { Evaluated } from './EvolutionStrategy';
 
@@ -50,7 +51,7 @@ class MapElites implements EvolutionStrategy {
         this.cells = [...Array(resolution)].map(() => new Array<Elite | null>(resolution).fill(null));
     }
 
-    public nextGeneration(evaluated: Evaluated[], best: NeuralNetwork): NeuralNetwork[] {
+    public nextGeneration(evaluated: Evaluated[], best: NeuralNetwork, random: Random): NeuralNetwork[] {
         evaluated.forEach((e) => this.insert(e));
 
         const elites = this.cells.flat().filter((e): e is Elite => e !== null);
@@ -61,7 +62,7 @@ class MapElites implements EvolutionStrategy {
                       this.neighbours,
                   )
                 : [];
-        const randomIndex = () => Math.floor(Math.random() * elites.length);
+        const randomIndex = () => Math.floor(random() * elites.length);
         const pickParent = (): NeuralNetwork => {
             const a = randomIndex();
             if (this.selection === 'uniform') {
@@ -75,7 +76,7 @@ class MapElites implements EvolutionStrategy {
 
         while (next.length < evaluated.length) {
             const parent = pickParent();
-            next.push(parent.fromVector(parent.toVector().map((w) => w + this.sigma * Gaussian.random())));
+            next.push(parent.fromVector(parent.toVector().map((w) => w + this.sigma * Gaussian.random(random))));
         }
 
         return next;

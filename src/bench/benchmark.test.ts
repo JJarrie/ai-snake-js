@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import ClassicGa from '../ai/strategy/ClassicGa';
+import { createStrategies } from '../ai/strategy/registry';
+import { createCarsGame } from '../game/cars/CarsEpisode';
 import { createSnakeGame } from '../game/snake/SnakeEpisode';
 import { records, runOnce, summarize } from './benchmark';
 
@@ -27,5 +29,20 @@ describe('summarize', () => {
             max: 9,
         });
         expect(summarize([3])).toEqual({ mean: 3, std: 0, min: 3, max: 3 });
+    });
+});
+
+describe('reproducibility', () => {
+    it('gives the same history for the same seed, for every strategy and game', () => {
+        [createSnakeGame(12), createCarsGame(true)].forEach((game) => {
+            const first = createStrategies(0.2);
+            const second = createStrategies(0.2);
+
+            first.forEach((strategy, i) => {
+                const a = runOnce(strategy, game, 12, 4, 77, true);
+                const b = runOnce(second[i], game, 12, 4, 77, true);
+                expect(b, `${game.name} / ${strategy.name}`).toEqual(a);
+            });
+        });
     });
 });

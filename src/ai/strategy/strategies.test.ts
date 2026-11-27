@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { seededRandom } from '../../utils/SeededRandom';
 import NeuralNetwork from '../NeuralNetwork';
 import ClassicGa from './ClassicGa';
 import DeepGa from './DeepGa';
@@ -7,6 +8,7 @@ import MapElites, { noveltyScores, type Selection } from './MapElites';
 import OpenAiEs, { centeredRanks } from './OpenAiEs';
 import SepCmaEs from './SepCmaEs';
 
+const random = seededRandom(1);
 const brain = () => new NeuralNetwork(4, [3], 2);
 const generation = (n: number) =>
     [...Array(n)].map((_, i) => ({ brain: brain(), fitness: i + 1, behavior: [i / n, 0.5] }));
@@ -35,10 +37,11 @@ describe.each<[string, () => EvolutionStrategy]>([
         const strategy = create();
         const best = brain();
 
-        const first = strategy.nextGeneration(generation(9), best);
+        const first = strategy.nextGeneration(generation(9), best, random);
         const second = strategy.nextGeneration(
             evaluate(first, (i) => i),
             best,
+            random,
         );
 
         expect(first).toHaveLength(9);
@@ -50,7 +53,7 @@ describe('DeepGa', () => {
     it("keeps this generation's top elites unchanged, once each", () => {
         const evaluated = generation(10);
 
-        const next = new DeepGa(0.2, 3, 0.1).nextGeneration(evaluated);
+        const next = new DeepGa(0.2, 3, 0.1).nextGeneration(evaluated, brain(), random);
 
         expect(next).toHaveLength(10);
         expect(next[0].toVector()).toEqual(evaluated[9].brain.toVector());
@@ -69,13 +72,14 @@ describe('OpenAiEs', () => {
     it('moves the mean toward the perturbation that scored best', () => {
         const es = new OpenAiEs(0.1, 0.1);
         const best = brain();
-        const first = es.nextGeneration(generation(2), best);
+        const first = es.nextGeneration(generation(2), best, random);
         const start = [...(es.mean as number[])];
 
         // The mirrored pair: reward the first perturbation only.
         es.nextGeneration(
             evaluate(first, (i) => (i === 0 ? 1 : 0)),
             best,
+            random,
         );
 
         const moved = (es.mean as number[]).map((m, j) => m - start[j]);
@@ -89,13 +93,14 @@ describe('SepCmaEs', () => {
     it('moves the mean toward the best samples and keeps a finite positive step size', () => {
         const cma = new SepCmaEs(0.2);
         const best = brain();
-        const first = cma.nextGeneration(generation(10), best);
+        const first = cma.nextGeneration(generation(10), best, random);
         const start = [...(cma.mean as number[])];
 
         // Only the first sample is good: the mean moves toward it.
         cma.nextGeneration(
             evaluate(first, (i) => (i === 0 ? 10 : 1)),
             best,
+            random,
         );
 
         const moved = (cma.mean as number[]).map((m, j) => m - start[j]);
@@ -118,6 +123,7 @@ describe('MapElites', () => {
                 { brain: brain(), fitness: 3, behavior: [1, 1] },
             ],
             strong,
+            random,
         );
 
         expect(mapElites.archive()).toEqual([
@@ -154,7 +160,7 @@ describe('MapElites', () => {
         ];
         const shareOfIsolated = (selection: Selection) => {
             // sigma 0: children are exact copies, so each child shows its parent.
-            const next = new MapElites(selection, 10, 0).nextGeneration(evaluated, brain()).slice(1);
+            const next = new MapElites(selection, 10, 0).nextGeneration(evaluated, brain(), random).slice(1);
             const target = isolated.toVector();
 
             return next.filter((b) => b.toVector().every((w, j) => w === target[j])).length / next.length;

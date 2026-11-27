@@ -1,5 +1,6 @@
 import type NeuralNetwork from '../NeuralNetwork';
 import Gaussian from '../../utils/Gaussian';
+import type { Random } from '../../utils/SeededRandom';
 import type EvolutionStrategy from './EvolutionStrategy';
 import type { Evaluated } from './EvolutionStrategy';
 
@@ -20,14 +21,14 @@ class DeepGa implements EvolutionStrategy {
     }
 
     /** The elites are this generation's top brains, so `best` (the first of them) is not needed. */
-    public nextGeneration(evaluated: Evaluated[]): NeuralNetwork[] {
+    public nextGeneration(evaluated: Evaluated[], _best: NeuralNetwork, random: Random): NeuralNetwork[] {
         const ranked = [...evaluated].sort((a, b) => b.fitness - a.fitness).map((e) => e.brain);
         const parents = ranked.slice(0, Math.max(1, Math.round(ranked.length * this.truncation)));
         const next = ranked.slice(0, this.elites).map((b) => b.clone());
 
         while (next.length < evaluated.length) {
-            const parent = parents[Math.floor(Math.random() * parents.length)];
-            next.push(parent.fromVector(parent.toVector().map((w) => w + this.sigma * Gaussian.random())));
+            const parent = parents[Math.floor(random() * parents.length)];
+            next.push(parent.fromVector(parent.toVector().map((w) => w + this.sigma * Gaussian.random(random))));
         }
 
         return next;

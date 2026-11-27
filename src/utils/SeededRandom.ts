@@ -1,3 +1,6 @@
+/** A source of floats in [0, 1), like Math.random; seeded ones make runs reproducible. */
+export type Random = () => number;
+
 /** mulberry32: small deterministic PRNG, returns floats in [0, 1) like Math.random. */
 export const seededRandom = (seed: number): (() => number) => {
     let a = seed >>> 0;

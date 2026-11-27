@@ -1,5 +1,6 @@
 import type NeuralNetwork from '../NeuralNetwork';
 import Gaussian from '../../utils/Gaussian';
+import type { Random } from '../../utils/SeededRandom';
 import type EvolutionStrategy from './EvolutionStrategy';
 import type { Evaluated } from './EvolutionStrategy';
 
@@ -40,12 +41,12 @@ class OpenAiEs implements EvolutionStrategy {
         this.learningRate = learningRate;
     }
 
-    public nextGeneration(evaluated: Evaluated[], best: NeuralNetwork): NeuralNetwork[] {
+    public nextGeneration(evaluated: Evaluated[], best: NeuralNetwork, random: Random): NeuralNetwork[] {
         const mean = this.updateMean(evaluated, best);
 
         this.noise = [];
         for (let i = 0; i < evaluated.length; ++i) {
-            this.noise.push(i % 2 === 0 ? mean.map(() => Gaussian.random()) : this.noise[i - 1].map((e) => -e));
+            this.noise.push(i % 2 === 0 ? mean.map(() => Gaussian.random(random)) : this.noise[i - 1].map((e) => -e));
         }
 
         return this.noise.map((eps) => best.fromVector(mean.map((m, j) => m + this.sigma * eps[j])));

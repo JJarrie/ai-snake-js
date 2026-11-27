@@ -2,7 +2,7 @@ import type { Episode, EpisodeState, GameDefinition } from '../game/Episode';
 import NeuralNetwork from './NeuralNetwork';
 import type EvolutionStrategy from './strategy/EvolutionStrategy';
 import { downsampleMax } from '../utils/downsample';
-import { deriveSeed, randomSeed } from '../utils/SeededRandom';
+import { deriveSeed, randomSeed, seededRandom, type Random } from '../utils/SeededRandom';
 
 export interface PopulationState {
     name: string;
@@ -25,6 +25,9 @@ export interface PopulationState {
 /** The history grows by one value per generation: it is sent reduced, or a long run would flood the socket. */
 const HISTORY_POINTS = 500;
 
+/** Seed index of the evolution's random stream; the worlds use the generation numbers, from 1. */
+const EVOLUTION_STREAM = -1;
+
 /** One strategy training networks on one game; knows nothing of the game's rules. */
 class Population {
     strategy: EvolutionStrategy;
@@ -38,6 +41,8 @@ class Population {
     history: number[] = [];
     /** Copy of the best network of the last finished generation; null before the first one. */
     generationBest: NeuralNetwork | null = null;
+    /** Every draw of the evolution (first weights, selection, mutation): seeded, so a run is reproducible. */
+    readonly random: Random;
 
     bestScore = 0;
     generation = 1;
@@ -55,12 +60,14 @@ class Population {
         this.strategy = strategy;
         this.game = game;
         this.baseSeed = baseSeed;
+        // Its own stream, apart from the worlds: same base seed, same first networks and same evolution.
+        this.random = seededRandom(deriveSeed(baseSeed, EVOLUTION_STREAM));
 
         const seed = this.generationSeed();
         // Later generations inherit this network shape (and memory setting) from the strategy's brains.
         this.episodes = [...Array(size)].map(() =>
             game.createEpisode(
-                new NeuralNetwork(game.inputs, [hiddenNeurons], game.outputs, undefined, recurrent),
+                new NeuralNetwork(game.inputs, [hiddenNeurons], game.outputs, undefined, recurrent, this.random),
                 seed,
             ),
         );
@@ -120,6 +127,7 @@ class Population {
             })),
             // Not the record: picked from one episode on one seed, it would stay the elite for ever.
             generationBest,
+            this.random,
         );
 
         this.generation = this.generation + 1;
