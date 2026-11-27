@@ -21,8 +21,9 @@ class Snake {
         this.reset();
     }
 
-    public nextPosition(): void {
-        this.nextBodyPosition();
+    /** Moves one cell ahead; when `grow` is true (it just ate), the tail stays where it is. */
+    public nextPosition(grow = false): void {
+        this.nextBodyPosition(grow);
         this.nextHeadPosition();
     }
 
@@ -63,9 +64,11 @@ class Snake {
         };
     }
 
-    private nextBodyPosition(): void {
+    private nextBodyPosition(grow: boolean): void {
         const body = [...this.body];
-        body.pop();
+        if (!grow) {
+            body.pop();
+        }
         body.unshift(this.head);
         this.body = body;
     }

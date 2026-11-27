@@ -19,6 +19,22 @@ describe('Game', () => {
         expect(game.score).toBe(1);
         expect(game.snake.body).toHaveLength(2);
     });
+
+    it('takes up one more cell right after eating, not once the meal reached the tail', () => {
+        const game = new Game(new BoardSize(20, 20), undefined, 1);
+        const { head } = game.snake;
+        game.snake.body = [1, 2, 3, 4, 5].map((k) => new Position(head.x, head.y + k));
+        const cells = () => new Set([game.snake.head, ...game.snake.body].map((p) => `${p.x},${p.y}`)).size;
+        expect(cells()).toBe(6);
+
+        game.food = game.snake.head.clone();
+        game.nextMove();
+        expect(cells()).toBe(7);
+
+        game.food = new Position(0, 0);
+        game.nextMove();
+        expect(cells()).toBe(7);
+    });
 });
 
 describe('Game obstacles', () => {

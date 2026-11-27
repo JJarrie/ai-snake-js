@@ -54,14 +54,15 @@ class Game {
     }
 
     public nextMove(): void {
-        if (this.snake.isEating(this.food)) {
+        const eating = this.snake.isEating(this.food);
+        if (eating) {
             this.snake.addLife();
-            this.snake.body.unshift(this.food);
             this.score = this.score + 1;
             this.generateFood();
         }
 
-        this.snake.nextPosition();
+        // Eating keeps the tail in place for this move: the snake is one cell longer at once.
+        this.snake.nextPosition(eating);
         this.snake.updateAlive();
         if (this.obstacleKeys.has(this.keyOf(this.snake.head))) {
             this.snake.alive = false;

@@ -81,8 +81,8 @@ class IntelligentSnake extends EyedSnake {
         }
     }
 
-    public nextPosition(): void {
-        super.nextPosition();
+    public nextPosition(grow = false): void {
+        super.nextPosition(grow);
         this.lifeleft = this.lifeleft - 1;
         this.lifetime = this.lifetime + 1;
     }
