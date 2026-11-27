@@ -62,7 +62,9 @@ const Screen = ({ simulation, commands }: ScreenProps) => {
                         </label>
                         {showSensors && settings.game === 'snake' && (
                             <p className="sensor-legend">
-                                <span className="legend-sight">line of sight</span>
+                                <span className="legend-sight">
+                                    {settings.vision === 'cone' ? 'field of view' : 'line of sight'}
+                                </span>
                                 <span className="legend-food">food seen</span>
                                 <span className="legend-body">own body seen</span>
                             </p>

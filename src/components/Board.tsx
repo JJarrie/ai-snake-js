@@ -1,7 +1,8 @@
 import * as React from 'react';
-import type { VisionRay } from '../ai/EyedSnake';
+import type { SnakeView } from '../game/snake/SnakeEpisode';
 import type { GridState } from '../rule/Grid';
 import SquareValue from '../rule/SquareValue';
+import SnakeCone from './SnakeCone';
 import SnakeVision from './SnakeVision';
 
 interface BoardProps {
@@ -9,8 +10,8 @@ interface BoardProps {
     /** Board width and height in pixels, whatever the number of squares. */
     size: number;
     label: string;
-    /** Lines of sight to draw over the board; none when omitted or the snake is dead. */
-    sight?: { head: { x: number; y: number } | null; vision: VisionRay[] };
+    /** What the snake sees, drawn over the board; nothing when omitted or the snake is dead. */
+    sight?: Pick<SnakeView, 'head' | 'vision' | 'cone'>;
 }
 
 const className = (value: SquareValue): string => {
@@ -45,7 +46,16 @@ const Board = ({ grid, size, label, sight }: BoardProps) => {
                     ))}
                 </tbody>
             </table>
-            {sight && sight.head && (
+            {sight && sight.head && sight.cone && (
+                <SnakeCone
+                    head={sight.head}
+                    cone={sight.cone}
+                    cell={cell}
+                    columns={grid.boardSize.width}
+                    rows={grid.boardSize.height}
+                />
+            )}
+            {sight && sight.head && !sight.cone && (
                 <SnakeVision
                     head={sight.head}
                     vision={sight.vision}

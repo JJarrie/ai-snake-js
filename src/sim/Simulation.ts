@@ -3,7 +3,7 @@ import Population, { type PopulationState } from '../ai/Population';
 import { createStrategies } from '../ai/strategy/registry';
 import { createGame } from '../game/registry';
 import { randomSeed } from '../utils/SeededRandom';
-import { requiresReset, validateSettings, type Settings } from './settings';
+import { requiresReset, snakeVisionOf, validateSettings, type Settings } from './settings';
 
 export interface StrategyState extends PopulationState {
     paused: boolean;
@@ -100,7 +100,7 @@ class Simulation {
 
     private createPopulations(): Population[] {
         const { populationSize, mutationRate, boardSize, hiddenNeurons, recurrent } = this.settings;
-        const game = createGame(this.settings.game, boardSize, this.settings.obstacles);
+        const game = createGame(this.settings.game, boardSize, this.settings.obstacles, snakeVisionOf(this.settings));
         // One base seed for all: at the same generation, every strategy faces the same world.
         const baseSeed = randomSeed();
 

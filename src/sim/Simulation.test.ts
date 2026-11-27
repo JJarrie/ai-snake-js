@@ -13,6 +13,10 @@ const settings: Settings = {
     game: 'snake',
     obstacles: false,
     recurrent: false,
+    vision: 'rays',
+    visionRange: 10,
+    visionFov: 180,
+    visionSectors: 7,
 };
 
 const snakeGame = (episode: Episode) => (episode as SnakeEpisode).game;
@@ -86,6 +90,17 @@ describe('Simulation', () => {
         });
         simulation.tick();
         expect(simulation.toState().populations[0].replay.view.kind).toBe('cars');
+    });
+
+    it('gives every snake a field of view after a reset, with matching network inputs', () => {
+        const simulation = new Simulation(settings);
+
+        simulation.configure({ ...settings, vision: 'cone', visionSectors: 5 });
+
+        simulation.populations.forEach((p) => {
+            expect(p.game.inputs).toBe(15);
+            expect(p.episodes[0].brain.inputsNodes).toBe(15);
+        });
     });
 
     it('gives every strategy memory after a reset', () => {

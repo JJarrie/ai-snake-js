@@ -22,7 +22,7 @@ const EpisodeView = ({ episode, size, label, showSensors }: EpisodeViewProps) =>
                     grid={view.grid}
                     size={size}
                     label={label}
-                    sight={showSensors ? { head: view.head, vision: view.vision } : undefined}
+                    sight={showSensors ? { head: view.head, vision: view.vision, cone: view.cone } : undefined}
                 />
             );
         case 'cars':

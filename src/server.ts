@@ -23,6 +23,11 @@ const simulation = new Simulation(
         obstacles: process.env.OBSTACLES === '1',
         // RECURRENT=1 gives the agents memory at start-up.
         recurrent: process.env.RECURRENT === '1',
+        // VISION=cone gives the snake a field of view (VISION_RANGE, VISION_FOV, VISION_SECTORS).
+        vision: process.env.VISION ?? 'rays',
+        visionRange: envSetting('VISION_RANGE', 'visionRange', 10),
+        visionFov: envSetting('VISION_FOV', 'visionFov', 180),
+        visionSectors: envSetting('VISION_SECTORS', 'visionSectors', 7),
     }),
 );
 
