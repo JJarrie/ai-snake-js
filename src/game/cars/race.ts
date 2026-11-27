@@ -43,6 +43,8 @@ export interface Standing {
     points: number;
     wins: number;
     races: number;
+    /** Generation the strategy's racing car (its champion) comes from. */
+    version: number;
 }
 
 export interface RaceLeagueState {
@@ -51,6 +53,8 @@ export interface RaceLeagueState {
     /** Number of races run so far. */
     races: number;
     last: RaceResult[];
+    /** Number of the race being replayed: it is played to the end before the newest one is shown. */
+    replayRace: number;
     replay: RaceView | null;
 }
 
@@ -150,52 +154,104 @@ export class Race {
     }
 }
 
+/** Unseen tracks a new car drives to qualify as its strategy's champion. */
+export const QUALIFYING_TRACKS = 5;
+
+interface Champion {
+    brain: NeuralNetwork;
+    /** Mean fitness over the qualifying tracks. */
+    score: number;
+    generation: number;
+}
+
 /**
- * Races between strategies on tracks never used in training, with cumulated points: a ranking of
- * all-round cars, apart from the records (one run on the generation's track, which an easy track can win).
+ * Races between strategies, one per generation on a new track, with cumulated points. Each strategy races
+ * its best car of all time, its champion: a generation's best car replaces it only if it scores better on
+ * the same qualifying tracks, all unseen in training. The records cannot do that: they come from one run
+ * on one track, which an easy track can win for thousands of generations.
  */
 export class RaceLeague {
     /** Apart from the training seeds: every race is on a new track. */
     private readonly baseSeed = randomSeed();
+    private readonly qualifyingSeeds = [...Array(QUALIFYING_TRACKS)].map((_, i) => deriveSeed(randomSeed(), i));
+    private champions = new Map<string, Champion>();
     private standings = new Map<string, Standing>();
     private last: RaceResult[] = [];
     private replay: Race | null = null;
+    private replayRace = 0;
+    /** Newest race, shown once the replay in progress is over. */
+    private next: Race | null = null;
     races = 0;
 
-    public run(racers: Racer[], laps: number, obstacles: boolean): RaceResult[] {
+    /** Mean fitness of `brain` over the qualifying tracks, with the training step cap. */
+    public qualifyingScore(brain: NeuralNetwork, obstacles: boolean): number {
+        const total = this.qualifyingSeeds.reduce((sum, seed) => {
+            const episode = new CarsEpisode(brain.clone(), seed, obstacles);
+            while (!episode.finished()) {
+                episode.step();
+            }
+            return sum + episode.fitness();
+        }, 0);
+        return total / QUALIFYING_TRACKS;
+    }
+
+    /** `brain` becomes the strategy's champion if it beats the current one on the qualifying tracks. */
+    public qualify(name: string, brain: NeuralNetwork, generation: number, obstacles: boolean): void {
+        const score = this.qualifyingScore(brain, obstacles);
+        const champion = this.champions.get(name);
+        if (champion === undefined || score > champion.score) {
+            this.champions.set(name, { brain: brain.clone(), score, generation });
+        }
+    }
+
+    /** One race of every champion on a new track. */
+    public run(laps: number, obstacles: boolean): RaceResult[] {
+        const racers = [...this.champions].map(([name, { brain }]) => ({ name, brain }));
+        if (racers.length === 0) {
+            return [];
+        }
         const seed = deriveSeed(this.baseSeed, this.races);
         this.races = this.races + 1;
         this.last = new Race(racers, seed, laps, obstacles).run();
         this.last.forEach(({ name, place, points }) => {
-            const standing = this.standings.get(name) ?? { name, points: 0, wins: 0, races: 0 };
+            const standing = this.standings.get(name) ?? { name, points: 0, wins: 0, races: 0, version: 0 };
             this.standings.set(name, {
-                name,
+                ...standing,
                 points: standing.points + points,
                 wins: standing.wins + (place === 1 ? 1 : 0),
                 races: standing.races + 1,
             });
         });
         // Same cars, same track: the replay drives the race again, at display pace.
-        this.replay = new Race(racers, seed, laps, obstacles);
+        this.next = new Race(racers, seed, laps, obstacles);
         return this.last;
     }
 
-    /** One step of the last race's replay; it starts again once every car is done. */
+    /**
+     * One step of the replayed race. A race lasts longer on screen than a generation, so the replay plays
+     * its race to the end, then moves to the newest one (races in between are scored, not shown).
+     */
     public stepReplay(): void {
-        if (this.replay === null) {
-            return;
+        if (this.replay === null || this.replay.done()) {
+            if (this.next !== null) {
+                this.replay = this.next;
+                this.replayRace = this.races;
+                this.next = null;
+            } else {
+                this.replay?.reset();
+            }
         }
-        if (this.replay.done()) {
-            this.replay.reset();
-        }
-        this.replay.step();
+        this.replay?.step();
     }
 
     public toState(): RaceLeagueState {
         return {
-            standings: [...this.standings.values()].sort((a, b) => b.points - a.points || b.wins - a.wins),
+            standings: [...this.standings.values()]
+                .map((s) => ({ ...s, version: this.champions.get(s.name)?.generation ?? 0 }))
+                .sort((a, b) => b.points - a.points || b.wins - a.wins),
             races: this.races,
             last: this.last,
+            replayRace: this.replayRace,
             replay: this.replay?.toState() ?? null,
         };
     }

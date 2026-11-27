@@ -209,6 +209,11 @@ button {
     }
 }
 
+/* As wide as its track view: the long caption and the table must not squeeze the chart. */
+.champion.race {
+    max-width: 480px;
+}
+
 .standings {
     width: 100%;
     margin-top: 10px;
