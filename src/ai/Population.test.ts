@@ -36,18 +36,6 @@ describe('Population', () => {
         expect(parentWeights).not.toContain(population.episodes[1].brain.weights[0].matrix[0][0]);
     });
 
-    it('sums fitness over every episode of the generation', () => {
-        const population = new Population(5, snakeGame, new ClassicGa(0));
-        population.calculateFitness();
-        population.naturalSelection();
-        population.calculateFitness();
-        const expected = population.episodes.reduce((sum, e) => sum + e.fitness(), 0);
-
-        population.naturalSelection();
-
-        expect(population.fitnessSum).toBeCloseTo(expected);
-    });
-
     it('records the best score of each generation and keeps its size', () => {
         const population = new Population(4, snakeGame, new ClassicGa(0.1));
         population.calculateFitness();

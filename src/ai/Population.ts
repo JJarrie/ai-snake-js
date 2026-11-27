@@ -8,8 +8,6 @@ export interface PopulationState {
     name: string;
     bestScore: number;
     generation: number;
-    bestFitness: number;
-    fitnessSum: number;
     bestGeneration: number;
     /** Replay of the record episode. */
     replay: EpisodeState;
@@ -43,7 +41,6 @@ class Population {
     generation = 1;
     bestGeneration = 0;
     bestFitness = 0;
-    fitnessSum = 0;
 
     constructor(
         size: number,
@@ -107,7 +104,6 @@ class Population {
 
     public naturalSelection(): void {
         this.electBest();
-        this.fitnessSum = this.fitness.reduce((sum, f) => sum + f, 0);
         this.history.push(this.episodes.reduce((max, episode) => Math.max(max, episode.score), 0));
 
         const brains = this.strategy.nextGeneration(
@@ -134,10 +130,8 @@ class Population {
 
         return {
             name: this.strategy.name,
-            bestFitness: this.bestFitness,
             replay: this.replay.toState(),
             bestScore: this.bestScore,
-            fitnessSum: this.fitnessSum,
             generation: this.generation,
             bestGeneration: this.bestGeneration,
             history: history.values,
