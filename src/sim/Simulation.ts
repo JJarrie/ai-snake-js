@@ -1,9 +1,13 @@
 import { stepInLockstep } from '../ai/lockstep';
 import Population, { type PopulationState } from '../ai/Population';
 import { createStrategies } from '../ai/strategy/registry';
+import { RaceLeague, type RaceLeagueState } from '../game/cars/race';
 import { createGame } from '../game/registry';
 import { randomSeed } from '../utils/SeededRandom';
 import { requiresReset, snakeVisionOf, validateSettings, type Settings } from './settings';
+
+/** Finished generations between two races of the car game. */
+export const RACE_EVERY = 10;
 
 export interface StrategyState extends PopulationState {
     paused: boolean;
@@ -13,6 +17,8 @@ export interface SimulationState {
     running: boolean;
     settings: Settings;
     populations: StrategyState[];
+    /** Races between strategies; car game only. */
+    race: RaceLeagueState | null;
 }
 
 /** Answer to a client command: empty on success. */
@@ -29,11 +35,14 @@ class Simulation {
     running = true;
     paused = new Set<string>();
     populations: Population[];
+    league: RaceLeague;
+    /** Finished generations at which the next race is run. */
+    private nextRace = RACE_EVERY;
     private lastReplay = -Infinity;
 
     constructor(settings: Settings) {
         this.settings = settings;
-        this.populations = this.createPopulations();
+        this.restart();
     }
 
     /** `action` comes from a client: anything else than a known control is refused. */
@@ -50,7 +59,7 @@ class Simulation {
                 this.running = false;
                 break;
             case 'reset':
-                this.populations = this.createPopulations();
+                this.restart();
                 break;
         }
     }
@@ -61,7 +70,7 @@ class Simulation {
         const reset = requiresReset(this.settings, next);
         this.settings = next;
         if (reset) {
-            this.populations = this.createPopulations();
+            this.restart();
         }
     }
 
@@ -76,8 +85,26 @@ class Simulation {
     }
 
     public tick(): void {
-        if (this.running) {
-            stepInLockstep(this.populations.filter((p) => !this.paused.has(p.strategy.name)));
+        if (!this.running) {
+            return;
+        }
+        const running = this.populations.filter((p) => !this.paused.has(p.strategy.name));
+        stepInLockstep(running);
+
+        const finished = Math.min(...running.map((p) => p.generation)) - 1;
+        if (this.settings.game === 'cars' && finished >= this.nextRace) {
+            this.nextRace = finished + RACE_EVERY;
+            this.race();
+        }
+    }
+
+    /** The best car of each strategy's last generation, on a new track. */
+    public race(): void {
+        const racers = this.populations.flatMap((p) =>
+            p.generationBest ? [{ name: p.strategy.name, brain: p.generationBest }] : [],
+        );
+        if (racers.length > 0) {
+            this.league.run(racers, this.settings.raceLaps, this.settings.obstacles);
         }
     }
 
@@ -88,6 +115,7 @@ class Simulation {
         }
         this.lastReplay = now;
         this.populations.forEach((p) => p.stepReplay());
+        this.league.stepReplay();
     }
 
     public toState(): SimulationState {
@@ -95,7 +123,15 @@ class Simulation {
             running: this.running,
             settings: this.settings,
             populations: this.populations.map((p) => ({ ...p.toState(), paused: this.paused.has(p.strategy.name) })),
+            race: this.settings.game === 'cars' ? this.league.toState() : null,
         };
+    }
+
+    /** Training and races start over. */
+    private restart(): void {
+        this.populations = this.createPopulations();
+        this.league = new RaceLeague();
+        this.nextRace = RACE_EVERY;
     }
 
     private createPopulations(): Population[] {

@@ -20,6 +20,7 @@ const LABELS: Record<SettingKey, string> = {
     visionRange: 'Vision range (cells)',
     visionFov: 'Field of view (degrees)',
     visionSectors: 'Vision sectors',
+    raceLaps: 'Race laps (cars)',
 };
 
 const VISION_KEYS: SettingKey[] = ['visionRange', 'visionFov', 'visionSectors'];
@@ -29,7 +30,7 @@ const unused = (draft: Settings): SettingKey[] => {
     if (draft.game === 'cars') {
         return ['boardSize', ...VISION_KEYS];
     }
-    return draft.vision === 'cone' ? [] : VISION_KEYS;
+    return draft.vision === 'cone' ? ['raceLaps'] : ['raceLaps', ...VISION_KEYS];
 };
 
 interface SettingsPanelProps {

@@ -45,7 +45,7 @@ const LAP_BONUS = 15000;
 const TURN_RATE = 0.12;
 /** Above this speed the car turns less and less: it must brake before tight bends. */
 const GRIP_SPEED = 2;
-const MAX_STEPS = 1000;
+export const MAX_STEPS = 1000;
 /** Steps allowed without reaching further along the track before the episode ends. */
 const STALL_STEPS = 100;
 /** Track segments per checkpoint: 40 checkpoints per lap. */
@@ -110,7 +110,11 @@ class CarsEpisode implements Episode {
     /** Cones in play: the track's cones with obstacles on, none otherwise. */
     cones: Point[];
 
-    constructor(brain: NeuralNetwork, seed: number, withObstacles = false) {
+    /** Steps before the episode ends: one lap at most in training, more in a race. */
+    maxSteps: number;
+
+    constructor(brain: NeuralNetwork, seed: number, withObstacles = false, maxSteps = MAX_STEPS) {
+        this.maxSteps = maxSteps;
         this.brain = brain;
         this.seed = seed;
         this.track = trackFor(seed);
@@ -149,7 +153,7 @@ class CarsEpisode implements Episode {
     }
 
     public finished(): boolean {
-        return this.crashed || this.stepsSinceBest >= STALL_STEPS || this.steps >= MAX_STEPS;
+        return this.crashed || this.stepsSinceBest >= STALL_STEPS || this.steps >= this.maxSteps;
     }
 
     public step(): void {

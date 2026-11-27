@@ -14,6 +14,7 @@ const valid: Settings = {
     visionRange: 10,
     visionFov: 180,
     visionSectors: 7,
+    raceLaps: 1,
 };
 
 describe('validateSettings', () => {
