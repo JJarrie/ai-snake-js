@@ -6,6 +6,7 @@ import { createStrategies } from './ai/strategy/registry';
 import { records, runOnce, summarize } from './bench/benchmark';
 import type { GameId } from './game/Episode';
 import { createGame, GAME_IDS, isGameId } from './game/registry';
+import { RAYS, type SnakeVisionConfig } from './game/snake/SnakeEpisode';
 import { SETTING_LIMITS } from './sim/settings';
 import { envNumber } from './utils/env';
 
@@ -19,6 +20,7 @@ interface Options {
     boardSize: number;
     obstacles: boolean;
     recurrent: boolean;
+    snakeVision: SnakeVisionConfig;
 }
 
 interface Task {
@@ -50,6 +52,26 @@ const readOptions = (): Options => {
         game,
         obstacles: process.env.BENCH_OBSTACLES === '1',
         recurrent: process.env.BENCH_RECURRENT === '1',
+        // BENCH_VISION=cone with VISION_RANGE, VISION_FOV, VISION_SECTORS, like the server.
+        snakeVision:
+            process.env.BENCH_VISION === 'cone'
+                ? {
+                      model: 'cone',
+                      range: envNumber(
+                          'VISION_RANGE',
+                          10,
+                          SETTING_LIMITS.visionRange.min,
+                          SETTING_LIMITS.visionRange.max,
+                      ),
+                      fov: envNumber('VISION_FOV', 180, SETTING_LIMITS.visionFov.min, SETTING_LIMITS.visionFov.max),
+                      sectors: envNumber(
+                          'VISION_SECTORS',
+                          7,
+                          SETTING_LIMITS.visionSectors.min,
+                          SETTING_LIMITS.visionSectors.max,
+                      ),
+                  }
+                : RAYS,
         boardSize: envNumber('BOARD_SIZE', 20, SETTING_LIMITS.boardSize.min, SETTING_LIMITS.boardSize.max),
         runs: envNumber('BENCH_RUNS', 5, 1, 1000),
         generations: envNumber('BENCH_GENERATIONS', 50, 1, 100000),
@@ -69,7 +91,7 @@ const work = (): void => {
 
     const start = Date.now();
     // Run i uses seed i + 1 for every strategy: runs are paired on the same worlds (food, tracks, obstacles).
-    const game = createGame(options.game, options.boardSize, options.obstacles);
+    const game = createGame(options.game, options.boardSize, options.obstacles, options.snakeVision);
     const history = runOnce(
         strategy,
         game,
@@ -134,7 +156,7 @@ const main = async (): Promise<void> => {
     );
     const workers = envNumber('BENCH_WORKERS', Math.max(1, availableParallelism() - 1), 1, 1024);
     console.log(
-        `${options.game}${options.obstacles ? ' with obstacles' : ''}${options.recurrent ? ', recurrent' : ''}:${tasks.length} runs (${options.strategies.length} strategies x ${options.runs}), ` +
+        `${options.game}${options.obstacles ? ' with obstacles' : ''}${options.recurrent ? ', recurrent' : ''}${options.game === 'snake' && options.snakeVision.model === 'cone' ? `, cone vision ${JSON.stringify(options.snakeVision)}` : ''}: ${tasks.length} runs (${options.strategies.length} strategies x ${options.runs}), ` +
             `${options.generations} generations of ${options.populationSize} individuals, ${workers} workers`,
     );
 

@@ -33,6 +33,23 @@ describe('SnakeEpisode view', () => {
         expect(episode.toState().view).toMatchObject({ head: null, vision: [] });
     });
 
+    it('feeds the field of view to the network and shows it, with the cone model', () => {
+        const cone = { model: 'cone' as const, range: 8, fov: 180, sectors: 5 };
+        const game = createSnakeGame(20, false, cone);
+        expect(game.inputs).toBe(15);
+
+        const episode = game.createEpisode(new NeuralNetwork(15, [8], 3), 4) as SnakeEpisode;
+        play(episode, 3);
+        expect(episode.finished()).toBe(false);
+
+        const view = episode.toState().view;
+        expect(view).toMatchObject({ kind: 'snake', vision: [], cone: { range: 8, fov: 180, sectors: 5 } });
+        if (view.kind !== 'snake' || view.cone === null) {
+            throw new Error('expected a cone view');
+        }
+        expect(view.cone.sight).toHaveLength(5);
+    });
+
     it('does not change the game it shows', () => {
         const brain = new NeuralNetwork(24, [8], 3);
         const watched = createSnakeGame(20).createEpisode(brain.clone(), 9) as SnakeEpisode;

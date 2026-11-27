@@ -34,6 +34,12 @@ const RAY_ORDER = [
 class EyedSnake extends Snake {
     vision: SeenInDirection[] = [];
 
+    /** Unit grid vector the snake is heading to. */
+    public headingVector(): { dx: number; dy: number } {
+        const vector = EyedSnake.mapVectorToDirection(this.direction);
+        return { dx: vector.x, dy: vector.y };
+    }
+
     /** What the last look() saw, as rays on the board; empty before the first look. */
     public visionRays(): VisionRay[] {
         if (this.vision.length === 0) {

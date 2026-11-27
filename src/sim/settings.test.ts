@@ -10,6 +10,10 @@ const valid: Settings = {
     game: 'snake',
     obstacles: false,
     recurrent: false,
+    vision: 'rays',
+    visionRange: 10,
+    visionFov: 180,
+    visionSectors: 7,
 };
 
 describe('validateSettings', () => {
@@ -31,6 +35,8 @@ describe('validateSettings', () => {
         ['obstacles that are not a boolean', { ...valid, obstacles: 'yes' }],
         ['missing obstacles', { ...valid, obstacles: undefined }],
         ['recurrent that is not a boolean', { ...valid, recurrent: 1 }],
+        ['an unknown vision model', { ...valid, vision: 'xray' }],
+        ['too many sectors', { ...valid, visionSectors: 16 }],
     ])('rejects %s', (_, input) => {
         expect(() => validateSettings(input)).toThrow();
     });
@@ -43,5 +49,7 @@ describe('requiresReset', () => {
         expect(requiresReset(valid, { ...valid, game: 'cars' })).toBe(true);
         expect(requiresReset(valid, { ...valid, obstacles: true })).toBe(true);
         expect(requiresReset(valid, { ...valid, recurrent: true })).toBe(true);
+        expect(requiresReset(valid, { ...valid, vision: 'cone' })).toBe(true);
+        expect(requiresReset(valid, { ...valid, visionRange: 12 })).toBe(true);
     });
 });

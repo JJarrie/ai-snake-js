@@ -358,6 +358,28 @@ button {
         stroke: #fb923c;
         stroke-width: 2;
     }
+
+    .seen-wall {
+        fill: #e6e8ee;
+    }
+
+    .sector {
+        fill: rgba(#e6e8ee, 0.06);
+        stroke: rgba(#e6e8ee, 0.25);
+        stroke-width: 1;
+    }
+
+    .sector-food {
+        fill: rgba($foodColor, 0.25);
+        stroke: rgba(#e6e8ee, 0.25);
+        stroke-width: 1;
+    }
+
+    .sector-body {
+        fill: rgba(#fb923c, 0.18);
+        stroke: rgba(#e6e8ee, 0.25);
+        stroke-width: 1;
+    }
 }
 
 .sensor-bar {

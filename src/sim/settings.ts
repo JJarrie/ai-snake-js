@@ -1,5 +1,6 @@
 import type { GameId } from '../game/Episode';
 import { GAME_IDS, isGameId } from '../game/registry';
+import type { SnakeVisionConfig } from '../game/snake/SnakeEpisode';
 
 interface Limit {
     min: number;
@@ -16,6 +17,10 @@ export const SETTING_LIMITS = {
     boardSize: { min: 10, max: 40, integer: true },
     hiddenNeurons: { min: 4, max: 64, integer: true },
     replayMovesPerSecond: { min: 1, max: 60, integer: true, live: true },
+    /** Snake field of view: range in cells, angle in degrees, number of sectors. */
+    visionRange: { min: 2, max: 40, integer: true },
+    visionFov: { min: 60, max: 360, integer: true },
+    visionSectors: { min: 3, max: 15, integer: true },
 } satisfies Record<string, Limit>;
 
 export type SettingKey = keyof typeof SETTING_LIMITS;
@@ -24,11 +29,15 @@ export type SettingKey = keyof typeof SETTING_LIMITS;
 export const SWITCH_KEYS = ['obstacles', 'recurrent'] as const;
 export type SwitchKey = (typeof SWITCH_KEYS)[number];
 
+/** How the snake sees: 8 unlimited lines of sight, or a field of view (the vision* settings). */
+export const VISION_MODELS = ['rays', 'cone'] as const;
+export type VisionModel = (typeof VISION_MODELS)[number];
+
 /**
- * The game being trained, the switches, plus the numeric settings.
- * Changing the game or a switch restarts the training.
+ * The game being trained, the snake's vision model, the switches, plus the numeric settings.
+ * Changing the game, the vision model or a switch restarts the training.
  */
-export type Settings = Record<SettingKey, number> & Record<SwitchKey, boolean> & { game: GameId };
+export type Settings = Record<SettingKey, number> & Record<SwitchKey, boolean> & { game: GameId; vision: VisionModel };
 
 export const SETTING_KEYS = Object.keys(SETTING_LIMITS) as SettingKey[];
 
@@ -41,6 +50,9 @@ export const validateSettings = (input: unknown): Settings => {
     const values = input as Record<string, unknown>;
     if (!isGameId(values.game)) {
         throw new Error(`game must be one of ${GAME_IDS.join(', ')}`);
+    }
+    if (!VISION_MODELS.includes(values.vision as VisionModel)) {
+        throw new Error(`vision must be one of ${VISION_MODELS.join(', ')}`);
     }
     const switches = Object.fromEntries(
         SWITCH_KEYS.map((key) => {
@@ -66,10 +78,17 @@ export const validateSettings = (input: unknown): Settings => {
         }),
     ) as Record<SettingKey, number>;
 
-    return { ...numbers, ...switches, game: values.game };
+    return { ...numbers, ...switches, game: values.game, vision: values.vision as VisionModel };
 };
 
 export const requiresReset = (current: Settings, next: Settings): boolean =>
     current.game !== next.game ||
+    current.vision !== next.vision ||
     SWITCH_KEYS.some((key) => current[key] !== next[key]) ||
     SETTING_KEYS.some((key) => !(SETTING_LIMITS[key] as Limit).live && current[key] !== next[key]);
+
+/** The snake vision the settings describe. */
+export const snakeVisionOf = (settings: Settings): SnakeVisionConfig =>
+    settings.vision === 'cone'
+        ? { model: 'cone', range: settings.visionRange, fov: settings.visionFov, sectors: settings.visionSectors }
+        : { model: 'rays' };

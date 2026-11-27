@@ -1,7 +1,14 @@
 import * as React from 'react';
 import type { GameId } from '../game/Episode';
 import { GAME_IDS, GAME_NAMES } from '../game/registry';
-import { SETTING_KEYS, SETTING_LIMITS, requiresReset, type SettingKey, type Settings } from '../sim/settings';
+import {
+    SETTING_KEYS,
+    SETTING_LIMITS,
+    requiresReset,
+    type SettingKey,
+    type Settings,
+    type VisionModel,
+} from '../sim/settings';
 import type { Commands } from './commands';
 
 const LABELS: Record<SettingKey, string> = {
@@ -10,12 +17,19 @@ const LABELS: Record<SettingKey, string> = {
     boardSize: 'Board size (Snake)',
     hiddenNeurons: 'Hidden neurons',
     replayMovesPerSecond: 'Replay speed (moves/s)',
+    visionRange: 'Vision range (cells)',
+    visionFov: 'Field of view (degrees)',
+    visionSectors: 'Vision sectors',
 };
 
-/** Settings that do not apply to a game: shown disabled. */
-const UNUSED: Record<GameId, SettingKey[]> = {
-    snake: [],
-    cars: ['boardSize'],
+const VISION_KEYS: SettingKey[] = ['visionRange', 'visionFov', 'visionSectors'];
+
+/** Settings that do not apply to the drafted game and vision: shown disabled. */
+const unused = (draft: Settings): SettingKey[] => {
+    if (draft.game === 'cars') {
+        return ['boardSize', ...VISION_KEYS];
+    }
+    return draft.vision === 'cone' ? [] : VISION_KEYS;
 };
 
 interface SettingsPanelProps {
@@ -29,6 +43,7 @@ const SettingsPanel = ({ settings, commands }: SettingsPanelProps) => {
     const [game, setGame] = React.useState<GameId>();
     const [obstacles, setObstacles] = React.useState<boolean>();
     const [recurrent, setRecurrent] = React.useState<boolean>();
+    const [vision, setVision] = React.useState<VisionModel>();
     const [message, setMessage] = React.useState<{ error: boolean; text: string }>();
 
     const draft: Settings = {
@@ -39,8 +54,10 @@ const SettingsPanel = ({ settings, commands }: SettingsPanelProps) => {
         game: game ?? settings.game,
         obstacles: obstacles ?? settings.obstacles,
         recurrent: recurrent ?? settings.recurrent,
+        vision: vision ?? settings.vision,
     };
     const willReset = requiresReset(settings, draft);
+    const disabled = unused(draft);
 
     const submit = async (event: React.FormEvent) => {
         event.preventDefault();
@@ -53,6 +70,7 @@ const SettingsPanel = ({ settings, commands }: SettingsPanelProps) => {
             setGame(undefined);
             setObstacles(undefined);
             setRecurrent(undefined);
+            setVision(undefined);
         }
         setMessage(error === undefined ? { error: false, text: 'Applied' } : { error: true, text: error });
     };
@@ -96,6 +114,18 @@ const SettingsPanel = ({ settings, commands }: SettingsPanelProps) => {
                     </span>
                     <small>remembers what its sensors saw, restarts training</small>
                 </label>
+                <label>
+                    <span>Snake vision</span>
+                    <select
+                        value={draft.vision}
+                        disabled={draft.game !== 'snake'}
+                        onChange={(event) => setVision(event.target.value as VisionModel)}
+                    >
+                        <option value="rays">8 lines of sight (unlimited)</option>
+                        <option value="cone">Field of view (range, angle, sectors)</option>
+                    </select>
+                    <small>restarts training</small>
+                </label>
                 {SETTING_KEYS.map((key) => {
                     const { min, max, integer } = SETTING_LIMITS[key];
                     return (
@@ -107,7 +137,7 @@ const SettingsPanel = ({ settings, commands }: SettingsPanelProps) => {
                                 max={max}
                                 step={integer ? 1 : 0.01}
                                 required
-                                disabled={UNUSED[draft.game].includes(key)}
+                                disabled={disabled.includes(key)}
                                 value={edits[key] ?? String(settings[key])}
                                 onChange={(event) => setEdits({ ...edits, [key]: event.target.value })}
                             />

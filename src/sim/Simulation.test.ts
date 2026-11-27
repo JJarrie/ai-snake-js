@@ -13,6 +13,10 @@ const settings: Settings = {
     game: 'snake',
     obstacles: false,
     recurrent: false,
+    vision: 'rays',
+    visionRange: 10,
+    visionFov: 180,
+    visionSectors: 7,
 };
 
 const snakeGame = (episode: Episode) => (episode as SnakeEpisode).game;
@@ -88,6 +92,17 @@ describe('Simulation', () => {
         expect(simulation.toState().populations[0].replay.view.kind).toBe('cars');
     });
 
+    it('gives every snake a field of view after a reset, with matching network inputs', () => {
+        const simulation = new Simulation(settings);
+
+        simulation.configure({ ...settings, vision: 'cone', visionSectors: 5 });
+
+        simulation.populations.forEach((p) => {
+            expect(p.game.inputs).toBe(15);
+            expect(p.episodes[0].brain.inputsNodes).toBe(15);
+        });
+    });
+
     it('gives every strategy memory after a reset', () => {
         const simulation = new Simulation(settings);
 
@@ -98,12 +113,13 @@ describe('Simulation', () => {
 
     it('turns obstacles on for every strategy after a reset', () => {
         const simulation = new Simulation(settings);
-        expect(snakeGame(simulation.populations[0].episodes[0]).obstacleKeys.size).toBe(0);
+        expect(snakeGame(simulation.populations[0].episodes[0]).withObstacles).toBe(false);
 
         simulation.configure({ ...settings, obstacles: true });
 
         simulation.populations.forEach((p) => {
-            expect(snakeGame(p.episodes[0]).obstacleKeys.size).toBeGreaterThan(0);
+            // The flag, not the wall count: on a small board a seed can put every wall in the start area.
+            expect(snakeGame(p.episodes[0]).withObstacles).toBe(true);
         });
     });
 
