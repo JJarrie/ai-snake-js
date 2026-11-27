@@ -1,17 +1,23 @@
 import { describe, expect, it } from 'vitest';
 import Matrix from '../../utils/Matrix';
 import NeuralNetwork from '../../ai/NeuralNetwork';
-import CarsEpisode, { createCarsGame, RAY_ANGLES, RAY_RANGE } from './CarsEpisode';
+import CarsEpisode, {
+    createCarsGame,
+    RAY_ANGLES,
+    RAY_RANGE,
+    THROTTLE_ACTIONS,
+    type ThrottleAction,
+} from './CarsEpisode';
 import { createTrack, projectOnSegment, rayCircleHit, rayHit, TRACK_SEGMENTS } from './track';
 
-/** A network whose outputs are always (steer, throttle) before tanh: zero weights, output biases only. */
-const constantBrain = (steer: number, throttle: number): NeuralNetwork => {
-    const network = new NeuralNetwork(RAY_ANGLES.length + 1, [4], 2);
+/** A network that always steers `steer` (before tanh) and picks `action`: zero weights, output biases only. */
+const constantBrain = (steer: number, action: ThrottleAction): NeuralNetwork => {
+    const network = new NeuralNetwork(RAY_ANGLES.length + 1, [4], 1 + THROTTLE_ACTIONS.length);
     network.weights = network.weights.map((w) => new Matrix(w.rows, w.cols));
     network.weights.forEach((w) => (w.matrix = w.matrix.map((row) => row.map(() => 0))));
     const last = network.weights[network.weights.length - 1];
     last.matrix[0][last.cols - 1] = steer;
-    last.matrix[1][last.cols - 1] = throttle;
+    last.matrix[1 + THROTTLE_ACTIONS.indexOf(action)][last.cols - 1] = 1;
     return network;
 };
 
@@ -73,7 +79,7 @@ describe('cones', () => {
     });
 
     it('crash the car only when obstacles are on', () => {
-        const brain = constantBrain(0, 5);
+        const brain = constantBrain(0, 'accelerate');
         const free = new CarsEpisode(brain, 1);
         const blocked = new CarsEpisode(brain, 1, true);
         expect(free.cones).toHaveLength(0);
@@ -95,11 +101,11 @@ describe('cones', () => {
 });
 
 describe('CarsEpisode', () => {
-    it('declares 8 inputs and 2 outputs, and senses walls within range', () => {
+    it('declares 8 inputs (7 rays + speed) and 4 outputs (steering + 3 actions), and senses walls', () => {
         const game = createCarsGame();
-        expect([game.inputs, game.outputs]).toEqual([8, 2]);
+        expect([game.inputs, game.outputs]).toEqual([8, 4]);
 
-        const episode = new CarsEpisode(constantBrain(0, 0), 1);
+        const episode = new CarsEpisode(constantBrain(0, 'hold'), 1);
         expect(episode.rays).toHaveLength(7);
         episode.rays.forEach((r) => expect(r).toBeGreaterThan(0));
         episode.rays.forEach((r) => expect(r).toBeLessThanOrEqual(RAY_RANGE));
@@ -108,15 +114,29 @@ describe('CarsEpisode', () => {
     });
 
     it('ends with no progress when the car never accelerates', () => {
-        const episode = play(new CarsEpisode(constantBrain(0, -5), 1));
+        const episode = play(new CarsEpisode(constantBrain(0, 'brake'), 1));
 
         expect(episode.crashed).toBe(false);
         expect(episode.score).toBe(0);
         expect(episode.steps).toBe(100);
     });
 
+    it('accelerates, holds its speed or brakes, never below zero', () => {
+        const speedAfterOneStep = (action: ThrottleAction, speed: number) => {
+            const episode = new CarsEpisode(constantBrain(0, action), 1);
+            episode.speed = speed;
+            episode.step();
+            return episode.speed;
+        };
+
+        expect(speedAfterOneStep('accelerate', 2)).toBeGreaterThan(2);
+        expect(speedAfterOneStep('hold', 2)).toBe(2);
+        expect(speedAfterOneStep('brake', 2)).toBeLessThan(2);
+        expect(speedAfterOneStep('brake', 0.1)).toBe(0);
+    });
+
     it('drives forward then crashes when it never steers', () => {
-        const episode = play(new CarsEpisode(constantBrain(0, 5), 1));
+        const episode = play(new CarsEpisode(constantBrain(0, 'accelerate'), 1));
 
         expect(episode.crashed).toBe(true);
         expect(episode.bestProgress).toBeGreaterThan(0);
@@ -124,7 +144,7 @@ describe('CarsEpisode', () => {
     });
 
     it('plays the same game for the same brain and seed, and reset replays it', () => {
-        const brain = new NeuralNetwork(8, [6], 2);
+        const brain = new NeuralNetwork(8, [6], 4);
         const a = play(new CarsEpisode(brain, 5));
         const b = play(new CarsEpisode(brain.clone(), 5));
         expect([b.steps, b.bestProgress]).toEqual([a.steps, a.bestProgress]);
@@ -136,11 +156,40 @@ describe('CarsEpisode', () => {
     });
 
     it('describes its behaviour in [0, 1]^2', () => {
-        const episode = play(new CarsEpisode(constantBrain(0.5, 5), 2));
+        const episode = play(new CarsEpisode(constantBrain(0.5, 'accelerate'), 2));
 
         episode.behavior().forEach((b) => {
             expect(b).toBeGreaterThanOrEqual(0);
             expect(b).toBeLessThanOrEqual(1);
         });
+    });
+});
+
+describe('CarsEpisode laps', () => {
+    it('records the time of each lap the first time it is completed', () => {
+        const episode = new CarsEpisode(constantBrain(0, 'hold'), 1);
+
+        episode.steps = 180;
+        episode.bestProgress = TRACK_SEGMENTS + 0.5;
+        episode.recordLaps();
+        episode.steps = 400;
+        episode.bestProgress = 2 * TRACK_SEGMENTS + 1;
+        episode.recordLaps();
+        episode.recordLaps();
+
+        expect(episode.lapSteps).toEqual([180, 220]);
+        expect(episode.toState().view).toMatchObject({ bestLap: 180 });
+    });
+
+    it('rewards faster laps on top of the distance driven', () => {
+        const withLap = (lapSteps: number[]) => {
+            const episode = new CarsEpisode(constantBrain(0, 'hold'), 1);
+            episode.bestProgress = TRACK_SEGMENTS + 1;
+            episode.lapSteps = lapSteps;
+            return episode.fitness();
+        };
+
+        expect(withLap([150])).toBeGreaterThan(withLap([300]));
+        expect(withLap([300])).toBeGreaterThan(withLap([]));
     });
 });

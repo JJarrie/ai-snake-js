@@ -47,6 +47,9 @@ const Screen = ({ simulation, commands }: ScreenProps) => {
                             {champion.bestGeneration > 0
                                 ? `replay of generation ${champion.bestGeneration} · score ${champion.replay.score}`
                                 : `replay score ${champion.replay.score}`}
+                            {champion.replay.view.kind === 'cars' &&
+                                champion.replay.view.bestLap !== null &&
+                                ` · best lap ${champion.replay.view.bestLap} steps`}
                         </span>
                     </figcaption>
                     <EpisodeView

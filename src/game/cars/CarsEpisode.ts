@@ -21,14 +21,27 @@ export interface CarsView {
     crashed: boolean;
     /** Whether the track's cones are in play (and drawn). */
     obstacles: boolean;
+    /** Fastest completed lap, in steps; null before the first lap. */
+    bestLap: number | null;
 }
+
+/** What the driver can do with the pedals, one per step. */
+export const THROTTLE_ACTIONS = ['accelerate', 'brake', 'hold'] as const;
+export type ThrottleAction = (typeof THROTTLE_ACTIONS)[number];
 
 /** Sensor directions relative to the heading. */
 export const RAY_ANGLES = [-90, -60, -30, 0, 30, 60, 90].map((deg) => (deg * Math.PI) / 180);
 export const RAY_RANGE = 50;
 const MAX_SPEED = 5;
 const ACCELERATION = 0.2;
+/** Air drag while accelerating; holding keeps the speed as it is. */
 const DRAG = 0.02;
+const BRAKING = 0.4;
+/**
+ * Fitness bonus for a lap driven at full speed all the way; a lap taking twice as long earns half.
+ * About the distance part of one lap ((1 + 120)^2), so lap time matters as much as distance.
+ */
+const LAP_BONUS = 15000;
 const TURN_RATE = 0.12;
 /** Above this speed the car turns less and less: it must brake before tight bends. */
 const GRIP_SPEED = 2;
@@ -56,11 +69,20 @@ const trackFor = (seed: number): Track => {
 
 const wrap = (i: number) => ((i % TRACK_SEGMENTS) + TRACK_SEGMENTS) % TRACK_SEGMENTS;
 
-/** A car driving laps on a seeded track; the network steers and accelerates from wall-distance rays. */
+/**
+ * A car driving laps on a seeded track. From wall-distance rays and its own speed, the network steers
+ * and picks a pedal action (accelerate, brake or hold) that changes the speed.
+ */
 class CarsEpisode implements Episode {
     readonly brain: NeuralNetwork;
     readonly seed: number;
     track: Track;
+    /** Steps for a lap at full speed on this track: the reference for the lap bonus. */
+    idealLapSteps: number;
+    /** Steps taken by each completed lap, in order. */
+    lapSteps: number[] = [];
+    /** Step at which the current lap started. */
+    lapStart = 0;
 
     position: Point = { x: 0, y: 0 };
     heading = 0;
@@ -86,6 +108,12 @@ class CarsEpisode implements Episode {
         this.seed = seed;
         this.track = trackFor(seed);
         this.cones = withObstacles ? this.track.cones : [];
+        const { center } = this.track;
+        const lapLength = center.reduce((sum, c, i) => {
+            const next = center[wrap(i + 1)];
+            return sum + Math.hypot(next.x - c.x, next.y - c.y);
+        }, 0);
+        this.idealLapSteps = lapLength / MAX_SPEED;
         this.reset();
     }
 
@@ -108,6 +136,8 @@ class CarsEpisode implements Episode {
         this.crashed = false;
         this.steerSum = 0;
         this.speedSum = 0;
+        this.lapSteps = [];
+        this.lapStart = 0;
         this.rays = this.sense();
     }
 
@@ -121,11 +151,11 @@ class CarsEpisode implements Episode {
         }
 
         const inputs = [...this.rays.map((r) => r / RAY_RANGE), this.speed / MAX_SPEED];
-        const [steerOut, throttleOut] = this.brain.output(inputs);
+        const [steerOut, ...actionOuts] = this.brain.output(inputs);
         const steer = Math.tanh(steerOut);
-        const throttle = Math.tanh(throttleOut);
+        const action = THROTTLE_ACTIONS[actionOuts.indexOf(Math.max(...actionOuts))];
 
-        this.speed = Math.min(MAX_SPEED, Math.max(0, this.speed + throttle * ACCELERATION - this.speed * DRAG));
+        this.speed = Math.min(MAX_SPEED, Math.max(0, this.nextSpeed(action)));
         this.heading = this.heading + (steer * TURN_RATE * GRIP_SPEED) / Math.max(GRIP_SPEED, this.speed);
         this.position = {
             x: this.position.x + Math.cos(this.heading) * this.speed,
@@ -139,9 +169,33 @@ class CarsEpisode implements Episode {
         this.rays = this.sense();
     }
 
-    /** Grows with the distance driven along the track; squared to favour the furthest cars. */
+    /**
+     * Distance driven along the track (squared, to favour the furthest cars), plus a bonus per completed
+     * lap that grows with its speed: LAP_BONUS for a lap at full speed, half for a lap twice as long.
+     */
     public fitness(): number {
-        return (1 + Math.max(0, this.bestProgress)) ** 2;
+        const lapBonus = this.lapSteps.reduce((sum, steps) => sum + (LAP_BONUS * this.idealLapSteps) / steps, 0);
+        return (1 + Math.max(0, this.bestProgress)) ** 2 + lapBonus;
+    }
+
+    /** Records the time of every lap newly completed, counted on the furthest point reached. */
+    public recordLaps(): void {
+        const laps = Math.floor(Math.max(0, this.bestProgress) / TRACK_SEGMENTS);
+        while (this.lapSteps.length < laps) {
+            this.lapSteps.push(this.steps - this.lapStart);
+            this.lapStart = this.steps;
+        }
+    }
+
+    private nextSpeed(action: ThrottleAction): number {
+        switch (action) {
+            case 'accelerate':
+                return this.speed + ACCELERATION - this.speed * DRAG;
+            case 'brake':
+                return this.speed - BRAKING;
+            case 'hold':
+                return this.speed;
+        }
     }
 
     /** Mean steering strength and mean speed, both in [0, 1]. */
@@ -160,6 +214,7 @@ class CarsEpisode implements Episode {
                 rays: this.rays,
                 crashed: this.crashed,
                 obstacles: this.cones.length > 0,
+                bestLap: this.lapSteps.length > 0 ? Math.min(...this.lapSteps) : null,
             },
         };
     }
@@ -195,6 +250,7 @@ class CarsEpisode implements Episode {
         if (this.progress > this.bestProgress) {
             this.bestProgress = this.progress;
             this.stepsSinceBest = 0;
+            this.recordLaps();
         } else {
             this.stepsSinceBest = this.stepsSinceBest + 1;
         }
@@ -225,12 +281,15 @@ class CarsEpisode implements Episode {
     }
 }
 
-/** 7 wall-distance rays + speed in; steering and throttle out. The rays also see the cones. */
+/**
+ * In: 7 wall-distance rays (they also see the cones) + current speed. Out: steering, then one output per
+ * pedal action, the highest one wins.
+ */
 export const createCarsGame = (withObstacles = false): GameDefinition => ({
     id: 'cars',
     name: 'Car racing',
     inputs: RAY_ANGLES.length + 1,
-    outputs: 2,
+    outputs: 1 + THROTTLE_ACTIONS.length,
     createEpisode: (brain, seed) => new CarsEpisode(brain, seed, withObstacles),
 });
 
