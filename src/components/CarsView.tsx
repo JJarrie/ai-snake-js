@@ -72,7 +72,8 @@ export const CarShape = ({ x, y, heading, crashed, color }: CarShapeProps) => (
         rx={1}
         transform={`rotate(${(heading * 180) / Math.PI} ${x} ${y})`}
         className={crashed ? 'car crashed' : 'car'}
-        style={color && !crashed ? { fill: color } : undefined}
+        // Out of the race: grey, outlined in its strategy's colour so it stays recognisable.
+        style={color ? (crashed ? { stroke: color } : { fill: color }) : undefined}
     />
 );
 

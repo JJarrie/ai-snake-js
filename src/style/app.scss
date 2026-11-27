@@ -536,7 +536,10 @@ button {
         fill: $headColor;
     }
 
+    /* Not $danger: it is Classic GA's colour. Grey body, outline in the strategy colour when it has one. */
     .car.crashed {
-        fill: $danger;
+        fill: #3b4150;
+        stroke: $muted;
+        stroke-width: 1;
     }
 }
