@@ -140,6 +140,17 @@ class Population {
         this.fitness = this.episodes.map((episode) => episode.fitness());
     }
 
+    /**
+     * The network this strategy stands for after its last finished generation, the one to measure on
+     * held-out worlds: its own policy (ES mean, best MAP-Elites elite), else the generation's fittest brain.
+     */
+    public policy(): NeuralNetwork | null {
+        if (this.generationBest === null) {
+            return null;
+        }
+        return this.strategy.policy?.(this.generationBest) ?? this.generationBest;
+    }
+
     public toState(): PopulationState {
         const history = downsampleMax(this.history, HISTORY_POINTS);
 

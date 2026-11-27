@@ -170,3 +170,27 @@ describe('MapElites', () => {
         expect(shareOfIsolated('novelty')).toBeGreaterThan(0.45);
     });
 });
+
+describe('policy', () => {
+    it('is the mean for the ES family and the fittest archived elite for MAP-Elites', () => {
+        const template = brain();
+        [new OpenAiEs(), new SepCmaEs()].forEach((es) => {
+            expect(es.policy(template)).toBeNull();
+            es.nextGeneration(generation(6), template, random);
+            expect(es.policy(template)?.toVector()).toEqual(es.mean);
+        });
+
+        const mapElites = new MapElites('uniform', 2);
+        expect(mapElites.policy()).toBeNull();
+        const strong = brain();
+        mapElites.nextGeneration(
+            [
+                { brain: brain(), fitness: 1, behavior: [0, 0] },
+                { brain: strong, fitness: 5, behavior: [0.9, 0.9] },
+            ],
+            strong,
+            random,
+        );
+        expect(mapElites.policy()?.toVector()).toEqual(strong.toVector());
+    });
+});

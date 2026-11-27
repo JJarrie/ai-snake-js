@@ -16,6 +16,13 @@ interface EvolutionStrategy {
     archive?(): (number | null)[][];
 
     /**
+     * The network this strategy would deploy, the one measured on held-out worlds, when it is not the
+     * fittest brain of the last generation: the mean for the ES family, the best archived elite for
+     * MAP-Elites. `template` gives the network shape. Null before there is one.
+     */
+    policy?(template: NeuralNetwork): NeuralNetwork | null;
+
+    /**
      * Brains of the next generation, as many as `evaluated`. `evaluated` is in the same order as the
      * brains this strategy returned for the current generation; `best` is the fittest brain of it.
      * Every draw comes from `random`, the population's seeded generator, so a run is reproducible.

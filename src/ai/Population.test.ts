@@ -5,6 +5,7 @@ import { createSnakeGame } from '../game/snake/SnakeEpisode';
 import Population from './Population';
 import ClassicGa from './strategy/ClassicGa';
 import type EvolutionStrategy from './strategy/EvolutionStrategy';
+import OpenAiEs from './strategy/OpenAiEs';
 import type NeuralNetwork from './NeuralNetwork';
 
 const snakeGame = createSnakeGame(20);
@@ -175,5 +176,21 @@ describe('Population elite', () => {
 
         expect(received[1].toVector()).toEqual(fittest.toVector());
         expect(received[1].toVector()).not.toEqual(population.replay.brain.toVector());
+    });
+});
+
+describe('Population policy', () => {
+    it('is null before the first generation, then the strategy policy or the generation best', () => {
+        const ga = new Population(4, snakeGame, new ClassicGa(0.1), 3);
+        const es = new Population(4, snakeGame, new OpenAiEs(), 3);
+        expect(ga.policy()).toBeNull();
+
+        [ga, es].forEach((p) => {
+            p.calculateFitness();
+            p.naturalSelection();
+        });
+
+        expect(ga.policy()?.toVector()).toEqual(ga.generationBest?.toVector());
+        expect(es.policy()?.toVector()).toEqual((es.strategy as OpenAiEs).mean);
     });
 });

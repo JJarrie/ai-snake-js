@@ -52,6 +52,11 @@ class OpenAiEs implements EvolutionStrategy {
         return this.noise.map((eps) => best.fromVector(mean.map((m, j) => m + this.sigma * eps[j])));
     }
 
+    /** The mean: what the ES optimizes, never played in training (only its perturbations are). */
+    public policy(template: NeuralNetwork): NeuralNetwork | null {
+        return this.mean ? template.fromVector(this.mean) : null;
+    }
+
     private updateMean(evaluated: Evaluated[], best: NeuralNetwork): number[] {
         // First generation is random networks, not perturbations: start from the best of them.
         if (this.mean === undefined || this.noise.length !== evaluated.length) {

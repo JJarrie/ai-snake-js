@@ -82,6 +82,15 @@ class MapElites implements EvolutionStrategy {
         return next;
     }
 
+    /** The fittest archived elite, as MAP-Elites would deploy it. */
+    public policy(): NeuralNetwork | null {
+        const elites = this.cells.flat().filter((e): e is Elite => e !== null);
+        if (elites.length === 0) {
+            return null;
+        }
+        return elites.reduce((best, e) => (e.fitness > best.fitness ? e : best)).brain.clone();
+    }
+
     public archive(): (number | null)[][] {
         return this.cells.map((row) => row.map((e) => (e === null ? null : e.fitness)));
     }
